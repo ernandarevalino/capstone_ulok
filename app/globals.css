@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ========================================================================== */
+/* #region LOGIN PAGE */
+/* ========================================================================== */
+
+.login-container {
+  width: 100%;
+  height: 100vh;
+  background: #142B4D; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 90%;
+  max-width: 800px;  
+  height: 520px;     
+  background: #ffffff;
+  border-radius: 15px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.left-section {
+  flex: 1;
+  background: #142B4D;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 10px;
+  border-radius: 15px;
+}
+
+.right-section {
+  flex: 1;
+  background: #f8f9fa;
+  padding: 60px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.logo-section {
+  margin-bottom: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tagline-sub {
+  font-size: 13px;
+  color: #7f8c8d;
+  font-weight: 400;
+}
+
+.highlight {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a202c;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #142B4D;
+  box-shadow: 0 0 0 3px rgba(17, 37, 70, 0.1);
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: -6px;
+}
+
+.forgot-link {
+  font-size: 12px;
+  color: #e74c3c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.login-button {
+  width: 100%;
+  height: 46px;
+  background: #142B4D;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.login-button:hover {
+  background: #1d3b6e;
+}
+
+.login-button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Responsive Rules */
+@media (max-width: 768px) {
+  .login-card { flex-direction: column; height: auto; }
+  .left-section { min-height: 250px; padding: 40px 20px; }
+  .illustration-container { width: 180px; height: 180px; margin-bottom: 20px; }
+  .right-section { padding: 40px 30px; }
+}
+
+/* #endregion */
+
+/* ========================================================================== */
+/* #region ADMIN CABANG PAGE */
+/* ========================================================================== */
+
+
+/* #endregion */
+
+/* ========================================================================== */
+/* #region SUPER ADMIN PAGE */
+/* ========================================================================== */
+
+/* #endregion */
