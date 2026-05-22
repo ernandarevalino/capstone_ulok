@@ -1,14 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getCurrentProfile } from '@/actions/auth'; // Ambil data profil dari server action
 
 export default function HeaderMobile() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
+
+  // Ambil data profil user saat komponen mobile dimuat
+  useEffect(() => {
+    async function loadProfile() {
+      const res = await getCurrentProfile();
+      if (res && res.success) {
+        setProfile(res.profile);
+      }
+    }
+    loadProfile();
+  }, [pathname]);
 
   const isActive = (path: string) => pathname === path;
+
+  // Logika penentuan inisial nama bray
+  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
 
   return (
     <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
@@ -91,7 +109,7 @@ export default function HeaderMobile() {
 
           <hr className="border-slate-700 my-2" />
 
-          {/* Profile Target */}
+          {/* Bagian Profile Target Mobile */}
           <Link 
             href="/admin/cabang/profile"
             onClick={() => setIsOpen(false)}
@@ -99,12 +117,25 @@ export default function HeaderMobile() {
               isActive('/admin/cabang/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
             }`}
           >
-            <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center font-bold text-xs text-white border border-gray-400">
-              AN
+            {/* Avatar Bulat */}
+            <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
+              {profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Profile Mobile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{initialLetter}</span>
+              )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs">Anastasya (Cabang)</span>
-              <span className="text-[10px] text-gray-400">Lihat Profil</span>
+
+            {/* Info Nama Teks */}
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-semibold tracking-wide block truncate max-w-37.5">
+                {profile?.full_name || 'Loading...'}
+              </span>
+              <span className="text-[10px] text-gray-400 block">Lihat Profil</span>
             </div>
           </Link>
         </nav>

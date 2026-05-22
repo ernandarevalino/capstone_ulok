@@ -1,8 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { getCurrentProfile } from '@/actions/auth'; // Ambil fungsi profil yang baru kita buat
 
 export default function AdminCabangPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [fullName, setFullName] = useState<string>("Loading..."); // State menampung nama user
 
   const dataUsulan = [
     { nama: "Cilandak Barat", status: "Dalam Review", skor: 10, color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
@@ -10,15 +13,28 @@ export default function AdminCabangPage() {
     { nama: "Kebayoran Baru", status: "Belum Direview", skor: 10, color: "text-slate-600 bg-slate-50 border-slate-200" },
     { nama: "Tb. Simatupang", status: "Revisi", skor: 10, color: "text-red-600 bg-red-50 border-red-200" },
     { nama: "Pesanggrahan", status: "Dalam Review", skor: 10, color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
-    { nama: "Pasar Minggu", status: "Dalam Review", skor: 10, color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
+    { nama: "Pasar Minggu", status: "Dalam Review", skor: "text-yellow-600 bg-yellow-50 border-yellow-200" },
   ];
+
+  // Ambil data profil dari database saat halaman pertama kali dibuka
+  useEffect(() => {
+    async function fetchProfile() {
+      const res = await getCurrentProfile();
+      if (res && res.success && res.profile) {
+        setFullName(res.profile.full_name); // Set nama sesuai full_name di DB (contoh: anasTasya / JokoWi)
+      } else {
+        setFullName("Pengguna"); // Fallback jika gagal ambil data
+      }
+    }
+    fetchProfile();
+  }, []);
 
   return (
     <div className="space-y-6">
-      {/* WELCOME */}
+      {/* WELCOME (Dinamis dari Database) */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">
-          Selamat Datang, Anastasya
+          Selamat Datang, {fullName}
         </h1>
         <p className="text-gray-500 text-xs md:text-sm mt-1">
           Berikut ini adalah status lokasi Anda saat ini.

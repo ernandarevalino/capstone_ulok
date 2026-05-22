@@ -1,14 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getCurrentProfile } from '@/actions/auth'; // Ambil data profil dari server action
 
 export default function HeaderDesktop() {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
 
-  // Helper function untuk cek status active menu utama
+  // Ambil data profil user saat komponen desktop dimuat
+  useEffect(() => {
+    async function loadProfile() {
+      const res = await getCurrentProfile();
+      if (res && res.success) {
+        setProfile(res.profile);
+      }
+    }
+    loadProfile();
+  }, [pathname]); // pathname dimasukkan agar ikut me-refresh data saat user berpindah halaman
+
   const isActive = (path: string) => pathname === path;
+
+  // Logika penentuan inisial nama bray
+  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
 
   return (
     <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-4 shadow-md text-white">
@@ -89,14 +104,24 @@ export default function HeaderDesktop() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
         </Link>
 
-        {/* Profile Avatar */}
+        {/* Bagian Profile Avatar */}
         <Link 
           href="/admin/cabang/profile"
-          className={`w-10 h-10 rounded-full bg-slate-500 overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${
-            isActive('/admin/cabang/profile') ? 'border-white ring-2 ring-blue-400' : 'border-gray-400'
-          }`}
+          className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${
+            isActive('/admin/cabang/profile') 
+              ? 'border-white ring-2 ring-blue-400' 
+              : 'border-gray-400'
+          } ${!profile?.avatar_url ? 'bg-slate-500 text-white' : ''}`}
         >
-          AN
+          {profile?.avatar_url ? (
+            <img 
+              src={profile.avatar_url} 
+              alt="Profile" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span>{initialLetter}</span>
+          )}
         </Link>
       </div>
     </header>

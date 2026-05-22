@@ -60,12 +60,15 @@ export default function LoginPage() {
         
         {/* SEKTOR KANAN: LOGIN COMPONENT FORMS */}
         <div className="right-section">
-          <div className="logo-section">
-            <div className="logo mb-4">
-              <img src="/images/logo-priolo-login.png" alt="Logo Priolo Alfamidi" className="h-12 w-auto object-contain" />
+          <div className="logo-section flex flex-col items-center justify-center w-full">
+            <div className="logo mb-4 flex justify-center">
+              <img 
+                src="/images/logo-priolo.png" 
+                alt="Logo Priolo Alfamidi" 
+                className="h-24 w-auto object-contain" 
+              />
             </div>
-            <p className="tagline-sub">The solution for a <span className="highlight">smarter expansion</span></p>
-          </div>
+          </div>  
           
           <form className="login-form" onSubmit={handleLogin}>
             {errorMsg && (
