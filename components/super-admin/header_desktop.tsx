@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile } from '@/actions/auth'; 
+import { getNotificationsAction } from '@/actions/superadmin'; // Import action notifikasi
 
 /**
  * Komponen Navigasi Utama (Header) untuk Perangkat Desktop.
@@ -13,10 +14,11 @@ import { getCurrentProfile } from '@/actions/auth';
 export default function HeaderDesktop() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0); // State untuk jumlah badge notifikasi
 
   /**
-   * Mengambil data profil pengguna yang sedang aktif setiap kali terjadi perubahan pola URL (pathname).
-   * Hal ini memastikan data foto profil atau nama terbaharui secara konsisten.
+   * Mengambil data profil pengguna yang sedang aktif dan menghitung total notifikasi unread
+   * setiap kali terjadi perubahan pola URL (pathname).
    */
   useEffect(() => {
     async function loadProfile() {
@@ -25,7 +27,18 @@ export default function HeaderDesktop() {
         setProfile(res.profile);
       }
     }
+
+    async function loadUnreadNotifications() {
+      const res = await getNotificationsAction();
+      if (res && res.success) {
+        // Filter untuk menghitung hanya notifikasi yang bernilai is_read = false
+        const unreadItems = res.data.filter((item: any) => !item.is_read);
+        setUnreadCount(unreadItems.length);
+      }
+    }
+
     loadProfile();
+    loadUnreadNotifications();
   }, [pathname]);
 
   /**
@@ -112,8 +125,12 @@ export default function HeaderDesktop() {
             alt="Notification Icon" 
             className="w-6 h-6 object-contain brightness-0 invert" 
           />
-          {/* Indikator Titik Merah (Badge Notifikasi Baru) */}
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+          {/* Indikator Angka Adaptif Dinamis (Maksimal 15+) */}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 border border-slate-900 shadow-sm animate-pulse">
+              {unreadCount > 15 ? '15+' : unreadCount}
+            </span>
+          )}
         </Link>
 
         {/* Navigasi Pengaturan Profil Komponen Avatar */}

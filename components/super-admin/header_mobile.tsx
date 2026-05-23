@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile } from '@/actions/auth'; 
+import { getNotificationsAction } from '@/actions/superadmin'; // Import action notifikasi
 
 /**
  * Komponen Navigasi Utama (Header) Responsif untuk Perangkat Mobile.
@@ -14,9 +15,10 @@ export default function HeaderMobile() {
   const [isOpen, setIsOpen] = useState(false);               // State untuk visibilitas dropdown menu hamburger
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0); // State untuk jumlah badge notifikasi
 
   /**
-   * Siklus pemuatan data profil pengguna untuk sinkronisasi antarmuka mobile.
+   * Siklus pemuatan data profil pengguna dan kalkulasi notifikasi unread untuk antarmuka mobile.
    */
   useEffect(() => {
     async function loadProfile() {
@@ -25,7 +27,18 @@ export default function HeaderMobile() {
         setProfile(res.profile);
       }
     }
+
+    async function loadUnreadNotifications() {
+      const res = await getNotificationsAction();
+      if (res && res.success) {
+        // Filter untuk menghitung hanya notifikasi yang bernilai is_read = false
+        const unreadItems = res.data.filter((item: any) => !item.is_read);
+        setUnreadCount(unreadItems.length);
+      }
+    }
+
     loadProfile();
+    loadUnreadNotifications();
   }, [pathname]);
 
   const isActive = (path: string) => pathname === path;
@@ -56,10 +69,16 @@ export default function HeaderMobile() {
         <div className="flex items-center space-x-2 ml-auto mr-2">
           <Link 
             href="/admin/super-admin/notification" 
-            className={`p-2 rounded-full relative ${isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''}`}
+            className={`p-2 rounded-full relative flex items-center justify-center ${isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''}`}
           >
             <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            
+            {/* Indikator Angka Adaptif Dinamis Versi Skala Ringkas Mobile UI (Maksimal 15+) */}
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 min-w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center px-0.5 border border-slate-900 shadow-sm">
+                {unreadCount > 15 ? '15+' : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
 

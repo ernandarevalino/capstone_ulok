@@ -3,11 +3,13 @@
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Inisialisasi Supabase Client dengan Service Role Key untuk bypass RLS (Row Level Security)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
+// Interface untuk parameter pencarian user
 interface GetUsersParams {
   role: 'admin_cabang' | 'assessor'
   search?: string
@@ -17,8 +19,68 @@ interface GetUsersParams {
 }
 
 /* ========================================================================= */
-/* #region 1. READ USERS BY ROLE */
+/* #region 1. FITUR MANAJEMEN NOTIFIKASI SISTERM */
 /* ========================================================================= */
+
+/**
+ * Ubah dari async function biasa menjadi export async function
+ * agar bisa di-import oleh file action lain (seperti action berkas/ulok)
+ */
+export async function createNotification(title: string, message: string) {
+  try {
+    await supabaseAdmin.from('notifications').insert([{ title, message }]);
+  } catch (err) {
+    console.error("Gagal mencatat log notifikasi ke database:", err);
+  }
+}
+
+/**
+ * Mengambil daftar seluruh notifikasi terbaru (Maksimal 100 baris dikontrol oleh DB Trigger)
+ */
+export async function getNotificationsAction() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .select('id, title, message, is_read, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    return { success: false, error: error.message, data: [] };
+  }
+}
+
+/**
+ * Menghapus satu record data notifikasi berdasarkan ID spesifik
+ */
+export async function deleteNotificationAction(id: number) {
+  try {
+    const { error } = await supabaseAdmin.from('notifications').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Mengubah status semua notifikasi yang belum dibaca menjadi sudah dibaca
+ */
+export async function markAllNotificationsAsReadAction() {
+  try {
+    const { error } = await supabaseAdmin.from('notifications').update({ is_read: true }).eq('is_read', false);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/* ========================================================================= */
+/* #region 2. READ USERS BY ROLE (WITH FILTER & PAGINATION) */
+/* ========================================================================= */
+
 export async function getUsersByRoleAction({ role, search = '', page = 1, limit = 7, branchFilter = '' }: GetUsersParams) {
   try {
     const from = (page - 1) * limit
@@ -83,8 +145,9 @@ export async function getAllBranchesAction() {
 }
 
 /* ========================================================================= */
-/* #region 2. DASHBOARD STATISTIK */
+/* #region 3. DASHBOARD STATISTIK */
 /* ========================================================================= */
+
 export async function getDashboardStatsAction() {
   try {
     const { count: totalCabang, error: err1 } = await supabaseAdmin
@@ -117,8 +180,9 @@ export async function getDashboardStatsAction() {
 }
 
 /* ========================================================================= */
-/* #region 3. CREATE USER (OTOMATIS CONVERT NIK JADI EMAIL LOGIN) */
+/* #region 4. CREATE USER (AUTO CONVERT NIK TO EMAIL LOGIN) */
 /* ========================================================================= */
+
 interface CreateUserParams {
   password: string
   fullName: string
@@ -131,7 +195,6 @@ export async function createUserAction({ password, fullName, nik, role, branchId
   try {
     const cleanNik = nik.trim();
     
-    // 1. Validasi Awal: Cek apakah NIK sudah dipakai di tabel profiles
     const { data: existingNik } = await supabaseAdmin
       .from('profiles')
       .select('id')
@@ -142,10 +205,8 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       return { success: false, error: `NIK ${cleanNik} sudah terdaftar di sistem!` };
     }
 
-    // 2. Auto-generate email login resmi perusahaan berbasis NIK
     const generatedEmail = `${cleanNik}@alfamidi.com`;
 
-    // 3. Daftarkan ke Supabase Auth Service
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: generatedEmail,
       password: password,
@@ -155,7 +216,6 @@ export async function createUserAction({ password, fullName, nik, role, branchId
     if (authError) throw authError
     if (!authData.user) throw new Error("Gagal membuat kredensial auth user baru.")
 
-    // 4. Masukkan data ke tabel profiles publik
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert([
@@ -169,10 +229,16 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       ])
 
     if (profileError) {
-      // Rollback Auth jika input ke profile gagal
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       throw profileError
     }
+
+    // Pemicu otomatis log notifikasi ke sistem pusat superadmin
+    const roleLabel = role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
+    await createNotification(
+      'Pengguna Baru Terdaftar',
+      `Berhasil menambahkan ${roleLabel} baru atas nama ${fullName.trim()} (NIK: ${cleanNik}).`
+    );
 
     return { success: true }
   } catch (error: any) {
@@ -181,8 +247,9 @@ export async function createUserAction({ password, fullName, nik, role, branchId
 }
 
 /* ========================================================================= */
-/* #region 4. UPDATE USER DATA (SINKRONISASI UPDATE NIK KE EMAIL AUTH) */
+/* #region 5. UPDATE USER DATA (WITH AUTO NOTIFICATION TRIGGER) */
 /* ========================================================================= */
+
 interface UpdateUserParams {
   id: string
   fullName: string
@@ -195,22 +262,20 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
   try {
     const cleanNik = nik.trim();
 
-    // 1. Ambil data profil lama di database
     const { data: existingUser, error: fetchError } = await supabaseAdmin
       .from('profiles')
-      .select('full_name, nik, branch_id')
+      .select('full_name, nik, role, branch_id')
       .eq('id', id)
       .single()
 
     if (fetchError || !existingUser) throw new Error("Data pengguna tidak ditemukan.")
 
-    // 2. Validasi Duplikasi NIK jika NIK diganti
     if (cleanNik !== existingUser.nik) {
       const { data: duplicateNik } = await supabaseAdmin
         .from('profiles')
         .select('id')
         .eq('nik', cleanNik)
-        .neq('id', id) // Kecualikan user diri sendiri
+        .neq('id', id)
         .maybeSingle();
 
       if (duplicateNik) {
@@ -218,7 +283,6 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       }
     }
 
-    // 3. Jika NIK berubah, perbarui EMAIL UTAMA di Supabase Auth Core Service secara paksa
     if (cleanNik !== existingUser.nik) {
       const newGeneratedEmail = `${cleanNik}@alfamidi.com`;
       const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(id, {
@@ -230,7 +294,6 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       }
     }
 
-    // 4. Siapkan payload update untuk tabel profiles publik
     const updatePayload: any = {}
 
     if (fullName.trim() !== existingUser.full_name) {
@@ -246,18 +309,24 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       updatePayload.branch_id = branchId || null
     }
 
-    // Jika tidak ada perubahan data fisik, hentikan eksekusi
     if (Object.keys(updatePayload).length === 0) {
       return { success: true }
     }
 
-    // 5. Jalankan update di tabel profiles publik
     const { error } = await supabaseAdmin
       .from('profiles')
       .update(updatePayload)
       .eq('id', id)
 
     if (error) throw error
+
+    // Pemicu otomatis log notifikasi perubahan data profil ke sistem
+    const roleLabel = existingUser.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
+    await createNotification(
+      'Pembaruan Data Pengguna',
+      `Profil ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
+    );
+
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -265,10 +334,18 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
 }
 
 /* ========================================================================= */
-/* #region 5. DELETE USER TOTAL */
+/* #region 6. DELETE USER TOTAL (WITH AUTO NOTIFICATION TRIGGER) */
 /* ========================================================================= */
+
 export async function deleteUserAction(id: string) {
   try {
+    // Ambil info user sebelum entitas dihapus demi kebutuhan rekaman pesan notifikasi
+    const { data: userTarget } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name, nik, role')
+      .eq('id', id)
+      .single();
+
     const { error: profileErr } = await supabaseAdmin
       .from('profiles')
       .delete()
@@ -278,6 +355,15 @@ export async function deleteUserAction(id: string) {
 
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(id)
     if (authErr) throw authErr
+
+    // Pemicu otomatis log notifikasi penghapusan akun ke sistem pusat superadmin
+    if (userTarget) {
+      const roleLabel = userTarget.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
+      await createNotification(
+        'Penghapusan Akun Pengguna',
+        `Akun ${roleLabel} bernama ${userTarget.full_name} (NIK: ${userTarget.nik}) telah dihapus permanen.`
+      );
+    }
 
     return { success: true }
   } catch (error: any) {

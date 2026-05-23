@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+// Mengimpor fungsi Server Actions untuk manajemen data pengguna tingkat superadmin
 import { getUsersByRoleAction, createUserAction, updateUserAction, deleteUserAction } from '@/actions/superadmin';
 
 export default function DaftarAssessorPage() {
+  // ==========================================
+  // [1] STATE UTAMA (DATA & PAGINATION)
+  // ==========================================
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -11,24 +15,40 @@ export default function DaftarAssessorPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Modals Controller bray
+  // ==========================================
+  // [2] STATE KONTROL VISIBILITAS MODAL UI
+  // ==========================================
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // Form States (Field email mentah dihapus total dari state awal bray)
+  // ==========================================
+  // [3] STATE DATA FORM DAN AKSES MUTASI
+  // ==========================================
   const [formData, setFormData] = useState({ password: '', fullName: '', nik: '' });
   const [editData, setEditData] = useState({ fullName: '', nik: '', deleteAvatar: false });
   const [actionLoading, setActionLoading] = useState(false);
 
+  // ==========================================
+  // [4] SIDE EFFECTS (PEMANTAUAN STATE)
+  // ==========================================
+  // Memicu pengambilan data ulang setiap kali parameter halaman atau kata kunci pencarian berubah
   useEffect(() => {
     fetchUsers();
   }, [page, search]);
 
+  // ==========================================
+  // [5] LOGIKA ASYNCHRONOUS (SERVER ACTIONS)
+  // ==========================================
+
+  /**
+   * Mengambil data akun assessor dari server berdasarkan filter pencarian dan pagination
+   */
   async function fetchUsers() {
     setLoading(true);
-    const res = await getUsersByRoleAction({ role: 'assessor', search, page, limit: 15 });
+    // Permintaan data dikunci untuk role 'assessor' dengan batasan density maksimal 7 baris per halaman
+    const res = await getUsersByRoleAction({ role: 'assessor', search, page, limit: 7 });
     if (res && res.success) {
       setUsers(res.data);
       setTotalPages(res.totalPages);
@@ -37,21 +57,27 @@ export default function DaftarAssessorPage() {
     setLoading(false);
   }
 
+  /**
+   * Menangani proses submit pembuatan akun Assessor baru
+   */
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading(true);
-    const res = await createUserAction({ ...formData, role: 'assessor' }); // Set role ke assessor bray!
+    const res = await createUserAction({ ...formData, role: 'assessor' }); 
     if (res.success) {
       alert('Tim Assessor baru berhasil didaftarkan! 🎉 Email login dibuat otomatis dari NIK.');
       setIsCreateOpen(false);
-      setFormData({ password: '', fullName: '', nik: '' });
-      fetchUsers();
+      setFormData({ password: '', fullName: '', nik: '' }); // Reset state form
+      fetchUsers(); // Memperbarui data tabel
     } else {
       alert(`Gagal membuat user: ${res.error}`);
     }
     setActionLoading(false);
   };
 
+  /**
+   * Menangani proses submit pembaruan profil data Assessor
+   */
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
@@ -67,6 +93,9 @@ export default function DaftarAssessorPage() {
     setActionLoading(false);
   };
 
+  /**
+   * Mengeksekusi penghapusan akun Assessor secara permanen dari basis data
+   */
   const handleDeleteSubmit = async () => {
     if (!selectedUser) return;
     setActionLoading(true);
@@ -81,9 +110,13 @@ export default function DaftarAssessorPage() {
     setActionLoading(false);
   };
 
+  // ==========================================
+  // [6] STRUKTUR ANTARMUKA (RENDER VIEW)
+  // ==========================================
   return (
     <div className="space-y-6">
-      {/* SEKTOR TOP CONTROL */}
+      
+      {/* SEKTOR TOP CONTROL: Judul Halaman, Pencarian Global, dan Tombol Akselerator */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Daftar Tim Assessor</h1>
@@ -95,6 +128,7 @@ export default function DaftarAssessorPage() {
             placeholder="🔍 Cari Nama / NIK..."
             className="px-4 py-2 text-xs md:text-sm border border-gray-300 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
             value={search}
+            // Mengembalikan indeks halaman ke awal setiap kali user mengubah kata kunci pencarian
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
           <button 
@@ -106,7 +140,7 @@ export default function DaftarAssessorPage() {
         </div>
       </div>
 
-      {/* TABEL VIEW */}
+      {/* STRUKTUR TABEL DATA UTAMA */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs md:text-sm">
@@ -167,7 +201,7 @@ export default function DaftarAssessorPage() {
           </table>
         </div>
 
-        {/* PAGINATION */}
+        {/* SUBSISTEM INTERFACE PAGINATION KONTROL */}
         <div className="p-4 bg-gray-50 border-t flex items-center justify-between text-xs font-semibold text-gray-600">
           <div>Halaman {page} dari {totalPages || 1}</div>
           <div className="flex gap-2">
@@ -177,7 +211,7 @@ export default function DaftarAssessorPage() {
         </div>
       </div>
 
-      {/* ==================== MODAL POP-UP 1: CREATE USER ==================== */}
+      {/* ==================== COMPONENT MODAL 1: REGISTRASI USER ==================== */}
       {isCreateOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-md rounded-xl shadow-xl overflow-hidden border">
@@ -208,7 +242,7 @@ export default function DaftarAssessorPage() {
         </div>
       )}
 
-      {/* ==================== MODAL POP-UP 2: EDIT USER ==================== */}
+      {/* ==================== COMPONENT MODAL 2: EDIT PROFILE ==================== */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-md rounded-xl shadow-xl overflow-hidden border">
@@ -243,7 +277,7 @@ export default function DaftarAssessorPage() {
         </div>
       )}
 
-      {/* ==================== MODAL POP-UP 3: CONFIRM DELETE ==================== */}
+      {/* ==================== COMPONENT MODAL 3: KONFIRMASI DESTRUKTIF ==================== */}
       {isDeleteOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-sm rounded-xl shadow-xl overflow-hidden border p-6 space-y-4 text-center">

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from '@/actions/superadmin' // Import fungsi notifikasi pusat
 
 /* ========================================================================== */
 /* #region MODUL MANAJEMEN USULAN LOKASI (ULOK) */
@@ -10,7 +11,7 @@ import { revalidatePath } from 'next/cache'
 /**
  * Mengambil seluruh daftar usulan lokasi (ULOK) yang diajukan oleh Admin Cabang yang sedang aktif.
  * Hasil query akan diurutkan berdasarkan waktu pembuatan terbaru.
- * * @returns Objek status operasi beserta array data usulan lokasi atau pesan kesalahan.
+ * @returns Objek status operasi beserta array data usulan lokasi atau pesan kesalahan.
  */
 export async function getUlokSubmissions() {
   try {
@@ -36,7 +37,7 @@ export async function getUlokSubmissions() {
 /**
  * Membuat entitas data usulan lokasi (ULOK) baru pada tahap awal melalui modal/pop-up.
  * Status awal otomatis ditetapkan sebagai 'Draft'.
- * * @param payload - Objek berisi parameter nama_lokasi, jenis_badan_hukum, dan nama_pemegang_hak.
+ * @param payload - Objek berisi parameter nama_lokasi, jenis_badan_hukum, dan nama_pemegang_hak.
  * @returns Objek status operasi beserta rekaman data yang berhasil disimpan.
  */
 export async function createUlokSubmission(payload: {
@@ -67,6 +68,39 @@ export async function createUlokSubmission(payload: {
       .single()
 
     if (error) throw error
+
+    // =========================================================================
+    // IMPLEMENTASI NOTIFIKASI PUSAT UNTUK SUPER ADMIN
+    // =========================================================================
+    try {
+      // Ambil nama admin dan relasi nama cabang berdasarkan admin_id yang sedang aktif
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select(`
+          full_name,
+          branches (
+            nama_cabang
+          )
+        `)
+        .eq('id', user.id)
+        .single()
+
+      if (profileData) {
+        const adminName = profileData.full_name;
+        // Gunakan optional chaining untuk mengantisipasi jika branch_id bernilai null
+        const branchName = (profileData.branches as any)?.nama_cabang || 'Cabang Tidak Diketahui';
+
+        // Pemicu otomatis log notifikasi ke sistem pusat superadmin
+        await createNotification(
+          'Usulan Lokasi (ULOK) Baru',
+          `Admin ${adminName} dari ${branchName} telah menambahkan usulan lokasi baru: "${payload.nama_lokasi}".`
+        );
+      }
+    } catch (notifErr) {
+      // Catch blok internal agar jika notifikasi gagal, proses utama simpan ULOK tidak ikut gagal/gantung
+      console.error("Gagal memicu notifikasi ULOK baru:", notifErr);
+    }
+    // =========================================================================
     
     // Melakukan pembersihan cache (purge cache) pada rute navigasi terkait agar data antarmuka diperbarui secara realtime
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -78,7 +112,7 @@ export async function createUlokSubmission(payload: {
 
 /**
  * Mengambil informasi detail tunggal dari satu berkas usulan lokasi berdasarkan unique identifier (ID).
- * * @param id - String UUID dari usulan lokasi terkait.
+ * @param id - String UUID dari usulan lokasi terkait.
  * @returns Objek status operasi beserta data detail usulan lokasi.
  */
 export async function getUlokDetail(id: string) {
@@ -100,7 +134,7 @@ export async function getUlokDetail(id: string) {
 /**
  * Memuat master template checklist kelengkapan dokumen berdasarkan jenis badan hukum yang dipilih.
  * Digunakan sebagai acuan validasi berkas fisik maupun digital di tingkat cabang.
- * * @param jenisBadanHukum - Parameter string kategori badan hukum (misal: PT, CV, Perorangan).
+ * @param jenisBadanHukum - Parameter string kategori badan hukum (misal: PT, CV, Perorangan).
  * @returns Objek status operasi beserta daftar master kriteria checklist.
  */
 export async function getChecklistMaster(jenisBadanHukum: string) {
@@ -120,7 +154,7 @@ export async function getChecklistMaster(jenisBadanHukum: string) {
 
 /**
  * Mengambil daftar berkas atau dokumen lampiran digital yang telah diunggah sebelumnya pada suatu usulan lokasi.
- * * @param ulokId - ID referensi usulan lokasi yang berelasi dengan tabel dokumen.
+ * @param ulokId - ID referensi usulan lokasi yang berelasi dengan tabel dokumen.
  * @returns Objek status operasi beserta array list dokumen pendukung.
  */
 export async function getUploadedDocuments(ulokId: string) {
@@ -141,7 +175,7 @@ export async function getUploadedDocuments(ulokId: string) {
 /**
  * Memperbarui struktur isian formulir usulan lokasi secara berkala (meliputi modifikasi isian Section 1 dan Section 2).
  * Fungsi ini mencatat waktu pembaruan terakhir secara otomatis melalui penanda ISO Timestamp.
- * * @param id - ID target berkas usulan lokasi yang akan diubah.
+ * @param id - ID target berkas usulan lokasi yang akan diubah.
  * @param payload - Objek kumpulan data formulir baru hasil input pengguna.
  * @returns Objek status operasi sukses pembaruan data.
  */
