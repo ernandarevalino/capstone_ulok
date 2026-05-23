@@ -87,9 +87,9 @@ export default function HeaderDesktop() {
 
         {/* Menu Manajemen Data Assessor */}
         <Link 
-          href="/admin/super-admin/daftaruser/assesor" 
+          href="/admin/super-admin/daftaruser/assessor" 
           className={`pb-1 transition-colors border-b-2 ${
-            isDaftarUserActive('assesor') 
+            isDaftarUserActive('assessor') 
               ? 'text-white border-white' 
               : 'text-gray-400 border-transparent hover:text-white'
           }`}

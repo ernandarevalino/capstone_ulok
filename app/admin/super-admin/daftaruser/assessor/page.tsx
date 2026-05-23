@@ -17,8 +17,8 @@ export default function DaftarAssessorPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // Form States
-  const [formData, setFormData] = useState({ email: '', password: '', fullName: '', nik: '' });
+  // Form States (Field email mentah dihapus total dari state awal bray)
+  const [formData, setFormData] = useState({ password: '', fullName: '', nik: '' });
   const [editData, setEditData] = useState({ fullName: '', nik: '', deleteAvatar: false });
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -42,9 +42,9 @@ export default function DaftarAssessorPage() {
     setActionLoading(true);
     const res = await createUserAction({ ...formData, role: 'assessor' }); // Set role ke assessor bray!
     if (res.success) {
-      alert('Tim Assessor baru berhasil didaftarkan! 🎉');
+      alert('Tim Assessor baru berhasil didaftarkan! 🎉 Email login dibuat otomatis dari NIK.');
       setIsCreateOpen(false);
-      setFormData({ email: '', password: '', fullName: '', nik: '' });
+      setFormData({ password: '', fullName: '', nik: '' });
       fetchUsers();
     } else {
       alert(`Gagal membuat user: ${res.error}`);
@@ -58,7 +58,7 @@ export default function DaftarAssessorPage() {
     setActionLoading(true);
     const res = await updateUserAction({ id: selectedUser.id, ...editData });
     if (res.success) {
-      alert('Data Assessor berhasil diperbarui! 💾');
+      alert('Data Assessor berhasil diperbarui! 💾 Kredensial login berhasil diselaraskan.');
       setIsEditOpen(false);
       fetchUsers();
     } else {
@@ -114,7 +114,7 @@ export default function DaftarAssessorPage() {
               <tr className="bg-gray-50 border-b text-gray-600 font-bold uppercase text-[10px] tracking-wider">
                 <th className="p-4 pl-6">Foto</th>
                 <th className="p-4">Nama Lengkap</th>
-                <th className="p-4">NIK</th>
+                <th className="p-4">NIK / Email Login</th>
                 <th className="p-4">Tanggal Gabung</th>
                 <th className="p-4 text-center">Aksi</th>
               </tr>
@@ -137,7 +137,10 @@ export default function DaftarAssessorPage() {
                       )}
                     </td>
                     <td className="p-4 font-semibold text-gray-900">{user.full_name}</td>
-                    <td className="p-4 font-mono text-gray-600">{user.nik}</td>
+                    <td className="p-4">
+                      <div className="font-mono text-gray-800 font-bold">{user.nik}</div>
+                      <div className="text-[11px] text-gray-400 font-mono">{user.nik}@alfamidi.com</div>
+                    </td>
                     <td className="p-4 text-gray-400">{new Date(user.created_at).toLocaleDateString('id-ID')}</td>
                     <td className="p-4 text-center space-x-2">
                       <button 
@@ -184,8 +187,9 @@ export default function DaftarAssessorPage() {
             </div>
             <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-500 uppercase">Email Login</label>
-                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-800" placeholder="contoh: assessor1@alfamidi.com" />
+                <label className="text-[11px] font-bold text-gray-500 uppercase">NIK Karyawan</label>
+                <input required type="text" value={formData.nik} onChange={e => setFormData({...formData, nik: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-800 font-mono font-bold" placeholder="Contoh: 12609099" />
+                <p className="text-[10px] text-purple-600 italic">💡 Email login digenerate otomatis: <b>{formData.nik ? formData.nik : 'NIK'}@alfamidi.com</b></p>
               </div>
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-gray-500 uppercase">Password</label>
@@ -194,10 +198,6 @@ export default function DaftarAssessorPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
                 <input required type="text" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-800" placeholder="Nama lengkap penilai..." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-500 uppercase">NIK Karyawan</label>
-                <input required type="text" value={formData.nik} onChange={e => setFormData({...formData, nik: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-800" placeholder="Nomor Induk Karyawan..." />
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t text-xs font-bold">
                 <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 border rounded-lg text-gray-500 hover:bg-gray-50">Batal</button>
@@ -218,12 +218,13 @@ export default function DaftarAssessorPage() {
             </div>
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
-                <input required type="text" value={editData.fullName} onChange={e => setEditData({...editData, fullName: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-semibold" />
+                <label className="text-[11px] font-bold text-gray-500 uppercase">NIK Karyawan</label>
+                <input required type="text" value={editData.nik} onChange={e => setEditData({...editData, nik: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-mono font-bold focus:ring-2 focus:ring-amber-500" />
+                <p className="text-[10px] text-amber-700 italic">⚠️ Mengubah NIK otomatis mengubah email login: <b>{editData.nik}@alfamidi.com</b></p>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-500 uppercase">NIK Karyawan</label>
-                <input required type="text" value={editData.nik} onChange={e => setEditData({...editData, nik: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-semibold" />
+                <label className="text-[11px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
+                <input required type="text" value={editData.fullName} onChange={e => setEditData({...editData, fullName: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-semibold focus:ring-2 focus:ring-amber-500" />
               </div>
               
               {selectedUser?.avatar_url && (

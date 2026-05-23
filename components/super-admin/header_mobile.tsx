@@ -99,10 +99,10 @@ export default function HeaderMobile() {
 
           {/* Link Daftar Assessor */}
           <Link 
-            href="/admin/super-admin/daftaruser/assesor" 
+            href="/admin/super-admin/daftaruser/assessor" 
             onClick={() => setIsOpen(false)} 
             className={`p-2 rounded-md transition-colors ${
-              isDaftarUserActive('assesor') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+              isDaftarUserActive('assessor') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
             Daftar Assessor

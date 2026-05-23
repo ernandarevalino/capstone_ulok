@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
  * Komponen Global untuk Menampilkan dan Mengelola Profil Pengguna.
  * Komponen ini bersifat Client Component ('use client') karena memerlukan interaksi state,
  * hooks efek (useEffect), referensi objek (useRef), dan navigasi router (useRouter).
+ * Diperbarui untuk mendukung visualisasi relasi wilayah penugasan Admin Cabang.
  */
 export default function ProfileGlobal() {
   // Deklarasi State Komponen
@@ -26,7 +27,7 @@ export default function ProfileGlobal() {
   }, []);
 
   /**
-   * Mengambil data profil terkini dari database melalui Server Action.
+   * Mengambil data profil terkini beserta data relasi cabang dari database melalui Server Action.
    */
   async function fetchProfileData() {
     setLoading(true);
@@ -104,8 +105,7 @@ export default function ProfileGlobal() {
    */
   const formatRole = (role: string) => {
     if (role === 'admin_cabang') return 'Admin Cabang';
-    if (role === 'assessor') return 'Assessor / Penilai';
-    if (role === 'super_admin') return 'Super Admin';
+    if (role === 'assessor') return 'Assessor';
     return role;
   };
 
@@ -174,11 +174,38 @@ export default function ProfileGlobal() {
             className="w-full text-xs md:text-sm bg-gray-50 text-gray-500 border border-gray-200 px-4 py-2.5 rounded-lg cursor-not-allowed font-medium"
           />
         </div>
+
+        {/* FIELD KONDISIONAL: HANYA TAMPIL JIKA USER ADALAH ADMIN CABANG */}
+        {profile?.role === 'admin_cabang' && (
+          <>
+            {/* Field Nama Unit Cabang / Kab-Kota */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-500 uppercase">Penugasan Cabang / Kota</label>
+              <input 
+                type="text" 
+                value={profile?.branches ? `${profile.branches.nama_cabang} - ${profile.branches.kabupaten_kota}` : 'Belum Ditentukan'} 
+                disabled 
+                className="w-full text-xs md:text-sm bg-gray-50 text-gray-500 border border-gray-200 px-4 py-2.5 rounded-lg cursor-not-allowed font-medium"
+              />
+            </div>
+
+            {/* Field Cakupan Provinsi */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-500 uppercase">Cakupan Wilayah Provinsi</label>
+              <input 
+                type="text" 
+                value={profile?.branches?.provinsi || 'Belum Ditentukan'} 
+                disabled 
+                className="w-full text-xs md:text-sm bg-gray-50 text-gray-500 border border-gray-200 px-4 py-2.5 rounded-lg cursor-not-allowed font-medium"
+              />
+            </div>
+          </>
+        )}
       </div>
       
       {/* Kotak Informasi Aturan Hak Akses Data Terkait Kebijakan RLS / Manajemen DB */}
       <div className="p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-medium">
-        Akun Anda dikelola oleh sistem pusat. Perubahan data NIK dan nama hanya dapat diajukan melalui tim Super Admin.
+        Akun Anda dikelola oleh sistem pusat. Perubahan data NIK, nama, serta mutasi perpindahan wilayah cabang hanya dapat diajukan melalui tim Super Admin.
       </div>
 
       {/* SEKTOR BAWAH: AKSI KELUAR SISTEM (LOGOUT SESSION) */}

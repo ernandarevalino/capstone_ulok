@@ -67,7 +67,8 @@ export async function logoutAction() {
 
 /**
  * Mengambil data entitas profil dari pengguna yang sedang aktif dan terverifikasi di dalam sesi browser.
- * * @returns Objek status sukses beserta record profil lengkap (nama, role, NIK, URL avatar).
+ * Diperbarui untuk melakukan relational JOIN guna memuat informasi detail wilayah dari tabel 'branches'.
+ * * @returns Objek status sukses beserta record profil lengkap (nama, role, NIK, URL avatar, dan data objek cabang).
  */
 export async function getCurrentProfile() {
   try {
@@ -79,10 +80,23 @@ export async function getCurrentProfile() {
       throw new Error('Unauthorized: Pengguna tidak terautentikasi')
     }
 
-    // 2. Query ke tabel database untuk memuat detail informasi data master profil
+    // 2. Query ke tabel database menggunakan teknik INNER/LEFT JOIN untuk memuat data master wilayah cabang
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, role, nik, avatar_url')
+      .select(`
+        id, 
+        full_name, 
+        role, 
+        nik, 
+        avatar_url,
+        branch_id,
+        branches (
+          id,
+          nama_cabang,
+          kabupaten_kota,
+          provinsi
+        )
+      `)
       .eq('id', user.id)
       .single()
 
