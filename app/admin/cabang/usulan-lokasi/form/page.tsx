@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getUlokDetail, getChecklistMaster, getUploadedDocuments, updateUlokSubmission } from '@/actions/ulok'
+import { getUlokDetail, getChecklistMaster, getUploadedDocuments, updateUlokSubmission } from '@/actions/cabang'
 
 function FormInputContent() {
   const router = useRouter()

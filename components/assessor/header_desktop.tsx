@@ -3,20 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth'; 
+import { getCurrentProfile } from '@/actions/auth';
 
 /**
- * Komponen Navigasi Utama (Header) Modul Admin Cabang untuk Perangkat Desktop.
- * Menggunakan arsitektur Client Component untuk mengelola status keaktifan tautan URL 
- * serta melakukan pengambilan data profil pengguna secara dinamis melalui Server Actions.
+ * Komponen Navigasi Utama (Header) Modul Assessor untuk Perangkat Desktop.
+ * Mengelola kecocokan URL aktif menggunakan Next.js `usePathname` dan memuat
+ * data profil assessor secara realtime melalui Server Action.
  */
 export default function HeaderDesktop() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
 
   /**
-   * Mengambil data informasi profil pengguna terautentikasi saat komponen dimuat.
-   * Dependensi 'pathname' disertakan untuk memastikan pembaruan data yang konsisten saat terjadi perpindahan halaman.
+   * Mengambil data profil assessor yang sedang aktif saat komponen desktop dimuat.
+   * Parameter 'pathname' memicu pembaruan berkala ketika terjadi navigasi halaman.
    */
   useEffect(() => {
     async function loadProfile() {
@@ -29,22 +29,22 @@ export default function HeaderDesktop() {
   }, [pathname]);
 
   /**
-   * Fungsi pembantu untuk memvalidasi status keaktifan menu navigasi berdasarkan URL saat ini.
-   * @param path - String jalur URL target komparasi.
-   * @returns Nilai boolean penanda status aktif.
+   * Memeriksa status keaktifan menu navigasi berdasarkan perbandingan URL saat ini.
+   * @param path - String rute URL tujuan.
+   * @returns Nilai boolean penanda rute aktif.
    */
   const isActive = (path: string) => pathname === path;
 
   /**
-   * Menentukan karakter inisial nama sebagai fallback penanda visual avatar.
-   * Secara default menggunakan huruf 'U' (User/User Cabang) apabila data belum berhasil dimuat.
+   * Menentukan karakter inisial berdasarkan nama pengguna untuk keperluan fallback avatar visual.
+   * Menggunakan karakter default 'A' (Assessor) apabila data nama belum termuat dari database.
    */
-  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
+  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';
 
   return (
     <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-4 shadow-md text-white">
-      {/* IDENTITAS LOGO PERUSAHAAN / APLIKASI */}
-      <Link href="/admin/cabang" className="flex items-center hover:opacity-90 transition-opacity">
+      {/* IDENTITAS BRAND LOGO MODUL ASSESSOR */}
+      <Link href="/admin/assessor" className="flex items-center hover:opacity-90 transition-opacity">
         <img 
           src="/images/logo-priolo-white.png" 
           alt="Logo Priolo" 
@@ -52,13 +52,13 @@ export default function HeaderDesktop() {
         />
       </Link>
 
-      {/* STRUKTUR NAVIGASI UTAMA ADMIN CABANG */}
+      {/* STRUKTUR NAVIGASI UTAMA AKUN ASSESSOR */}
       <nav className="flex items-center space-x-8 text-sm font-semibold">
         {/* Menu Dashboard */}
         <Link 
-          href="/admin/cabang" 
+          href="/admin/assessor" 
           className={`pb-1 transition-colors border-b-2 ${
-            isActive('/admin/cabang') 
+            isActive('/admin/assessor') 
               ? 'text-white border-white' 
               : 'text-gray-400 border-transparent hover:text-white'
           }`}
@@ -66,35 +66,35 @@ export default function HeaderDesktop() {
           Dashboard
         </Link>
 
-        {/* Menu Pengajuan Usulan Lokasi (ULOK) */}
+        {/* Menu Penilaian Berkas Usulan */}
         <Link 
-          href="/admin/cabang/usulan-lokasi" 
+          href="/admin/assessor/penilaian" 
           className={`pb-1 transition-colors border-b-2 ${
-            isActive('/admin/cabang/usulan-lokasi') 
+            isActive('/admin/assessor/penilaian') 
               ? 'text-white border-white' 
               : 'text-gray-400 border-transparent hover:text-white'
           }`}
         >
-          Usulan Lokasi
+          Penilaian
         </Link>
 
-        {/* Menu Feedback Evaluasi Berkas */}
+        {/* Menu Histori Rekam Jejak Penilaian */}
         <Link 
-          href="/admin/cabang/feedback" 
+          href="/admin/assessor/histori" 
           className={`pb-1 transition-colors border-b-2 ${
-            isActive('/admin/cabang/feedback') 
+            isActive('/admin/assessor/histori') 
               ? 'text-white border-white' 
               : 'text-gray-400 border-transparent hover:text-white'
           }`}
         >
-          Feedback
+          Histori
         </Link>
 
-        {/* Menu Peringkat / Hasil Rekomendasi SPK */}
+        {/* Menu Peringkat Hasil SPK / Evaluasi Akhir */}
         <Link 
-          href="/admin/cabang/peringkat" 
+          href="/admin/assessor/peringkat" 
           className={`pb-1 transition-colors border-b-2 ${
-            isActive('/admin/cabang/peringkat') 
+            isActive('/admin/assessor/peringkat') 
               ? 'text-white border-white' 
               : 'text-gray-400 border-transparent hover:text-white'
           }`}
@@ -103,13 +103,13 @@ export default function HeaderDesktop() {
         </Link>
       </nav>
 
-      {/* PANEL AKSES PROFIL DAN NOTIFIKASI PENGGUNA */}
+      {/* SEKTOR INTEGRASI INFORMASI AKUN DAN NOTIFIKASI */}
       <div className="flex items-center space-x-5">
-        {/* Tombol Navigasi Pusat Notifikasi Masuk */}
+        {/* Navigasi Menu Pusat Notifikasi Assessor */}
         <Link 
-          href="/admin/cabang/notification" 
+          href="/admin/assessor/notification" 
           className={`p-2 rounded-full transition-colors flex items-center justify-center relative group ${
-            isActive('/admin/cabang/notification') ? 'bg-slate-700' : 'hover:bg-slate-700/50'
+            isActive('/admin/assessor/notification') ? 'bg-slate-700' : 'hover:bg-slate-700/50'
           }`}
         >
           <img 
@@ -120,11 +120,11 @@ export default function HeaderDesktop() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
         </Link>
 
-        {/* Tombol Navigasi Menu Pengaturan Profil Pengguna */}
+        {/* Navigasi Halaman Pengaturan Profil Komponen Avatar */}
         <Link 
-          href="/admin/cabang/profile"
+          href="/admin/assessor/profile"
           className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${
-            isActive('/admin/cabang/profile') 
+            isActive('/admin/assessor/profile') 
               ? 'border-white ring-2 ring-blue-400' 
               : 'border-gray-400'
           } ${!profile?.avatar_url ? 'bg-slate-500 text-white' : ''}`}

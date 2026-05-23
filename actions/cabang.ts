@@ -3,14 +3,24 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// 1. Ambil semua list usulan berdasarkan admin cabang yang login
+/* ========================================================================== */
+/* #region MODUL MANAJEMEN USULAN LOKASI (ULOK) */
+/* ========================================================================== */
+
+/**
+ * Mengambil seluruh daftar usulan lokasi (ULOK) yang diajukan oleh Admin Cabang yang sedang aktif.
+ * Hasil query akan diurutkan berdasarkan waktu pembuatan terbaru.
+ * * @returns Objek status operasi beserta array data usulan lokasi atau pesan kesalahan.
+ */
 export async function getUlokSubmissions() {
   try {
     const supabase = await createClient()
     
+    // Validasi token sesi untuk memastikan identitas pengguna terautentikasi
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
+    // Melakukan query data dari tabel 'ulok_submissions'
     const { data, error } = await supabase
       .from('ulok_submissions')
       .select('*')
@@ -23,7 +33,12 @@ export async function getUlokSubmissions() {
   }
 }
 
-// 2. Buat data usulan lokasi awal dari Pop-up modal
+/**
+ * Membuat entitas data usulan lokasi (ULOK) baru pada tahap awal melalui modal/pop-up.
+ * Status awal otomatis ditetapkan sebagai 'Draft'.
+ * * @param payload - Objek berisi parameter nama_lokasi, jenis_badan_hukum, dan nama_pemegang_hak.
+ * @returns Objek status operasi beserta rekaman data yang berhasil disimpan.
+ */
 export async function createUlokSubmission(payload: {
   nama_lokasi: string
   jenis_badan_hukum: string
@@ -32,14 +47,16 @@ export async function createUlokSubmission(payload: {
   try {
     const supabase = await createClient()
     
+    // Validasi token sesi guna mendapatkan ID pengguna secara aman di sisi server
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
+    // Menyisipkan data baru ke dalam tabel 'ulok_submissions'
     const { data, error } = await supabase
       .from('ulok_submissions')
       .insert([
         {
-          admin_id: user.id, // ID diambil langsung dari session server yang aman 100%
+          admin_id: user.id, 
           nama_lokasi: payload.nama_lokasi,
           jenis_badan_hukum: payload.jenis_badan_hukum,
           nama_pemegang_hak: payload.nama_pemegang_hak,
@@ -50,6 +67,8 @@ export async function createUlokSubmission(payload: {
       .single()
 
     if (error) throw error
+    
+    // Melakukan pembersihan cache (purge cache) pada rute navigasi terkait agar data antarmuka diperbarui secara realtime
     revalidatePath('/admin/cabang/usulan-lokasi')
     return { success: true, data }
   } catch (error: any) {
@@ -57,7 +76,11 @@ export async function createUlokSubmission(payload: {
   }
 }
 
-// 3. Ambil Detail Tunggal dari 1 data ULOK
+/**
+ * Mengambil informasi detail tunggal dari satu berkas usulan lokasi berdasarkan unique identifier (ID).
+ * * @param id - String UUID dari usulan lokasi terkait.
+ * @returns Objek status operasi beserta data detail usulan lokasi.
+ */
 export async function getUlokDetail(id: string) {
   try {
     const supabase = await createClient()
@@ -74,7 +97,12 @@ export async function getUlokDetail(id: string) {
   }
 }
 
-// 4. Ambil list template checklist dari DB berdasarkan kriteria badan hukum
+/**
+ * Memuat master template checklist kelengkapan dokumen berdasarkan jenis badan hukum yang dipilih.
+ * Digunakan sebagai acuan validasi berkas fisik maupun digital di tingkat cabang.
+ * * @param jenisBadanHukum - Parameter string kategori badan hukum (misal: PT, CV, Perorangan).
+ * @returns Objek status operasi beserta daftar master kriteria checklist.
+ */
 export async function getChecklistMaster(jenisBadanHukum: string) {
   try {
     const supabase = await createClient()
@@ -90,7 +118,11 @@ export async function getChecklistMaster(jenisBadanHukum: string) {
   }
 }
 
-// 5. Ambil file berkas yang sudah pernah diupload untuk lokasi ini
+/**
+ * Mengambil daftar berkas atau dokumen lampiran digital yang telah diunggah sebelumnya pada suatu usulan lokasi.
+ * * @param ulokId - ID referensi usulan lokasi yang berelasi dengan tabel dokumen.
+ * @returns Objek status operasi beserta array list dokumen pendukung.
+ */
 export async function getUploadedDocuments(ulokId: string) {
   try {
     const supabase = await createClient()
@@ -106,7 +138,13 @@ export async function getUploadedDocuments(ulokId: string) {
   }
 }
 
-// 6. Simpan / Update perubahan form (Section 1 & Section 2) ke database
+/**
+ * Memperbarui struktur isian formulir usulan lokasi secara berkala (meliputi modifikasi isian Section 1 dan Section 2).
+ * Fungsi ini mencatat waktu pembaruan terakhir secara otomatis melalui penanda ISO Timestamp.
+ * * @param id - ID target berkas usulan lokasi yang akan diubah.
+ * @param payload - Objek kumpulan data formulir baru hasil input pengguna.
+ * @returns Objek status operasi sukses pembaruan data.
+ */
 export async function updateUlokSubmission(id: string, payload: any) {
   try {
     const supabase = await createClient()

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUlokSubmissions, createUlokSubmission } from '@/actions/ulok'
+import { getUlokSubmissions, createUlokSubmission } from '@/actions/cabang'
 
 // 💡 HAPUS createClient Supabase manual dari client-side karena membuat session bentrok
 // Dan biarkan Server Action di backend yang mengurusi autentikasinya

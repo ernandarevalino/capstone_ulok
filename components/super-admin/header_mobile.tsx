@@ -3,14 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth'; // Mengambil data profile dari server action
+import { getCurrentProfile } from '@/actions/auth'; 
 
+/**
+ * Komponen Navigasi Utama (Header) Responsif untuk Perangkat Mobile.
+ * Menggunakan batas media query breakpoints Tailwind (md:hidden) untuk mengisolasi
+ * tampilan menu dropdown/hamburger pada resolusi layar telepon genggam.
+ */
 export default function HeaderMobile() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);               // State untuk visibilitas dropdown menu hamburger
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
 
-  // Ambil data profil user saat komponen mobile dimuat
+  /**
+   * Siklus pemuatan data profil pengguna untuk sinkronisasi antarmuka mobile.
+   */
   useEffect(() => {
     async function loadProfile() {
       const res = await getCurrentProfile();
@@ -24,13 +31,16 @@ export default function HeaderMobile() {
   const isActive = (path: string) => pathname === path;
   const isDaftarUserActive = (subPath: string) => pathname.includes(`/daftaruser/${subPath}`);
 
-  // Logika penentuan inisial nama bray
+  /**
+   * Menentukan karakter inisial berdasarkan nama pengguna untuk keperluan fallback avatar visual mobile.
+   * Menggunakan karakter default 'S' (Super Admin) apabila data nama belum termuat dari database.
+   */
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
   return (
     <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
       <div className="flex items-center justify-between p-4">
-        {/* Logo */}
+        {/* IDENTITAS APLIKASI DAN BADGE ROLE (MOBILE) */}
         <Link href="/admin/super-admin" className="flex items-center">
           <img 
             src="/images/logo-priolo-white.png" 
@@ -42,7 +52,7 @@ export default function HeaderMobile() {
           </span>
         </Link>
 
-        {/* Notif Icon di Mobile */}
+        {/* AKSES CEPAT PUSAT NOTIFIKASI (MOBILE) */}
         <div className="flex items-center space-x-2 ml-auto mr-2">
           <Link 
             href="/admin/super-admin/notification" 
@@ -53,7 +63,7 @@ export default function HeaderMobile() {
           </Link>
         </div>
 
-        {/* Hamburger Button */}
+        {/* TOMBOL PEMICU MENU HAMBURGER (TOGGLE DROPDOWN) */}
         <button 
           onClick={() => setIsOpen(!isOpen)}
           className="text-2xl p-2 focus:outline-none hover:bg-slate-700 rounded transition-colors"
@@ -62,10 +72,10 @@ export default function HeaderMobile() {
         </button>
       </div>
 
-      {/* Dropdown Menu Mobile */}
+      {/* DROPDOWN MENU KONTEN NAVIGASI RESPONSIVE */}
       {isOpen && (
         <nav className="bg-[#142B4D] border-t border-slate-700 p-4 flex flex-col space-y-2 font-semibold text-sm animate-fade-in">
-          {/* Dashboard */}
+          {/* Link Dashboard */}
           <Link 
             href="/admin/super-admin" 
             onClick={() => setIsOpen(false)} 
@@ -76,7 +86,7 @@ export default function HeaderMobile() {
             Dashboard
           </Link>
 
-          {/* Daftar Admin Cabang */}
+          {/* Link Daftar Admin Cabang */}
           <Link 
             href="/admin/super-admin/daftaruser/admincabang" 
             onClick={() => setIsOpen(false)} 
@@ -87,7 +97,7 @@ export default function HeaderMobile() {
             Daftar Admin Cabang
           </Link>
 
-          {/* Daftar Assessor */}
+          {/* Link Daftar Assessor */}
           <Link 
             href="/admin/super-admin/daftaruser/assesor" 
             onClick={() => setIsOpen(false)} 
@@ -98,9 +108,10 @@ export default function HeaderMobile() {
             Daftar Assessor
           </Link>
 
+          {/* Garis Pembatas Horisontal Navigasi */}
           <hr className="border-slate-700 my-2" />
 
-          {/* Bagian Profile Target Mobile */}
+          {/* RINGKASAN DATA PROFIL AKUN PADA BAGIAN BAWAH MENU MOBILE */}
           <Link 
             href="/admin/super-admin/profile"
             onClick={() => setIsOpen(false)}
@@ -108,7 +119,7 @@ export default function HeaderMobile() {
               isActive('/admin/super-admin/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
             }`}
           >
-            {/* Avatar Bulat */}
+            {/* Wadah Avatar Pengguna */}
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
               {profile?.avatar_url ? (
                 <img 
@@ -121,7 +132,7 @@ export default function HeaderMobile() {
               )}
             </div>
 
-            {/* Info Nama Teks */}
+            {/* Informasi Nama & Deskripsi Teks */}
             <div className="flex flex-col text-left">
               <span className="text-xs font-semibold tracking-wide block truncate max-w-37.5">
                 {profile?.full_name || 'Loading...'}

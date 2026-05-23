@@ -13,7 +13,7 @@ export default function AdminCabangPage() {
     { nama: "Kebayoran Baru", status: "Belum Direview", skor: 10, color: "text-slate-600 bg-slate-50 border-slate-200" },
     { nama: "Tb. Simatupang", status: "Revisi", skor: 10, color: "text-red-600 bg-red-50 border-red-200" },
     { nama: "Pesanggrahan", status: "Dalam Review", skor: 10, color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
-    { nama: "Pasar Minggu", status: "Dalam Review", skor: "text-yellow-600 bg-yellow-50 border-yellow-200" },
+    { nama: "Pasar Minggu", status: "Dalam Review", skor: 10, color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
   ];
 
   // Ambil data profil dari database saat halaman pertama kali dibuka

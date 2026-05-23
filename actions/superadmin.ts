@@ -3,8 +3,12 @@
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Inisialisasi Supabase Admin Client menggunakan Service Role Key bray!
-// Ini wajib supaya Super Admin bisa daftarin & hapus auth user lain tanpa bikin sesi dirinya sendiri logout.
+/**
+ * Inisialisasi Supabase Admin Client menggunakan Service Role Key.
+ * Penggunaan Service Role Key sangat krusial pada modul Super Admin agar sistem dapat 
+ * melakukan pengelolaan akun pengguna lain (seperti pendaftaran, pembaruan data, dan penghapusan) 
+ * via bypass mekanisme Row Level Security (RLS) tanpa mengganggu atau mengeluarkan sesi login Super Admin yang sedang aktif.
+ */
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -17,27 +21,34 @@ interface GetUsersParams {
   limit?: number
 }
 
-// =========================================================================
-// 1. READ USERS BY ROLE (Diperbarui menggunakan supabaseAdmin biar makin ngebut)
-// =========================================================================
+/* ========================================================================= */
+/* #region 1. READ USERS BY ROLE (PAGINATION & SEARCH FILTER) */
+/* ========================================================================= */
+
+/**
+ * Mengambil daftar data pengguna dari tabel 'profiles' berdasarkan hak akses (role) tertentu.
+ * Mendukung fitur pencarian data secara realtime serta pembatasan baris data (pagination).
+ * * @param params - Objek konfigurasi parameter filter (role, keyword search, page, limit).
+ * @returns Objek response status operasi beserta array data profil dan metadata kalkulasi halaman.
+ */
 export async function getUsersByRoleAction({ role, search = '', page = 1, limit = 15 }: GetUsersParams) {
   try {
-    // Hitung titik awal (from) dan akhir (to) untuk limit baris
+    // Melakukan kalkulasi offset baris database berdasarkan halaman aktif
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    // Query dasar filter berdasarkan role menggunakan admin client
+    // Membangun query dasar dengan instruksi penghitungan jumlah total data secara eksak
     let query = supabaseAdmin
       .from('profiles')
-      .select('*', { count: 'exact' }) // count exact untuk tahu total data asli di DB
+      .select('*', { count: 'exact' }) 
       .eq('role', role)
 
-    // Jika ada keyword search, filter nama atau NIK (Case Insensitive)
+    // Penerapan klausa penyaringan apabila pengguna memasukkan kata kunci pencarian (Case Insensitive)
     if (search) {
       query = query.or(`full_name.ilike.%${search}%,nik.ilike.%${search}%`)
     }
 
-    // Urutkan dari yang terbaru dibuat dan ambil range barisnya
+    // Eksekusi query dengan pengurutan berdasarkan rekaman data terbaru
     const { data, count, error } = await query
       .order('created_at', { ascending: false })
       .range(from, to)
@@ -55,24 +66,30 @@ export async function getUsersByRoleAction({ role, search = '', page = 1, limit 
   }
 }
 
-// =========================================================================
-// 2. DASHBOARD STATS (Fungsi asli lu tetap dipertahankan aman bray!)
-// =========================================================================
+/* ========================================================================= */
+/* #region 2. DASHBOARD STATISTIK GLOBAL */
+/* ========================================================================= */
+
+/**
+ * Mengambil akumulasi kuantitas data master dari keseluruhan tabel sistem.
+ * Digunakan untuk menyajikan visualisasi ringkasan statistik pada halaman dashboard utama Super Admin.
+ * * @returns Objek berisi total kuantitas masing-masing entitas data.
+ */
 export async function getDashboardStatsAction() {
   try {
-    // 1. Hitung total Admin Cabang
+    // 1. Mengambil total kuantitas data pengguna dengan hak akses Admin Cabang
     const { count: totalCabang, error: err1 } = await supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('role', 'admin_cabang')
 
-    // 2. Hitung total Assessor
+    // 2. Mengambil total kuantitas data pengguna dengan hak akses Assessor
     const { count: totalAssessor, error: err2 } = await supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('role', 'assessor')
 
-    // 3. Hitung total Usulan Lokasi (ULOK) masuk
+    // 3. Mengambil total berkas pendaftaran usulan lokasi (ULOK) yang tersimpan di dalam sistem
     const { count: totalUlok, error: err3 } = await supabaseAdmin
       .from('ulok_submissions')
       .select('*', { count: 'exact', head: true })
@@ -92,9 +109,9 @@ export async function getDashboardStatsAction() {
   }
 }
 
-// =========================================================================
-// 3. CREATE USER BARU (Fungsi penambahan baru untuk Pop-up Add)
-// =========================================================================
+/* ========================================================================= */
+/* #region 3. CREATE USER (REGISTRASI AKUN LOGIN & PROFIL BARU) */
+/* ========================================================================= */
 interface CreateUserParams {
   email: string
   password: string
@@ -103,19 +120,25 @@ interface CreateUserParams {
   role: 'admin_cabang' | 'assessor'
 }
 
+/**
+ * Mendaftarkan akun login baru ke dalam auth server sistem, sekaligus menginisialisasi 
+ * baris profile barunya ke dalam skema tabel publik.
+ * * @param params - Objek payload berisikan kredensial login dan identitas karyawan.
+ * @returns Objek status sukses atau kegagalan transaksi data.
+ */
 export async function createUserAction({ email, password, fullName, nik, role }: CreateUserParams) {
   try {
-    // A. Daftarkan akun ke Supabase Auth Server secara direct (Auto Confirm Email)
+    // A. Menyimpan kredensial ke dalam layanan Supabase Auth dengan status konfirmasi email otomatis (Direct Aktivasi)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
       email_confirm: true
     })
 
-    if (authError) throw authError
-    if (!authData.user) throw new Error("Gagal membuat kredensial auth user baru.")
+  if (authError) throw authError
+  if (!authData.user) throw new Error("Gagal membuat kredensial auth user baru.")
 
-    // B. Masukkan data detail profile-nya ke tabel profiles public schema lu bray
+    // B. Menyisipkan relasi data informasi profil fisik ke dalam tabel 'profiles' publik memakai UUID dari Auth Service
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert([
@@ -128,7 +151,8 @@ export async function createUserAction({ email, password, fullName, nik, role }:
       ])
 
     if (profileError) {
-      // Jika penulisan tabel profile gagal, rollback hapus user auth biar tidak jadi data sampah bray
+      // Mekanisme Rollback: Menghapus kembali akun pada Auth Service jika proses penulisan profil publik gagal,
+      // demi mencegah terjadinya inkonsistensi data (data sampah) pada storage database.
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       throw profileError
     }
@@ -139,9 +163,9 @@ export async function createUserAction({ email, password, fullName, nik, role }:
   }
 }
 
-// =========================================================================
-// 4. UPDATE USER DATA & RESET AVATAR (VERSI FIX ANTI-DUPLICATE NIK 🚀)
-// =========================================================================
+/* ========================================================================= */
+/* #region 4. UPDATE USER DATA & RESET AVATAR (OPTIMALISASI CEK INTEGRITAS) */
+/* ========================================================================= */
 interface UpdateUserParams {
   id: string
   fullName: string
@@ -149,9 +173,15 @@ interface UpdateUserParams {
   deleteAvatar: boolean
 }
 
+/**
+ * Memperbarui data parsial pengguna. Fungsi ini dilengkapi validasi komparasi data lama
+ * guna menghindari terjadinya error redundansi data atau pemicuan query kosong ke database.
+ * * @param params - Objek data pembaruan identitas beserta status pengaturan ulang foto profil.
+ * @returns Objek konfirmasi penyelesaian pembaruan data.
+ */
 export async function updateUserAction({ id, fullName, nik, deleteAvatar }: UpdateUserParams) {
   try {
-    // 1. Ambil data lama user dari database terlebih dahulu bray
+    // 1. Memuat salinan rekaman data pengguna yang ada saat ini dari database
     const { data: existingUser, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('full_name, nik')
@@ -160,30 +190,30 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar }: Upda
 
     if (fetchError || !existingUser) throw new Error("Data pengguna tidak ditemukan.")
 
-    // 2. Siapkan payload update kosong
+    // 2. Inisialisasi wadah objek payload dinamis
     const updatePayload: any = {}
 
-    // 3. Hanya masukkan full_name jika ada perubahan dari data lama
+    // 3. Verifikasi pembaruan field nama lengkap
     if (fullName.trim() !== existingUser.full_name) {
       updatePayload.full_name = fullName.trim()
     }
 
-    // 4. Hanya masukkan nik jika benar-benar diubah oleh Super Admin
+    // 4. Verifikasi pembaruan field Nomor Induk Karyawan (NIK)
     if (nik.trim() !== existingUser.nik) {
       updatePayload.nik = nik.trim()
     }
 
-    // 5. Jika Super Admin mencentang kotak hapus foto, masukkan ke payload
+    // 5. Pemeriksaan instruksi penghapusan berkas foto profil (reset ke default avatar)
     if (deleteAvatar) {
       updatePayload.avatar_url = null
     }
 
-    // 6. Jika tidak ada perubahan sama sekali, langsung return sukses tanpa buang-buang query bray
+    // 6. Optimasi Query: Jika tidak ada perubahan data terdeteksi, operasi database dihentikan dan mengembalikan status sukses
     if (Object.keys(updatePayload).length === 0) {
       return { success: true }
     }
 
-    // 7. Eksekusi update hanya untuk data yang berubah saja!
+    // 7. Melakukan eksekusi pembaruan data secara selektif (hanya memproses kolom yang berubah)
     const { error } = await supabaseAdmin
       .from('profiles')
       .update(updatePayload)
@@ -196,12 +226,18 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar }: Upda
   }
 }
 
-// =========================================================================
-// 5. DELETE USER TOTAL (Fungsi penambahan baru untuk Pop-up Hapus)
-// =========================================================================
+/* ========================================================================= */
+/* #region 5. DELETE USER TOTAL (MANUAL CASCADE REMOVAL) */
+/* ========================================================================= */
+
+/**
+ * Menghapus entitas data pengguna secara permanen dari sistem (mencakup data profil publik dan akun login).
+ * * @param id - String UUID dari pengguna yang akan dihapus.
+ * @returns Objek konfirmasi status penyelesaian penghapusan akun.
+ */
 export async function deleteUserAction(id: string) {
   try {
-    // A. Karena ada Foreign Key Cascade / Manual Constraint, hapus dulu data baris di tabel profiles
+    // A. Menjalankan penghapusan data relasi pada tabel 'profiles' terlebih dahulu untuk menghindari benturan konstrain integritas database
     const { error: profileErr } = await supabaseAdmin
       .from('profiles')
       .delete()
@@ -209,7 +245,7 @@ export async function deleteUserAction(id: string) {
 
     if (profileErr) throw profileErr
 
-    // B. Setelah datanya bersih, baru hapus data akun login user tersebut di server auth utama
+    // B. Menghapus data akun autentikasi utama pada core server Auth Supabase setelah tabel profile bersih
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(id)
     if (authErr) throw authErr
 

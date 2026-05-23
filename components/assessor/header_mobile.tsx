@@ -3,12 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth'; 
+import { getCurrentProfile } from '@/actions/auth';
 
 /**
- * Komponen Navigasi Utama (Header) Modul Admin Cabang untuk Perangkat Mobile.
- * Menyediakan tampilan adaptif dengan menu hamburger dan dropdown responsif 
- * pada resolusi viewport di bawah breakpoint desktop (md:hidden).
+ * Komponen Navigasi Utama (Header) Modul Assessor untuk Perangkat Mobile.
+ * Menyediakan tampilan responsif berbasis dropdown hamburger menu pada resolusi (md:hidden).
  */
 export default function HeaderMobile() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +15,7 @@ export default function HeaderMobile() {
   const [profile, setProfile] = useState<any>(null);
 
   /**
-   * Sinkronisasi berkala pengambilan data profil pengguna disesuaikan dengan navigasi rute aktif.
+   * Sinkronisasi data profil pengguna disesuaikan dengan transisi navigasi rute aktif mobile.
    */
   useEffect(() => {
     async function loadProfile() {
@@ -31,35 +30,38 @@ export default function HeaderMobile() {
   const isActive = (path: string) => pathname === path;
 
   /**
-   * Menentukan karakter inisial nama sebagai fallback penanda visual avatar pada perangkat mobile.
-   * Secara default menggunakan huruf 'U' (User/User Cabang) apabila data belum berhasil dimuat.
+   * Menentukan karakter inisial berdasarkan nama pengguna untuk keperluan fallback avatar visual mobile.
+   * Menggunakan karakter default 'A' (Assessor) apabila data nama belum termuat dari database.
    */
-  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
+  const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';
 
   return (
     <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
       <div className="flex items-center justify-between p-4">
-        {/* IDENTITAS LOGO APLIKASI (MOBILE VIEW) */}
-        <Link href="/admin/cabang" className="flex items-center">
+        {/* LOGO UTAMA DAN BADGE INTEGRASI ROLE (MOBILE VIEW) */}
+        <Link href="/admin/assessor" className="flex items-center">
           <img 
             src="/images/logo-priolo-white.png" 
             alt="Logo Priolo" 
             className="h-9 w-auto object-contain" 
           />
+          <span className="text-[9px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase">
+            AS
+          </span>
         </Link>
 
-        {/* AKSES CEPAT INDIKATOR PUSAT NOTIFIKASI */}
+        {/* INDIKATOR NOTIFIKASI SECARA LANGSUNG PADA MOBILE HEADER */}
         <div className="flex items-center space-x-2 ml-auto mr-2">
           <Link 
-            href="/admin/cabang/notification" 
-            className={`p-2 rounded-full relative ${isActive('/admin/cabang/notification') ? 'bg-slate-700' : ''}`}
+            href="/admin/assessor/notification" 
+            className={`p-2 rounded-full relative ${isActive('/admin/assessor/notification') ? 'bg-slate-700' : ''}`}
           >
             <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
           </Link>
         </div>
 
-        {/* PENGENDALI TRIGGER MEMBUKA/MENUTUP DROPDOWN MENU HAMBURGER */}
+        {/* PEMICU AKSI MEMBUKA / MENUTUP DROP-DOWN HAMBURGER MENU */}
         <button 
           onClick={() => setIsOpen(!isOpen)}
           className="text-2xl p-2 focus:outline-none hover:bg-slate-700 rounded transition-colors"
@@ -68,65 +70,65 @@ export default function HeaderMobile() {
         </button>
       </div>
 
-      {/* DROPDOWN MENU KONTEN NAVIGASI RESPONSIVE MOBILE */}
+      {/* DROPDOWN KONTEN NAVIGASI RESPONSIVE MOBILE */}
       {isOpen && (
         <nav className="bg-[#142B4D] border-t border-slate-700 p-4 flex flex-col space-y-2 font-semibold text-sm animate-fade-in">
-          {/* Tautan Menu Dashboard */}
+          {/* Tautan Dashboard */}
           <Link 
-            href="/admin/cabang" 
+            href="/admin/assessor" 
             onClick={() => setIsOpen(false)} 
             className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+              isActive('/admin/assessor') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
             Dashboard
           </Link>
 
-          {/* Tautan Menu Usulan Lokasi */}
+          {/* Tautan Menu Penilaian */}
           <Link 
-            href="/admin/cabang/usulan-lokasi" 
+            href="/admin/assessor/penilaian" 
             onClick={() => setIsOpen(false)} 
             className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/usulan-lokasi') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+              isActive('/admin/assessor/penilaian') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
-            Usulan Lokasi
+            Penilaian
           </Link>
 
-          {/* Tautan Menu Feedback */}
+          {/* Tautan Menu Histori */}
           <Link 
-            href="/admin/cabang/feedback" 
+            href="/admin/assessor/histori" 
             onClick={() => setIsOpen(false)} 
             className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/feedback') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+              isActive('/admin/assessor/histori') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
-            Feedback
+            Histori
           </Link>
 
           {/* Tautan Menu Peringkat */}
           <Link 
-            href="/admin/cabang/peringkat" 
+            href="/admin/assessor/peringkat" 
             onClick={() => setIsOpen(false)} 
             className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/peringkat') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+              isActive('/admin/assessor/peringkat') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
             Peringkat
           </Link>
 
-          {/* Garis Batas Horizontal Sektor Profil */}
+          {/* Batas Garis Horisontal Menu */}
           <hr className="border-slate-700 my-2" />
 
-          {/* RINGKASAN INFORMASI AKUN DI BAGIAN BAWAH DROPDOWN MENU */}
+          {/* SEKTOR RINGKASAN DATA PROFIL AKUN PADA BAGIAN BAWAH MENU MOBILE */}
           <Link 
-            href="/admin/cabang/profile"
+            href="/admin/assessor/profile"
             onClick={() => setIsOpen(false)}
             className={`flex items-center space-x-3 p-2 rounded-md ${
-              isActive('/admin/cabang/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
+              isActive('/admin/assessor/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
             }`}
           >
-            {/* Komponen Wadah Avatar Lingkaran */}
+            {/* Wadah Tampilan Bulat Gambar Avatar Pengguna */}
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
               {profile?.avatar_url ? (
                 <img 
@@ -139,12 +141,12 @@ export default function HeaderMobile() {
               )}
             </div>
 
-            {/* Informasi Nama Akun Karyawan Cabang */}
+            {/* Blok Informasi Nama Lengkap Assessor */}
             <div className="flex flex-col text-left">
               <span className="text-xs font-semibold tracking-wide block truncate max-w-37.5">
                 {profile?.full_name || 'Loading...'}
               </span>
-              <span className="text-[10px] text-gray-400 block">Lihat Profil</span>
+              <span className="text-[10px] text-gray-400 block">Lihat Profil Assessor</span>
             </div>
           </Link>
         </nav>
