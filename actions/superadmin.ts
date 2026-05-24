@@ -256,9 +256,10 @@ interface UpdateUserParams {
   nik: string
   deleteAvatar: boolean
   branchId?: number | null
+  password?: string // ✏️ Tambahkan opsional password di interface
 }
 
-export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId }: UpdateUserParams) {
+export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password }: UpdateUserParams) {
   try {
     const cleanNik = nik.trim();
 
@@ -283,17 +284,24 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       }
     }
 
+    // 🔥 PROSES UPDATE KREDENSIAL AUTH (EMAIL & PASSWORD) SECARA EFISIEN
+    const authUpdatePayload: any = {}
+    
     if (cleanNik !== existingUser.nik) {
-      const newGeneratedEmail = `${cleanNik}@alfamidi.com`;
-      const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(id, {
-        email: newGeneratedEmail
-      });
+      authUpdatePayload.email = `${cleanNik}@alfamidi.com`
+    }
+    if (password && password.trim() !== '') {
+      authUpdatePayload.password = password.trim()
+    }
 
+    if (Object.keys(authUpdatePayload).length > 0) {
+      const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(id, authUpdatePayload);
       if (authUpdateError) {
-        throw new Error(`Gagal menyelaraskan email login baru: ${authUpdateError.message}`);
+        throw new Error(`Gagal menyelaraskan kredensial login baru: ${authUpdateError.message}`);
       }
     }
 
+    // PROSES UPDATE DATA PROFIL DATABASE
     const updatePayload: any = {}
 
     if (fullName.trim() !== existingUser.full_name) {
@@ -309,22 +317,28 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       updatePayload.branch_id = branchId || null
     }
 
-    if (Object.keys(updatePayload).length === 0) {
+    // Jika tidak ada perubahan di profil database & auth, langsung return sukses
+    if (Object.keys(updatePayload).length === 0 && !authUpdatePayload.password) {
       return { success: true }
     }
 
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .update(updatePayload)
-      .eq('id', id)
+    if (Object.keys(updatePayload).length > 0) {
+      const { error } = await supabaseAdmin
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', id)
 
-    if (error) throw error
+      if (error) throw error
+    }
 
     // Pemicu otomatis log notifikasi perubahan data profil ke sistem
     const roleLabel = existingUser.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
+    
+    // Sesuaikan pesan notifikasi jika ada pergantian password
+    const passwordMsg = password && password.trim() !== '' ? ' dan kata sandi' : '';
     await createNotification(
       'Pembaruan Data Pengguna',
-      `Profil ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
+      `Profil${passwordMsg} ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
     );
 
     return { success: true }

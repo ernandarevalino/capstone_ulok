@@ -36,7 +36,13 @@ export default function DaftarAdminCabangPage() {
   // ==========================================
   // Field email tidak disertakan karena email login di-generate secara otomatis oleh sistem backend menggunakan format: ${nik}@alfamidi.com
   const [formData, setFormData] = useState({ password: '', fullName: '', nik: '', branchId: '' });
-  const [editData, setEditData] = useState({ fullName: '', nik: '', branchId: '', deleteAvatar: false });
+  const [editData, setEditData] = useState<{
+    fullName: string;
+    nik: string;
+    branchId: string;
+    deleteAvatar: boolean;
+    password?: string;
+    }>({ fullName: '', nik: '', branchId: '', deleteAvatar: false });
   const [actionLoading, setActionLoading] = useState(false); // Loading state khusus untuk proses mutasi data (Submit Form)
 
   // ==========================================
@@ -121,11 +127,12 @@ export default function DaftarAdminCabangPage() {
     setActionLoading(true);
     
     const res = await updateUserAction({ 
-      id: selectedUser.id, // ID entitas pengguna yang menjadi target pembaruan
+      id: selectedUser.id, 
       fullName: editData.fullName,
-      nik: editData.nik, // Perubahan nilai NIK akan memicu penyesuaian email login secara otomatis di sisi server
+      nik: editData.nik, 
       deleteAvatar: editData.deleteAvatar,
-      branchId: editData.branchId ? parseInt(editData.branchId) : null // Konversi ID cabang ke tipe data integer
+      branchId: editData.branchId ? parseInt(editData.branchId) : null,
+      password: editData.password || undefined // Kirim password jika diisi, jika kosong biarkan undefined
     });
     
     if (res.success) {
@@ -293,15 +300,15 @@ export default function DaftarAdminCabangPage() {
                     <td className="p-4 text-center space-x-2">
                       <button 
                         onClick={() => {
-                          setSelectedUser(user); // Menandai entitas user objek sebagai target mutasi data
-                          // Inisialisasi default value pada Form State Edit berdasarkan record tabel yang dipilih
+                          setSelectedUser(user);
                           setEditData({ 
                             fullName: user.full_name, 
                             nik: user.nik, 
-                            branchId: user.branch_id ? user.branch_id.toString() : '', // Casting integer ke string untuk standarisasi elemen select HTML
-                            deleteAvatar: false 
+                            branchId: user.branch_id ? user.branch_id.toString() : '', 
+                            deleteAvatar: false,
+                            password: '' // Setel ulang password menjadi string kosong saat modal dibuka
                           });
-                          setIsEditOpen(true); // Membuka Modal Form Edit
+                          setIsEditOpen(true);
                         }}
                         className="text-amber-600 hover:bg-amber-50 px-2 py-1 rounded border border-amber-200 text-xs font-bold transition-colors"
                       >
@@ -404,7 +411,6 @@ export default function DaftarAdminCabangPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-gray-500 uppercase">NIK Karyawan</label>
                 <input required type="text" value={editData.nik} onChange={e => setEditData({...editData, nik: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-mono font-bold focus:ring-2 focus:ring-amber-500" />
-                {/* Informasi Resiko Sistem: Perubahan NIK berakibat pada restrukturisasi email login */}
                 <p className="text-[10px] text-amber-700 italic">⚠️ Mengubah NIK otomatis mengubah email login: <b>{editData.nik}@alfamidi.com</b></p>
               </div>
 
@@ -423,6 +429,13 @@ export default function DaftarAdminCabangPage() {
                     <option key={br.id} value={br.id}>{br.nama_cabang} - {br.provinsi} ({br.kabupaten_kota})</option>
                   ))}
                 </select>
+              </div>
+
+              {/* 🔥 BARU - Form Input: Edit Password (Opsional) */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-500 uppercase">Ubah Kata Sandi Baru (Opsional)</label>
+                <input type="password" placeholder="••••••••" value={editData.password || ''} onChange={e => setEditData({...editData, password: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 focus:ring-2 focus:ring-amber-500" />
+                <p className="text-[10px] text-gray-400 italic">Kosongkan kolom ini jika tidak ingin merubah kata sandi login user.</p>
               </div>
               
               {/* Checkbox Opsi Destruktif: Reset File Media Avatar */}

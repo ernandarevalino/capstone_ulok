@@ -253,7 +253,9 @@ export async function updateUlokSubmission(id: string, payload: any) {
     
     // Bentuk Objek & Status Jaminan Bank
     if (payload.bentuk_objek !== undefined) updateData.bentuk_objek = payload.bentuk_objek
-    if (payload.dokumen_jaminan !== undefined) updateData.dokumen_jaminan = payload.dokumen_jaminan
+    if (payload.dokumen_jaminan !== undefined) {
+      updateData.dokumen_jaminan = payload.dokumen_jaminan === true || payload.dokumen_jaminan === "Ya";
+    }
     if (payload.jaminan_bank_nama !== undefined) updateData.jaminan_bank_nama = payload.jaminan_bank_nama
     if (payload.jaminan_bank_no_surat !== undefined) updateData.jaminan_bank_no_surat = payload.jaminan_bank_no_surat
     if (payload.jaminan_bank_tanggal !== undefined) updateData.jaminan_bank_tanggal = payload.jaminan_bank_tanggal || null

@@ -27,7 +27,8 @@ export default function DaftarAssessorPage() {
   // [3] STATE DATA FORM DAN AKSES MUTASI
   // ==========================================
   const [formData, setFormData] = useState({ password: '', fullName: '', nik: '' });
-  const [editData, setEditData] = useState({ fullName: '', nik: '', deleteAvatar: false });
+  // 🔥 PERBAIKAN: Menambahkan 'password' pada initial state agar tidak terjadi TypeScript error
+  const [editData, setEditData] = useState({ fullName: '', nik: '', deleteAvatar: false, password: '' });
   const [actionLoading, setActionLoading] = useState(false);
 
   // ==========================================
@@ -180,7 +181,8 @@ export default function DaftarAssessorPage() {
                       <button 
                         onClick={() => {
                           setSelectedUser(user);
-                          setEditData({ fullName: user.full_name, nik: user.nik, deleteAvatar: false });
+                          // 🔥 PERBAIKAN: Menambahkan reset 'password: \'\'' saat membuka formulir edit
+                          setEditData({ fullName: user.full_name, nik: user.nik, deleteAvatar: false, password: '' });
                           setIsEditOpen(true);
                         }}
                         className="text-amber-600 hover:bg-amber-50 px-2 py-1 rounded border border-amber-200 text-xs font-bold transition-colors"
@@ -259,6 +261,13 @@ export default function DaftarAssessorPage() {
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
                 <input required type="text" value={editData.fullName} onChange={e => setEditData({...editData, fullName: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 font-semibold focus:ring-2 focus:ring-amber-500" />
+              </div>
+
+              {/* 🔥 Form Input: Edit Password Assessor (Opsional) */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-500 uppercase">Ubah Kata Sandi Baru (Opsional)</label>
+                <input type="password" placeholder="••••••••" value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})} className="w-full text-xs md:text-sm border px-3 py-2 rounded-lg text-gray-800 focus:ring-2 focus:ring-amber-500" />
+                <p className="text-[10px] text-gray-400 italic">Kosongkan kolom ini jika tidak ingin merubah kata sandi login user.</p>
               </div>
               
               {selectedUser?.avatar_url && (
