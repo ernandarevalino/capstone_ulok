@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUlokSubmissions, createUlokSubmission } from '@/actions/cabang'
-
-// 💡 HAPUS createClient Supabase manual dari client-side karena membuat session bentrok
-// Dan biarkan Server Action di backend yang mengurusi autentikasinya
+// Import fungsi deleteUlokSubmission yang baru dibuat
+import { getUlokSubmissions, createUlokSubmission, deleteUlokSubmission } from '@/actions/cabang'
 
 export default function UsulanLokasiPage() {
   const router = useRouter()
@@ -14,19 +12,17 @@ export default function UsulanLokasiPage() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // State untuk form modal
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
 
-  // Fungsi fetch data dibersihkan agar bergantung langsung pada respon Server Action
+  // Ambil data dari server/database
   const fetchSubmissions = async () => {
     const res = await getUlokSubmissions()
-    
     if (res.success && res.data) {
       setSubmissions(res.data)
     } else {
-      // Jika server action mengirimkan pesan error 'Unauthorized' / gagal auth, 
-      // arahkan ke halaman root '/' (halaman login kamu), bukan ke '/login'
       if (res.error && res.error.includes('Unauthorized')) {
         router.push('/') 
       }
@@ -37,6 +33,21 @@ export default function UsulanLokasiPage() {
     fetchSubmissions()
   }, [router])
 
+  /**
+   * HELPER ROUTING
+   * Menentukan halaman form berdasarkan value jenis_badan_hukum dari database / select option
+   */
+  const getFormRoute = (jenisBadanHukum: string) => {
+    const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
+    
+    if (kelompokPerorangan.includes(jenisBadanHukum)) {
+      return `/admin/cabang/usulan-lokasi/form/perorangan`
+    }
+    
+    return `/admin/cabang/usulan-lokasi/form/badanhukum`
+  }
+
+  // Handle submit pembuatan ULOK baru
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!namaLokasi || !statusBadan || !namaPemegang) return
@@ -44,22 +55,42 @@ export default function UsulanLokasiPage() {
     startTransition(async () => {
       const res = await createUlokSubmission({
         nama_lokasi: namaLokasi,
-        jenis_badan_hukum: statusBadan,
+        jenis_badan_hukum: statusBadan, 
         nama_pemegang_hak: namaPemegang
       })
 
       if (res.success && res.data) {
         setIsModalOpen(false)
+        const targetRoute = getFormRoute(res.data.jenis_badan_hukum)
+        
         setNamaLokasi('')
         setStatusBadan('')
         setNamaPemegang('')
-        router.push(`/admin/cabang/usulan-lokasi/form?id=${res.data.id}`)
+        
+        router.push(`${targetRoute}?id=${res.data.id}`)
       } else {
         alert("Error: " + res.error)
       }
     })
   } 
 
+  // Handle aksi menghapus data usulan lokasi
+  const handleDeleteLocation = async (id: string, namaLokasi: string) => {
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus usulan lokasi "${namaLokasi}"?`)
+    if (!confirmDelete) return
+
+    startTransition(async () => {
+      const res = await deleteUlokSubmission(id)
+      if (res.success) {
+        // Segarkan data tabel setelah berhasil dihapus
+        fetchSubmissions()
+      } else {
+        alert("Gagal menghapus: " + res.error)
+      }
+    })
+  }
+
+  // Komponen pembantu untuk merender kelompok tabel berdasarkan status
   const renderTableGroup = (title: string, allowedStatuses: string[], colorStyles: string) => {
     const dataFiltered = submissions.filter(item => allowedStatuses.includes(item.status))
 
@@ -73,23 +104,23 @@ export default function UsulanLokasiPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 text-gray-400 font-semibold text-xs border-b">
-                <th className="p-4 w-1/3">Nama ULOK</th>
+                <th className="p-4 w-1/4">Nama ULOK</th>
                 <th className="p-4">Tanggal Dibuat</th>
                 <th className="p-4">Kepemilikan</th>
-                <th className="p-4 text-right">Status Assessor</th>
+                <th className="p-4 text-center">Status Assessor</th>
+                <th className="p-4 text-center w-56">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {dataFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-4 text-center text-gray-400 text-sm">Tidak ada data usulan lokasi</td>
+                  <td colSpan={5} className="p-4 text-center text-gray-400 text-sm">Tidak ada data usulan lokasi</td>
                 </tr>
               ) : (
                 dataFiltered.map((item) => (
                   <tr 
                     key={item.id} 
-                    onClick={() => router.push(`/admin/cabang/usulan-lokasi/form?id=${item.id}`)}
-                    className="border-b hover:bg-gray-50/80 cursor-pointer transition"
+                    className="border-b hover:bg-gray-50/80 transition"
                   >
                     <td className="p-4 flex items-center gap-3">
                       <span className="text-xl text-amber-500">📁</span>
@@ -101,10 +132,28 @@ export default function UsulanLokasiPage() {
                     <td className="p-4 text-gray-600 text-sm">
                       <span className="font-medium text-gray-800">{item.jenis_badan_hukum}</span> ({item.nama_pemegang_hak})
                     </td>
-                    <td className="p-4 text-right">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${colorStyles}`}>
+                    <td className="p-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
                         {item.status === 'Draft' ? 'Belum Direview' : item.status}
                       </span>
+                    </td>
+                    {/* KOLOM AKSI DENGAN DUA TOMBOL BARU */}
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center items-center gap-2">
+                        <button
+                          onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
+                          className="bg-blue-950 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm"
+                        >
+                          Lihat
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
+                          disabled={isPending}
+                          className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 transition shadow-sm disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -117,9 +166,9 @@ export default function UsulanLokasiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8 text-gray-800">
       <div className="max-w-5xl mx-auto flex justify-between items-center mb-8">
-        <h1 className="text-xl font-bold text-gray-900">Daftar Lokasi</h1>
+        <h1 className="text-xl font-bold text-gray-900">Daftar Usulan Lokasi (ULOK)</h1>
         <div className="flex gap-3">
           <input 
             type="text" 
@@ -137,9 +186,9 @@ export default function UsulanLokasiPage() {
 
       <div className="max-w-5xl mx-auto">
         {renderTableGroup("ULOK Baru", ["Draft"], "bg-blue-50 text-blue-700 border border-blue-200")}
-        {renderTableGroup("Sedang Direview", ["In Review", "Submitted"], "bg-amber-50 text-amber-700 border border-amber-200")}
-        {renderTableGroup("Perlu Revisi", ["Revisi"], "bg-red-50 text-red-700 border border-red-200")}
-        {renderTableGroup("Disetujui", ["Approved"], "bg-green-50 text-green-700 border border-green-200")}
+        {renderTableGroup("Sedang Direview", ["In Review"], "bg-amber-50 text-amber-700 border border-amber-200")}
+        {renderTableGroup("Perlu Revisi", ["Revision"], "bg-red-50 text-red-700 border border-red-200")}
+        {renderTableGroup("Disetujui / Ditolak", ["Approved", "Rejected"], "bg-green-50 text-green-700 border border-green-200")}
       </div>
 
       {/* POP UP FORM MODAL */}
@@ -162,16 +211,26 @@ export default function UsulanLokasiPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Status</label>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Status Kepemilikan</label>
                 <select 
                   value={statusBadan} 
                   onChange={(e) => setStatusBadan(e.target.value)}
                   className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950"
                   required
                 >
-                  <option value="">Pilih Status Kepemilikan</option>
-                  <option value="Badan Hukum">Badan Hukum</option>
-                  <option value="Perorangan">Perorangan</option>
+                  <option value="">Pilih Opsi Kepemilikan</option>
+                  <optgroup label="Kelompok Perorangan">
+                    <option value="Perorangan">Perorangan</option>
+                    <option value="Waris">Waris / Ahli Waris</option>
+                    <option value="Hibah">Hibah</option>
+                    <option value="Kuasa">Kuasa / Penerima Kuasa</option>
+                  </optgroup>
+                  <optgroup label="Kelompok Badan Hukum">
+                    <option value="PT">PT (Perseroan Terbatas)</option>
+                    <option value="Yayasan">Yayasan</option>
+                    <option value="Koperasi">Koperasi</option>
+                    <option value="Badan Hukum">Badan Hukum</option>
+                  </optgroup>
                 </select>
               </div>
               <div>
