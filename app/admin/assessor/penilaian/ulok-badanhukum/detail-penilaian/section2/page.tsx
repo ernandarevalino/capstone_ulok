@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
+import { Check } from 'lucide-react'
+import { toggleDocumentVerification } from '@/actions/assessor'
+import { calculateULOKSAW } from '@/actions/saw'
 
 export default function Section2BadanHukumAssessorPage() {
   const router = useRouter()
@@ -25,6 +28,7 @@ export default function Section2BadanHukumAssessorPage() {
 
   // State Kondisi Objek & Finansial
   const [bentukObjek, setBentukObjek] = useState('')
+  const [hargaSewa, setHargaSewa] = useState<number | null>(null)
   const [isJaminan, setIsJaminan] = useState('Tidak')
   const [namaBank, setNamaBank] = useState('')
   const [noSuratJaminan, setNoSuratJaminan] = useState('')
@@ -32,6 +36,30 @@ export default function Section2BadanHukumAssessorPage() {
   const [catatanLainnya, setCatatanLainnya] = useState('')
 
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
+
+  const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
+    setUploadedDocs(prev => prev.map(doc => {
+      if (doc.id === docId) {
+        return { ...doc, is_verified: !currentStatus }
+      }
+      return doc
+    }))
+    
+    const res = await toggleDocumentVerification(docId, currentStatus)
+    if (!res.success) {
+      setUploadedDocs(prev => prev.map(doc => {
+        if (doc.id === docId) {
+          return { ...doc, is_verified: currentStatus }
+        }
+        return doc
+      }))
+      alert("Gagal memperbarui status verifikasi dokumen: " + res.error)
+    } else {
+      if (ulokId) {
+        await calculateULOKSAW(ulokId)
+      }
+    }
+  }
 
   const fetchDocs = async () => {
     if (!ulokId) return
@@ -62,6 +90,7 @@ export default function Section2BadanHukumAssessorPage() {
         setNoAjbLainnya(d.no_ajb_lainnya || '')
         if (d.nama_ajb_lainnya || d.no_ajb_lainnya) setIsLainnya(true)
         setBentukObjek(d.bentuk_objek || '')
+        setHargaSewa(d.harga_sewa || null)
         setIsJaminan(d.dokumen_jaminan || 'Tidak')
         setNamaBank(d.jaminan_bank_nama || '')
         setNoSuratJaminan(d.jaminan_bank_no_surat || '')
@@ -85,11 +114,23 @@ export default function Section2BadanHukumAssessorPage() {
         <label className="block text-[11px] font-bold text-gray-700 leading-tight">{label}</label>
         {existingDoc ? (
           <div className="flex items-center justify-between gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
-            <span className="text-[10px] font-medium text-green-700 truncate max-w-30">Sudah Diunggah</span>
-            <div className="flex gap-1.5">
-              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-950 text-white px-2 py-0.5 rounded font-bold hover:bg-blue-900 transition shadow-sm">
+            <span className="text-[10px] font-medium text-green-700 truncate max-w-[90px]">Sudah Diunggah</span>
+            <div className="flex gap-1.5 items-center">
+              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-blue-950 text-white px-2 py-1 rounded font-bold hover:bg-blue-900 transition shadow-sm flex items-center h-[26px]">
                 👁️ Lihat
               </a>
+              <button
+                type="button"
+                onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
+                title="Verify Document"
+                className={`p-1 rounded transition border flex items-center justify-center h-[26px] w-[26px] ${
+                  existingDoc.is_verified
+                    ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200'
+                    : 'bg-gray-100 text-gray-400 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3px]" />
+              </button>
             </div>
           </div>
         ) : (
@@ -249,6 +290,13 @@ export default function Section2BadanHukumAssessorPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa per Tahun:</label>
+            <p className="text-sm font-black text-blue-950 bg-gray-50 p-3 rounded-lg border border-gray-200">
+              Rp {hargaSewa?.toLocaleString('id-ID') || 0}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">

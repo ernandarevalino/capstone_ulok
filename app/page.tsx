@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { loginAction } from '@/actions/auth'; 
 
 /**
@@ -124,7 +125,9 @@ export default function LoginPage() {
             
             {/* Tautan Fitur Recovery Kata Sandi */}
             <div className="forgot-password">
-              <a href="#" className="forgot-link">Lupa Kata Sandi Anda?</a>
+              <Link href="/admin/lupasandi" className="forgot-link">
+                Lupa Kata Sandi Anda?
+              </Link>
             </div>
             
             {/* Tombol Aksi Masuk Sistem Terproteksi */}

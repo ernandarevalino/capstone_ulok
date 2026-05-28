@@ -26,6 +26,7 @@ export default function Section2BadanHukumPage() {
 
   // State Kondisi Objek & Finansial
   const [bentukObjek, setBentukObjek] = useState('')
+  const [hargaSewa, setHargaSewa] = useState('')
   const [isJaminan, setIsJaminan] = useState('Tidak')
   const [namaBank, setNamaBank] = useState('')
   const [noSuratJaminan, setNoSuratJaminan] = useState('')
@@ -63,6 +64,7 @@ export default function Section2BadanHukumPage() {
         setNoAjbLainnya(d.no_ajb_lainnya || '')
         if (d.nama_ajb_lainnya || d.no_ajb_lainnya) setIsLainnya(true)
         setBentukObjek(d.bentuk_objek || '')
+        setHargaSewa(d.harga_sewa?.toString() || '')
         setIsJaminan(d.dokumen_jaminan || 'Tidak')
         setNamaBank(d.jaminan_bank_nama || '')
         setNoSuratJaminan(d.jaminan_bank_no_surat || '')
@@ -86,6 +88,7 @@ export default function Section2BadanHukumPage() {
         nama_ajb_lainnya: isLainnya ? namaAjbLainnya : null,
         no_ajb_lainnya: isLainnya ? noAjbLainnya : null,
         bentuk_objek: bentukObjek,
+        harga_sewa: hargaSewa ? parseFloat(hargaSewa) : null,
         dokumen_jaminan: isJaminan,
         jaminan_bank_nama: isJaminan === 'Ya' ? namaBank : null,
         jaminan_bank_no_surat: isJaminan === 'Ya' ? noSuratJaminan : null,
@@ -289,6 +292,17 @@ export default function Section2BadanHukumPage() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa per Tahun (Rp):</label>
+            <input 
+              type="number" 
+              value={hargaSewa} 
+              onChange={(e) => setHargaSewa(e.target.value)} 
+              className="w-full border p-2 bg-white rounded-lg text-xs font-medium focus:outline-blue-950" 
+              placeholder="Contoh: 75000000" 
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">

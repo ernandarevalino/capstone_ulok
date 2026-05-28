@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getComments, createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
+import { updateUlokStatus } from '@/actions/assessor'
 
 export default function DetailPenilaianPeroranganPage() {
   const router = useRouter()
@@ -24,6 +25,35 @@ export default function DetailPenilaianPeroranganPage() {
   const [newComment, setNewComment] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<any>(null)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!ulokId) return
+    setIsUpdatingStatus(true)
+    const res = await updateUlokStatus(ulokId, newStatus)
+    if (res.success) {
+      setStatusSubmission(newStatus)
+      router.refresh()
+    } else {
+      alert('Gagal mengubah status: ' + res.error)
+    }
+    setIsUpdatingStatus(false)
+  }
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'In Review':
+        return 'bg-amber-100 text-amber-800 border-amber-300'
+      case 'Revision':
+        return 'bg-rose-100 text-rose-800 border-rose-300'
+      case 'Approved':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-300'
+      case 'Rejected':
+        return 'bg-slate-100 text-slate-800 border-slate-300'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300'
+    }
+  }
 
   useEffect(() => {
     const prefill = searchParams.get('prefill')
@@ -154,13 +184,28 @@ export default function DetailPenilaianPeroranganPage() {
 
         {/* 1. PANEL FORM DATA UTAMA (READ-ONLY) */}
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-5">
-          <div className="flex justify-between items-center border-b pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-3">
             <h2 className="font-bold text-gray-800 text-base flex items-center gap-2">
               <span>📍</span> Informasi Usulan Kelompok Perorangan (Read-Only)
             </h2>
-            <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">
-              {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
-            </span>
+            
+            {/* MANAJEMEN STATUS DROPDOWN */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-500">Ubah Status:</span>
+              <select
+                value={statusSubmission}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={isUpdatingStatus}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition shadow-sm outline-none cursor-pointer ${getStatusStyle(statusSubmission)}`}
+              >
+                {statusSubmission === 'In Review' && (
+                  <option value="In Review" disabled>In Review</option>
+                )}
+                <option value="Revision">Revision</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,7 +257,7 @@ export default function DetailPenilaianPeroranganPage() {
                 <p className="text-xs text-gray-400 mt-0.5">Kirim pesan di bawah untuk memberikan catatan review ke cabang.</p>
               </div>
             ) : (
-              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto pr-1">
+              <div className="space-y-3 mb-4 max-h-100 overflow-y-auto pr-1">
                 {comments.map((item) => (
                   <div key={item.id} className="bg-white p-4 rounded-xl border shadow-sm max-w-2xl">
                     <div className="flex justify-between items-center mb-1">

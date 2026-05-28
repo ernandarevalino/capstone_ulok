@@ -244,7 +244,7 @@ export default function DetailUlokPeroranganPage() {
                 <p className="text-xs text-gray-400 mt-0.5">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
               </div>
             ) : (
-              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto pr-1">
+              <div className="space-y-3 mb-4 max-h-100 overflow-y-auto pr-1">
                 {comments.map((item) => {
                   const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
                   return (

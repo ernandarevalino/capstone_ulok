@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
+import { Check } from 'lucide-react'
+import { toggleDocumentVerification } from '@/actions/assessor'
+import { calculateULOKSAW } from '@/actions/saw'
 
 export default function Section1BadanHukumAssessorPage() {
   const router = useRouter()
@@ -14,6 +17,30 @@ export default function Section1BadanHukumAssessorPage() {
   const [statusPajak, setStatusPajak] = useState('Non-PKP')
   const [isDikuasakan, setIsDikuasakan] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
+
+  const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
+    setUploadedDocs(prev => prev.map(doc => {
+      if (doc.id === docId) {
+        return { ...doc, is_verified: !currentStatus }
+      }
+      return doc
+    }))
+    
+    const res = await toggleDocumentVerification(docId, currentStatus)
+    if (!res.success) {
+      setUploadedDocs(prev => prev.map(doc => {
+        if (doc.id === docId) {
+          return { ...doc, is_verified: currentStatus }
+        }
+        return doc
+      }))
+      alert("Gagal memperbarui status verifikasi dokumen: " + res.error)
+    } else {
+      if (ulokId) {
+        await calculateULOKSAW(ulokId)
+      }
+    }
+  }
 
   // Fungsi memuat ulang daftar dokumen yang sudah diunggah
   const fetchDocs = async () => {
@@ -67,11 +94,23 @@ export default function Section1BadanHukumAssessorPage() {
         <label className="block text-xs font-bold text-gray-700 leading-snug">{label}</label>
         {existingDoc ? (
           <div className="flex items-center justify-between gap-2 bg-green-50 p-2.5 rounded-lg border border-green-200">
-            <span className="text-xs font-bold text-green-700 truncate max-w-45">📄 Berkas Berhasil Diunggah</span>
-            <div className="flex gap-2">
-              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-950 text-white px-3 py-1.5 rounded-md font-bold hover:bg-blue-900 transition flex items-center gap-1 shadow-sm">
+            <span className="text-xs font-bold text-green-700 truncate max-w-[120px]">📄 Berkas Berhasil Diunggah</span>
+            <div className="flex gap-2 items-center">
+              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-950 text-white px-3 py-1.5 rounded-md font-bold hover:bg-blue-900 transition flex items-center gap-1 shadow-sm h-[32px]">
                 👁️ Lihat
               </a>
+              <button
+                type="button"
+                onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
+                title="Verify Document"
+                className={`p-1 rounded transition border flex items-center justify-center h-[32px] w-[32px] ${
+                  existingDoc.is_verified
+                    ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200'
+                    : 'bg-gray-100 text-gray-400 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                <Check className="w-4 h-4 stroke-[3px]" />
+              </button>
             </div>
           </div>
         ) : (

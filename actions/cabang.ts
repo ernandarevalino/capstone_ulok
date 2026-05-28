@@ -65,6 +65,65 @@ export async function getUlokSubmissions() {
 }
 
 /**
+ * Mengambil seluruh daftar usulan lokasi (ULOK) satu cabang beserta data komentar/catatan revisi.
+ * Digunakan pada halaman Feedback Admin Cabang.
+ */
+export async function getFeedbackSubmissions() {
+  try {
+    const supabase = await createClient()
+    
+    // Validasi token sesi
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // 1. Ambil data branch_id dari profil admin yang sedang login
+    const { data: currentProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('branch_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !currentProfile) {
+      throw new Error('Profil pengguna atau data asal cabang tidak ditemukan')
+    }
+
+    if (!currentProfile.branch_id) {
+      return { success: true, data: [] }
+    }
+
+    // 2. Ambil semua ID user (admin) yang bekerja di cabang yang sama
+    const { data: siblingProfiles, error: siblingError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('branch_id', currentProfile.branch_id)
+
+    if (siblingError) throw siblingError
+
+    const branchAdminIds = siblingProfiles.map(profile => profile.id)
+
+    // 3. Ambil data ULOK beserta relasi comments dan profiles pengirim komentar
+    const { data, error } = await supabase
+      .from('ulok_submissions')
+      .select(`
+        *,
+        comments (
+          *,
+          profiles:user_id (
+            full_name,
+            role
+          )
+        )
+      `)
+      .in('admin_id', branchAdminIds)
+
+    if (error) throw error
+    return { success: true, data }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+/**
  * Menghapus entitas data usulan lokasi (ULOK) berdasarkan ID.
  * Diperbarui: Menghapus data anak di tabel 'documents' terlebih dahulu agar tidak error Foreign Key!
  * @param id - String UUID dari usulan lokasi yang akan dihapus.
@@ -290,6 +349,7 @@ export async function updateUlokSubmission(id: string, payload: any) {
     
     // Bentuk Objek & Status Jaminan Bank
     if (payload.bentuk_objek !== undefined) updateData.bentuk_objek = payload.bentuk_objek
+    if (payload.harga_sewa !== undefined) updateData.harga_sewa = payload.harga_sewa
     if (payload.dokumen_jaminan !== undefined) {
       updateData.dokumen_jaminan = payload.dokumen_jaminan === true || payload.dokumen_jaminan === "Ya";
     }
@@ -375,17 +435,25 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     }
 
     // =========================================================================
-    // PERBAIKAN: SEKARANG KITA TANGKAP ERROR UPDATE STATUS AGAR TIDAK SILENT FAILURE
+    // TRIGGER OTOMATIS STATUS 'IN REVIEW' (SISI ADMIN CABANG):
+    // Jika Admin Cabang sudah mengupload dokumen DAN mengirimkan komentar pertama kali pada ULOK yang berstatus 'Draft', otomatis sistem akan menembakkan update status ULOK tersebut menjadi 'In Review'.
     // =========================================================================
-    const { error: statusError } = await supabase
-      .from('ulok_submissions')
-      .update({ status: 'In Review' })
-      .eq('id', ulokId)
-      .eq('status', 'Draft')
+    const { data: commentList, error: commentError } = await supabase
+      .from('comments')
+      .select('id')
+      .eq('ulok_id', ulokId)
 
-    if (statusError) {
-      console.error("Gagal update status ULOK:", statusError)
-      throw new Error(`Gagal memperbarui status ke In Review: ${statusError.message}`)
+    if (!commentError && commentList && commentList.length > 0) {
+      const { error: statusError } = await supabase
+        .from('ulok_submissions')
+        .update({ status: 'In Review' })
+        .eq('id', ulokId)
+        .eq('status', 'Draft')
+
+      if (statusError) {
+        console.error("Gagal update status ULOK:", statusError)
+        throw new Error(`Gagal memperbarui status ke In Review: ${statusError.message}`)
+      }
     }
     // =========================================================================
 
@@ -485,6 +553,31 @@ export async function createComment(ulokId: string, userId: string, message: str
       .single()
 
     if (error) throw error
+
+    // =========================================================================
+    // TRIGGER OTOMATIS STATUS 'IN REVIEW' (SISI ADMIN CABANG):
+    // Jika Admin Cabang sudah mengupload dokumen DAN mengirimkan komentar pertama kali pada ULOK yang berstatus 'Draft', otomatis sistem akan menembakkan update status ULOK tersebut menjadi 'In Review'.
+    // =========================================================================
+    const { data: ulok, error: ulokError } = await supabase
+      .from('ulok_submissions')
+      .select('status')
+      .eq('id', ulokId)
+      .single()
+
+    if (!ulokError && ulok && ulok.status === 'Draft') {
+      const { data: docs, error: docsError } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('ulok_id', ulokId)
+
+      if (!docsError && docs && docs.length > 0) {
+        await supabase
+          .from('ulok_submissions')
+          .update({ status: 'In Review' })
+          .eq('id', ulokId)
+      }
+    }
+    // =========================================================================
 
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum`)
