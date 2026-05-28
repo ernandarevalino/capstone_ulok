@@ -9,7 +9,8 @@ import { createNotification } from '@/actions/superadmin' // Import fungsi notif
 /* ========================================================================== */
 
 /**
- * Mengambil seluruh daftar usulan lokasi (ULOK) yang diajukan oleh Admin Cabang yang sedang aktif.
+ * Mengambil seluruh daftar usulan lokasi (ULOK) yang diajukan oleh SIAPAPUN,
+ * asalkan berasal dari Cabang (branch_id) yang sama dengan Admin yang sedang aktif.
  * Hasil query akan diurutkan berdasarkan waktu pembuatan terbaru.
  * @returns Objek status operasi beserta array data usulan lokasi atau pesan kesalahan.
  */
@@ -21,10 +22,39 @@ export async function getUlokSubmissions() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    // Melakukan query data dari tabel 'ulok_submissions'
+    // 1. Ambil data branch_id dari profil admin yang sedang login saat ini
+    const { data: currentProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('branch_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !currentProfile) {
+      throw new Error('Profil pengguna atau data asal cabang tidak ditemukan')
+    }
+
+    // Jika admin tidak memiliki branch_id, kembalikan array kosong
+    if (!currentProfile.branch_id) {
+      return { success: true, data: [] }
+    }
+
+    // 2. Ambil semua ID user (admin) yang bekerja di cabang yang sama
+    const { data: siblingProfiles, error: siblingError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('branch_id', currentProfile.branch_id)
+
+    if (siblingError) throw siblingError
+
+    // Kumpulkan semua ID admin satu cabang ke dalam sebuah array string
+    const branchAdminIds = siblingProfiles.map(profile => profile.id)
+
+    // 3. Ambil data ULOK yang 'admin_id'-nya ada di dalam daftar admin satu cabang tadi
+    // Menggunakan .in() dengan select('*') untuk menghindari error ambiguitas multi-foreign key
     const { data, error } = await supabase
       .from('ulok_submissions')
       .select('*')
+      .in('admin_id', branchAdminIds) // Filter menggunakan flat array (Anti Error Join!) 
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -36,6 +66,7 @@ export async function getUlokSubmissions() {
 
 /**
  * Menghapus entitas data usulan lokasi (ULOK) berdasarkan ID.
+ * Diperbarui: Menghapus data anak di tabel 'documents' terlebih dahulu agar tidak error Foreign Key!
  * @param id - String UUID dari usulan lokasi yang akan dihapus.
  * @returns Objek status operasi sukses atau gagal.
  */
@@ -47,7 +78,13 @@ export async function deleteUlokSubmission(id: string) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    // Eksekusi penghapusan baris data di tabel 'ulok_submissions'
+    // 1. HAPUS DAHULU SEMUA BERKAS TERKAIT DI TABEL DOCUMENTS (Anti Error Foreign Key!)
+    await supabase
+      .from('documents')
+      .delete()
+      .eq('ulok_id', id)
+
+    // 2. BARU EKSEKUSI PENGHAPUSAN BARIS DATA UTAMA DI TABEL 'ulok_submissions'
     const { error } = await supabase
       .from('ulok_submissions')
       .delete()
@@ -298,19 +335,16 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     const fileExtension = file.name.split('.').pop()
     const storagePath = `${ulokId}/${docType}-${Date.now()}.${fileExtension}`
     
-    // FIXED BUCKET NAME: sesuai dengan instruksi 'dokumen-ulok'
     const { error: storageError } = await supabase.storage
       .from('dokumen-ulok')
       .upload(storagePath, file, { upsert: true })
 
     if (storageError) throw storageError
 
-    // Dapatkan tautan publik dari storage bucket
     const { data: { publicUrl } } = supabase.storage
       .from('dokumen-ulok')
       .getPublicUrl(storagePath)
 
-    // Cek ketersediaan duplikasi document_type untuk record bersangkutan
     const { data: existingDoc } = await supabase
       .from('documents')
       .select('id')
@@ -319,7 +353,6 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       .maybeSingle()
 
     if (existingDoc) {
-      // Jika tipe dokumen sudah pernah diupload, timpa data url yang lama
       const { error: updateError } = await supabase
         .from('documents')
         .update({ 
@@ -329,7 +362,6 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
         .eq('id', existingDoc.id)
       if (updateError) throw updateError
     } else {
-      // Jika dokumen baru pertama kali dimasukkan
       const { error: insertError } = await supabase
         .from('documents')
         .insert([
@@ -342,9 +374,28 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       if (insertError) throw insertError
     }
 
-    // Refresh halaman section2 agar tampilan tombol 'View' / 'Delete' sinkron secara instan
+    // =========================================================================
+    // PERBAIKAN: SEKARANG KITA TANGKAP ERROR UPDATE STATUS AGAR TIDAK SILENT FAILURE
+    // =========================================================================
+    const { error: statusError } = await supabase
+      .from('ulok_submissions')
+      .update({ status: 'In Review' })
+      .eq('id', ulokId)
+      .eq('status', 'Draft')
+
+    if (statusError) {
+      console.error("Gagal update status ULOK:", statusError)
+      throw new Error(`Gagal memperbarui status ke In Review: ${statusError.message}`)
+    }
+    // =========================================================================
+
+    // Perluas revalidatePath agar mencakup form Section 1 & Section 2 secara menyeluruh
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section1`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section2`)
+    revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum/section1`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum/section2`)
+    
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -380,6 +431,67 @@ export async function deleteUlokFile(docId: string, fileUrl: string) {
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section2`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum/section2`)
     return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Mengambil daftar seluruh komentar untuk usulan lokasi (ULOK) tertentu,
+ * di-JOIN dengan profiles untuk mendapatkan full_name dan role pengirim.
+ * @param ulokId - String UUID usulan lokasi terkait.
+ */
+export async function getComments(ulokId: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          role
+        )
+      `)
+      .eq('ulok_id', ulokId)
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    return { success: true, data }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Menyimpan komentar baru pada suatu usulan lokasi (ULOK).
+ * @param ulokId - ID usulan lokasi terkait.
+ * @param userId - ID pengguna pengirim pesan.
+ * @param message - Isi teks pesan komentar.
+ */
+export async function createComment(ulokId: string, userId: string, message: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('comments')
+      .insert([
+        {
+          ulok_id: ulokId,
+          user_id: userId,
+          message: message,
+        }
+      ])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan`)
+    revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum`)
+    revalidatePath(`/admin/assessor/penilaian/ulok-badanhukum`)
+    revalidatePath(`/admin/assessor/penilaian/ulok-perorangan`)
+
+    return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
   }

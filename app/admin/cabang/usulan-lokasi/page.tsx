@@ -25,11 +25,14 @@ export default function UsulanLokasiPage() {
     } else {
       if (res.error && res.error.includes('Unauthorized')) {
         router.push('/') 
+      } else {
+        alert("Gagal memuat daftar usulan: " + res.error)
       }
     }
   }
 
   useEffect(() => {
+    router.refresh()
     fetchSubmissions()
   }, [router])
 

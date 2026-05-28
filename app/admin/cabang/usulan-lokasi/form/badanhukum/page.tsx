@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment } from '@/actions/cabang'
+import { getCurrentProfile } from '@/actions/auth'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function DetailUlokBadanHukumPage() {
   const router = useRouter()
@@ -20,6 +22,9 @@ export default function DetailUlokBadanHukumPage() {
   
   // State untuk chat/komentar dari assessor
   const [comments, setComments] = useState<any[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [currentProfile, setCurrentProfile] = useState<any>(null)
 
   useEffect(() => {
     if (!ulokId) {
@@ -38,8 +43,17 @@ export default function DetailUlokBadanHukumPage() {
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setStatusSubmission(res.data.status || 'Draft')
         
-        // Mock data komentar assessor kosong (Menampilkan kondisi "Belum ada komentar")
-        setComments([]) 
+        // Fetch comments
+        const commentsRes = await getComments(ulokId)
+        if (commentsRes.success && commentsRes.data) {
+          setComments(commentsRes.data)
+        }
+
+        // Fetch user profile
+        const profileRes = await getCurrentProfile()
+        if (profileRes.success && profileRes.profile) {
+          setCurrentProfile(profileRes.profile)
+        }
       } else {
         alert('Gagal memuat data: ' + res.error)
         router.push('/admin/cabang/usulan-lokasi')
@@ -48,7 +62,52 @@ export default function DetailUlokBadanHukumPage() {
     }
 
     fetchDetail()
+
+    // Realtime subscription untuk chat comments
+    const channel = supabase
+      .channel(`comments-ulok-bh-${ulokId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `ulok_id=eq.${ulokId}`,
+        },
+        async () => {
+          const commentsRes = await getComments(ulokId)
+          if (commentsRes.success && commentsRes.data) {
+            setComments(commentsRes.data)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [ulokId, router])
+
+  const handleSendComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!ulokId || !newComment.trim() || !currentProfile?.id) return
+
+    setIsSending(true)
+    const commentText = newComment.trim()
+    const res = await createComment(ulokId, currentProfile.id, commentText)
+    if (res.success) {
+      setNewComment('')
+      // Langsung update state local agar instant
+      const commentsRes = await getComments(ulokId)
+      if (commentsRes.success && commentsRes.data) {
+        setComments(commentsRes.data)
+      }
+      router.refresh()
+    } else {
+      alert('Gagal mengirim komentar: ' + res.error)
+    }
+    setIsSending(false)
+  }
 
   // Handle update perubahan data awal (Nama Lokasi, Pemegang Hak, Status Kelompok)
   const handleUpdateDetail = async (e: React.FormEvent) => {
@@ -176,7 +235,7 @@ export default function DetailUlokBadanHukumPage() {
             <h2 className="font-bold text-gray-800 text-sm">Kolom Komentar / Pesan Assessor</h2>
           </div>
           
-          <div className="p-6 bg-gray-50/50 min-h-[200px] flex flex-col justify-between">
+          <div className="p-6 bg-gray-50/50 min-h-50 flex flex-col justify-between">
             {/* List Pesan */}
             {comments.length === 0 ? (
               <div className="text-center my-auto py-6 flex flex-col items-center justify-center text-gray-400 text-sm">
@@ -185,36 +244,65 @@ export default function DetailUlokBadanHukumPage() {
                 <p className="text-xs text-gray-400 mt-0.5">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
               </div>
             ) : (
-              <div className="space-y-3 mb-4">
-                {comments.map((item) => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl border shadow-sm max-w-2xl">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-bold text-xs text-blue-950 bg-blue-50 px-2 py-0.5 rounded">
-                        {item.sender}
-                      </span>
-                      <span className="text-[10px] text-gray-400">{item.time}</span>
+              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto pr-1">
+                {comments.map((item) => {
+                  const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`p-4 rounded-xl border shadow-sm max-w-2xl transition-all duration-300 ${
+                        isComplaint 
+                          ? 'bg-rose-50 border-rose-300 shadow-rose-100/30' 
+                          : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`font-bold text-xs px-2 py-0.5 rounded flex items-center gap-1 ${
+                          isComplaint 
+                            ? 'text-rose-700 bg-rose-100' 
+                            : 'text-blue-950 bg-blue-50'
+                        }`}>
+                          {isComplaint && <span>⚠️ REVISI PENTING</span>}
+                          <span>{item.profiles?.full_name || 'Anonim'} ({item.profiles?.role || 'User'})</span>
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(item.created_at).toLocaleString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        {isComplaint && <span className="text-lg leading-none select-none">⚠️</span>}
+                        <p className={`text-sm font-medium whitespace-pre-line ${isComplaint ? 'text-rose-950' : 'text-gray-700'}`}>{item.message}</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 font-medium">{item.message}</p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 
-            {/* Kotak Input Chat Disabled */}
-            <div className="mt-4 pt-4 border-t flex gap-2">
+            {/* Kotak Input Chat */}
+            <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t flex gap-2">
               <input 
                 type="text" 
                 placeholder="Tulis pesan balasan ke assessor jika diperlukan..." 
-                className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950"
-                disabled 
+                className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 text-gray-700"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                disabled={isSending}
               />
               <button 
-                className="bg-gray-300 text-gray-600 px-4 rounded-lg text-xs font-bold cursor-not-allowed"
-                disabled
+                type="submit"
+                className="bg-blue-950 hover:bg-blue-900 text-white px-5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                disabled={isSending || !newComment.trim()}
               >
-                Kirim
+                {isSending ? 'Mengirim...' : 'Kirim'}
               </button>
-            </div>
+            </form>
           </div>
         </div>
 

@@ -1,34 +1,40 @@
 'use client'
 
-import React, { useEffect, useState, useTransition } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment } from '@/actions/cabang'
+import { getUlokDetail, getComments, createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 
-export default function DetailUlokPeroranganPage() {
+export default function DetailPenilaianPeroranganPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
-  const [isPending, startTransition] = useTransition()
 
   const [isLoading, setIsLoading] = useState(true)
   
-  // State untuk data inputan form (Bisa diedit)
+  // State untuk data inputan form (Read-Only)
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   
-  // State untuk chat/komentar dari assessor
+  // State untuk chat/komentar
   const [comments, setComments] = useState<any[]>([])
   const [newComment, setNewComment] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<any>(null)
 
   useEffect(() => {
+    const prefill = searchParams.get('prefill')
+    if (prefill) {
+      setNewComment(prefill)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
     if (!ulokId) {
-      router.push('/admin/cabang/usulan-lokasi')
+      router.push('/admin/assessor/penilaian')
       return
     }
 
@@ -37,7 +43,6 @@ export default function DetailUlokPeroranganPage() {
       const res = await getUlokDetail(ulokId)
       
       if (res.success && res.data) {
-        // Set state data form penyesuaian inputan dari modal awal
         setNamaLokasi(res.data.nama_lokasi || '')
         setStatusBadan(res.data.jenis_badan_hukum || '')
         setNamaPemegang(res.data.nama_pemegang_hak || '')
@@ -56,7 +61,7 @@ export default function DetailUlokPeroranganPage() {
         }
       } else {
         alert('Gagal memuat data: ' + res.error)
-        router.push('/admin/cabang/usulan-lokasi')
+        router.push('/admin/assessor/penilaian')
       }
       setIsLoading(false)
     }
@@ -65,7 +70,7 @@ export default function DetailUlokPeroranganPage() {
 
     // Realtime subscription untuk chat comments
     const channel = supabase
-      .channel(`comments-ulok-po-${ulokId}`)
+      .channel(`comments-ulok-po-assessor-${ulokId}`)
       .on(
         'postgres_changes',
         {
@@ -109,26 +114,6 @@ export default function DetailUlokPeroranganPage() {
     setIsSending(false)
   }
 
-  // Handle update perubahan data awal (Nama Lokasi, Pemegang Hak, Status Kelompok)
-  const handleUpdateDetail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
-
-    startTransition(async () => {
-      const res = await updateUlokSubmission(ulokId, {
-        nama_lokasi: namaLokasi,
-        jenis_badan_hukum: statusBadan,
-        nama_pemegang_hak: namaPemegang
-      })
-
-      if (res.success) {
-        alert('Data awal usulan berhasil diperbarui!')
-      } else {
-        alert('Gagal memperbarui data: ' + res.error)
-      }
-    })
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500 text-sm font-medium">
@@ -145,33 +130,33 @@ export default function DetailUlokPeroranganPage() {
         <div className="flex items-center justify-between border-b pb-4">
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => router.push('/admin/cabang/usulan-lokasi')}
+              onClick={() => router.push('/admin/assessor/penilaian')}
               className="text-gray-500 hover:text-blue-950 transition bg-white p-2 rounded-full shadow-sm border"
             >
               ←
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Data Usulan Lokasi (ULOK)</h1>
+              <h1 className="text-xl font-bold text-gray-900">Penilaian Usulan Lokasi (Assessor)</h1>
               <p className="text-xs text-gray-400">ID Berkas: {ulokId}</p>
             </div>
           </div>
           
-          {/* SATU TOMBOL UTAMA TUNGGAL UNTUK MASUK KE RANGKAIAN FORMULIR */}
+          {/* TOMBOL UNTUK MULAI PENILAIAN CHECKLIST */}
           <div>
             <button
-              onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`)}
+              onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}`)}
               className="bg-blue-950 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-900 transition shadow-sm flex items-center gap-2"
             >
-              📝 Isi Formulir Usulan
+              🔎 Mulai Penilaian Berkas / Dokumen
             </button>
           </div>
         </div>
 
-        {/* 1. PANEL FORM DATA UTAMA (BISA DI-EDIT) */}
-        <form onSubmit={handleUpdateDetail} className="bg-white rounded-xl shadow-sm border p-6 space-y-5">
+        {/* 1. PANEL FORM DATA UTAMA (READ-ONLY) */}
+        <div className="bg-white rounded-xl shadow-sm border p-6 space-y-5">
           <div className="flex justify-between items-center border-b pb-3">
             <h2 className="font-bold text-gray-800 text-base flex items-center gap-2">
-              <span>📍</span> Informasi Usulan Kelompok Perorangan
+              <span>📍</span> Informasi Usulan Kelompok Perorangan (Read-Only)
             </h2>
             <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">
               {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
@@ -180,59 +165,42 @@ export default function DetailUlokPeroranganPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">Nama Lokasi</label>
+              <label className="block text-xs font-bold text-gray-400 mb-1">Nama Lokasi</label>
               <input 
                 type="text"
                 value={namaLokasi}
-                onChange={(e) => setNamaLokasi(e.target.value)}
-                className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 font-medium text-gray-700"
-                required
+                readOnly
+                className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 cursor-not-allowed font-medium text-gray-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">Nama Pemegang Hak</label>
+              <label className="block text-xs font-bold text-gray-400 mb-1">Nama Pemegang Hak</label>
               <input 
                 type="text"
                 value={namaPemegang}
-                onChange={(e) => setNamaPemegang(e.target.value)}
-                className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 font-medium text-gray-700"
-                required
+                readOnly
+                className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 cursor-not-allowed font-medium text-gray-500 outline-none"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-gray-500 mb-1">Status Kepemilikan (Khusus Perorangan)</label>
-              <select 
-                value={statusBadan} 
-                onChange={(e) => setStatusBadan(e.target.value)}
-                className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 font-medium text-gray-700"
-                required
-              >
-                <option value="Perorangan">Perorangan</option>
-                <option value="Waris">Waris / Ahli Waris</option>
-                <option value="Hibah">Hibah</option>
-                <option value="Kuasa">Kuasa / Penerima Kuasa</option>
-              </select>
+              <label className="block text-xs font-bold text-gray-400 mb-1">Status Kepemilikan (Khusus Perorangan)</label>
+              <input 
+                type="text"
+                value={statusBadan}
+                readOnly
+                className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 cursor-not-allowed font-medium text-gray-500 outline-none"
+              />
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isPending}
-              className="bg-blue-950 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-900 transition disabled:opacity-50"
-            >
-              {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </button>
-          </div>
-        </form>
-
-        {/* 2. PANEL KOLOM KOMENTAR / CHAT ASSESSOR */}
+        {/* 2. PANEL KOLOM KOMENTAR / CHAT ACTIVE */}
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
             <span className="text-lg">💬</span>
-            <h2 className="font-bold text-gray-800 text-sm">Kolom Komentar / Pesan Assessor</h2>
+            <h2 className="font-bold text-gray-800 text-sm">Kolom Komentar / Pesan Hubungan ke Cabang</h2>
           </div>
           
           <div className="p-6 bg-gray-50/50 min-h-50 flex flex-col justify-between">
@@ -240,48 +208,30 @@ export default function DetailUlokPeroranganPage() {
             {comments.length === 0 ? (
               <div className="text-center my-auto py-6 flex flex-col items-center justify-center text-gray-400 text-sm">
                 <span className="text-3xl mb-2 opacity-40">✉️</span>
-                <p className="font-medium">Belum ada komentar atau pesan dari assessor.</p>
-                <p className="text-xs text-gray-400 mt-0.5">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
+                <p className="font-medium">Belum ada komentar atau pesan dari/ke cabang.</p>
+                <p className="text-xs text-gray-400 mt-0.5">Kirim pesan di bawah untuk memberikan catatan review ke cabang.</p>
               </div>
             ) : (
               <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto pr-1">
-                {comments.map((item) => {
-                  const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
-                  return (
-                    <div 
-                      key={item.id} 
-                      className={`p-4 rounded-xl border shadow-sm max-w-2xl transition-all duration-300 ${
-                        isComplaint 
-                          ? 'bg-rose-50 border-rose-300 shadow-rose-100/30' 
-                          : 'bg-white border-gray-200'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className={`font-bold text-xs px-2 py-0.5 rounded flex items-center gap-1 ${
-                          isComplaint 
-                            ? 'text-rose-700 bg-rose-100' 
-                            : 'text-blue-950 bg-blue-50'
-                        }`}>
-                          {isComplaint && <span>⚠️ REVISI PENTING</span>}
-                          <span>{item.profiles?.full_name || 'Anonim'} ({item.profiles?.role || 'User'})</span>
-                        </span>
-                        <span className="text-[10px] text-gray-400">
-                          {new Date(item.created_at).toLocaleString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        {isComplaint && <span className="text-lg leading-none select-none">⚠️</span>}
-                        <p className={`text-sm font-medium whitespace-pre-line ${isComplaint ? 'text-rose-950' : 'text-gray-700'}`}>{item.message}</p>
-                      </div>
+                {comments.map((item) => (
+                  <div key={item.id} className="bg-white p-4 rounded-xl border shadow-sm max-w-2xl">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-xs text-blue-950 bg-blue-50 px-2 py-0.5 rounded">
+                        {item.profiles?.full_name || 'Anonim'} ({item.profiles?.role || 'User'})
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(item.created_at).toLocaleString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
                     </div>
-                  )
-                })}
+                    <p className="text-sm text-gray-700 font-medium whitespace-pre-line">{item.message}</p>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -289,7 +239,7 @@ export default function DetailUlokPeroranganPage() {
             <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t flex gap-2">
               <input 
                 type="text" 
-                placeholder="Tulis pesan balasan ke assessor jika diperlukan..." 
+                placeholder="Tulis pesan atau instruksi revisi ke cabang..." 
                 className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 text-gray-700"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
