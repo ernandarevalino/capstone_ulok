@@ -295,13 +295,13 @@ export default function Section2BadanHukumPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa per Tahun (Rp):</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa Total per 5 Tahun (Rp):</label>
             <input 
               type="number" 
               value={hargaSewa} 
               onChange={(e) => setHargaSewa(e.target.value)} 
               className="w-full border p-2 bg-white rounded-lg text-xs font-medium focus:outline-blue-950" 
-              placeholder="Contoh: 75000000" 
+              placeholder="Harga Sewa Total per 5 Tahun" 
             />
           </div>
 

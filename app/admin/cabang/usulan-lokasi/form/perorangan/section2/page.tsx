@@ -57,7 +57,7 @@ export default function Section2PeroranganPage() {
       setLuasAjbLainnya(d.luas_ajb_lainnya || '')
 
       setBentukObjek(d.bentuk_objek || '')
-      setHargaSewa(d.harga_sewa?.toString() || '')
+      setHargaSewa(d.harga_sewa ? d.harga_sewa.toString() : '')
       setIsJaminan(d.dokumen_jaminan ? 'Ya' : 'Tidak')
       setNamaBank(d.jaminan_bank_nama || '')
       setNoSuratJaminan(d.jaminan_bank_no_surat || '')
@@ -319,13 +319,13 @@ export default function Section2PeroranganPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa per Tahun (Rp):</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa Total per 5 Tahun (Rp):</label>
             <input 
               type="number" 
               value={hargaSewa} 
               onChange={(e) => setHargaSewa(e.target.value)} 
               className="w-full border p-2 bg-white rounded-lg text-xs font-medium focus:outline-blue-950" 
-              placeholder="Contoh: 75000000" 
+              placeholder="Harga Sewa Total per 5 Tahun" 
             />
           </div>
 

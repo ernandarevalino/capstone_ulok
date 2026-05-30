@@ -209,7 +209,6 @@ export default function DetailUlokBadanHukumPage() {
                 className="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-blue-950 font-medium text-gray-700"
                 required
               >
-                <option value="Badan Hukum">Badan Hukum</option>
                 <option value="PT">PT (Perseroan Terbatas)</option>
                 <option value="Yayasan">Yayasan</option>
                 <option value="Koperasi">Koperasi</option>

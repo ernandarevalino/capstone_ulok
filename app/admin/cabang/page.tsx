@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getCurrentProfile } from '@/actions/auth';
 import { getUlokSubmissions } from '@/actions/cabang';
 import { getNotificationsAction } from '@/actions/superadmin';
+import { calculateULOKSAW } from '@/actions/saw';
 import { 
   FileText, 
   FileEdit, 
@@ -46,6 +47,21 @@ export default function AdminCabangPage() {
         const submissionsRes = await getUlokSubmissions();
         if (submissionsRes && submissionsRes.success && submissionsRes.data) {
           setSubmissions(submissionsRes.data);
+
+          // Background calculation for items with 0 or null final_score which are not draft
+          const uncalculated = submissionsRes.data.filter((s: any) => s.status !== 'Draft' && (s.final_score === 0 || s.final_score === null));
+          if (uncalculated.length > 0) {
+            Promise.all(uncalculated.map((s: any) => calculateULOKSAW(s.id)))
+              .then(() => {
+                // Fetch again to get updated scores
+                getUlokSubmissions().then((updatedRes) => {
+                  if (updatedRes && updatedRes.success && updatedRes.data) {
+                    setSubmissions(updatedRes.data);
+                  }
+                });
+              })
+              .catch((err) => console.error("Gagal melakukan kalkulasi background SAW:", err));
+          }
         }
 
         // Fetch Notifications as Recent Activity

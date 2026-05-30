@@ -26,9 +26,16 @@ interface GetUsersParams {
  * Ubah dari async function biasa menjadi export async function
  * agar bisa di-import oleh file action lain (seperti action berkas/ulok)
  */
-export async function createNotification(title: string, message: string) {
+export async function createNotification(
+  title: string,
+  message: string,
+  userId: string | null = null,
+  category: string = 'system'
+) {
   try {
-    await supabaseAdmin.from('notifications').insert([{ title, message }]);
+    await supabaseAdmin
+      .from('notifications')
+      .insert([{ title, message, user_id: userId, category }]);
   } catch (err) {
     console.error("Gagal mencatat log notifikasi ke database:", err);
   }
@@ -37,12 +44,20 @@ export async function createNotification(title: string, message: string) {
 /**
  * Mengambil daftar seluruh notifikasi terbaru (Maksimal 100 baris dikontrol oleh DB Trigger)
  */
-export async function getNotificationsAction() {
+export async function getNotificationsAction(userId: string | null = null) {
   try {
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('notifications')
-      .select('id, title, message, is_read, created_at')
+      .select('id, title, message, is_read, created_at, category, user_id')
       .order('created_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    } else {
+      query = query.is('user_id', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return { success: true, data: data || [] };
@@ -67,9 +82,20 @@ export async function deleteNotificationAction(id: number) {
 /**
  * Mengubah status semua notifikasi yang belum dibaca menjadi sudah dibaca
  */
-export async function markAllNotificationsAsReadAction() {
+export async function markAllNotificationsAsReadAction(userId: string | null = null) {
   try {
-    const { error } = await supabaseAdmin.from('notifications').update({ is_read: true }).eq('is_read', false);
+    let query = supabaseAdmin
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('is_read', false);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    } else {
+      query = query.is('user_id', null);
+    }
+
+    const { error } = await query;
     if (error) throw error;
     return { success: true };
   } catch (error: any) {
@@ -339,6 +365,14 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
     await createNotification(
       'Pembaruan Data Pengguna',
       `Profil${passwordMsg} ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
+    );
+
+    // Kirim notifikasi terarah ke user yang bersangkutan
+    await createNotification(
+      'Akun Diperbarui Super Admin',
+      'Data profil atau kredensial akun Anda telah disesuaikan oleh Super Admin.',
+      id,
+      'profile'
     );
 
     return { success: true }

@@ -232,7 +232,6 @@ export default function UsulanLokasiPage() {
                     <option value="PT">PT (Perseroan Terbatas)</option>
                     <option value="Yayasan">Yayasan</option>
                     <option value="Koperasi">Koperasi</option>
-                    <option value="Badan Hukum">Badan Hukum</option>
                   </optgroup>
                 </select>
               </div>

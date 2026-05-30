@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAssessorSubmissions } from '@/actions/assessor';
+import { calculateULOKSAW } from '@/actions/saw';
 import { 
   Inbox, 
   CheckCircle, 
@@ -38,6 +39,21 @@ export default function AssessorDashboardPage() {
       const res = await getAssessorSubmissions();
       if (res.success && res.data) {
         setSubmissions(res.data);
+
+        // Background calculation for items with 0 or null final_score which are not draft
+        const uncalculated = res.data.filter((s: any) => s.status !== 'Draft' && (s.final_score === 0 || s.final_score === null));
+        if (uncalculated.length > 0) {
+          Promise.all(uncalculated.map((s: any) => calculateULOKSAW(s.id)))
+            .then(() => {
+              // Fetch again to get updated scores
+              getAssessorSubmissions().then((updatedRes) => {
+                if (updatedRes && updatedRes.success && updatedRes.data) {
+                  setSubmissions(updatedRes.data);
+                }
+              });
+            })
+            .catch((err) => console.error("Gagal melakukan kalkulasi background SAW:", err));
+        }
       } else {
         console.error("Gagal memuat data usulan untuk assessor:", res.error);
       }

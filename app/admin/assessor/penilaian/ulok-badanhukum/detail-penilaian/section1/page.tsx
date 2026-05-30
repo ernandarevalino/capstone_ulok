@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
-import { Check } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { toggleDocumentVerification } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 
@@ -12,6 +12,7 @@ export default function Section1BadanHukumAssessorPage() {
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
   const [isLoading, setIsLoading] = useState(true)
+  const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
 
   // State untuk Kondisional Berkas (Pajak & Kuasa)
   const [statusPajak, setStatusPajak] = useState('Non-PKP')
@@ -19,6 +20,7 @@ export default function Section1BadanHukumAssessorPage() {
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
   const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
+    setVerifyingDocId(docId)
     setUploadedDocs(prev => prev.map(doc => {
       if (doc.id === docId) {
         return { ...doc, is_verified: !currentStatus }
@@ -40,6 +42,7 @@ export default function Section1BadanHukumAssessorPage() {
         await calculateULOKSAW(ulokId)
       }
     }
+    setVerifyingDocId(null)
   }
 
   // Fungsi memuat ulang daftar dokumen yang sudah diunggah
@@ -94,22 +97,27 @@ export default function Section1BadanHukumAssessorPage() {
         <label className="block text-xs font-bold text-gray-700 leading-snug">{label}</label>
         {existingDoc ? (
           <div className="flex items-center justify-between gap-2 bg-green-50 p-2.5 rounded-lg border border-green-200">
-            <span className="text-xs font-bold text-green-700 truncate max-w-[120px]">📄 Berkas Berhasil Diunggah</span>
+            <span className="text-xs font-bold text-green-700 truncate max-w-30">📄 Berkas Berhasil Diunggah</span>
             <div className="flex gap-2 items-center">
-              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-950 text-white px-3 py-1.5 rounded-md font-bold hover:bg-blue-900 transition flex items-center gap-1 shadow-sm h-[32px]">
+              <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-950 text-white px-3 py-1.5 rounded-md font-bold hover:bg-blue-900 transition flex items-center gap-1 shadow-sm h-8">
                 👁️ Lihat
               </a>
               <button
                 type="button"
+                disabled={verifyingDocId === existingDoc.id}
                 onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
                 title="Verify Document"
-                className={`p-1 rounded transition border flex items-center justify-center h-[32px] w-[32px] ${
+                className={`p-1 rounded transition border flex items-center justify-center h-8 w-8 ${
                   existingDoc.is_verified
                     ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200'
                     : 'bg-gray-100 text-gray-400 border-gray-300 hover:bg-gray-200'
-                }`}
+                } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
               >
-                <Check className="w-4 h-4 stroke-[3px]" />
+                {verifyingDocId === existingDoc.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 stroke-[3px]" />
+                )}
               </button>
             </div>
           </div>

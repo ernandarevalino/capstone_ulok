@@ -39,21 +39,21 @@ export default function PeringkatCabangPage() {
   const renderRankBadge = (index: number) => {
     if (index === 0) {
       return (
-        <span className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-md animate-pulse">
+        <span className="flex items-center gap-1.5 bg-linear-to-r from-amber-500 to-yellow-400 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-md animate-pulse">
           <Trophy className="w-4 h-4" /> Juara 1 (Emas)
         </span>
       )
     }
     if (index === 1) {
       return (
-        <span className="flex items-center gap-1.5 bg-gradient-to-r from-slate-400 to-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-full text-xs shadow-md">
+        <span className="flex items-center gap-1.5 bg-linear-to-r from-slate-400 to-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-full text-xs shadow-md">
           <Medal className="w-4 h-4 text-slate-700" /> Juara 2 (Perak)
         </span>
       )
     }
     if (index === 2) {
       return (
-        <span className="flex items-center gap-1.5 bg-gradient-to-r from-amber-700 to-amber-600 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-md">
+        <span className="flex items-center gap-1.5 bg-linear-to-r from-amber-700 to-amber-600 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-md">
           <Medal className="w-4 h-4 text-amber-200" /> Juara 3 (Perunggu)
         </span>
       )
@@ -67,7 +67,7 @@ export default function PeringkatCabangPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-bold text-gray-500 animate-pulse">Menghubungkan ke Pusat & Menyusun Leaderboard Nasional...</p>
@@ -78,7 +78,7 @@ export default function PeringkatCabangPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100 p-6 flex items-center justify-center">
         <div className="bg-white p-6 rounded-2xl border shadow-lg max-w-md text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <h3 className="text-lg font-bold text-gray-900">Gagal Memuat Data</h3>
@@ -92,11 +92,11 @@ export default function PeringkatCabangPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-6 text-gray-800">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 p-6 text-gray-800">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-emerald-900/55">
+        <div className="bg-linear-to-r from-emerald-950 via-slate-900 to-emerald-950 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-emerald-900/55">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <Award className="w-48 h-48 text-emerald-400" />
           </div>
@@ -128,8 +128,7 @@ export default function PeringkatCabangPage() {
           ) : (
             leaderboard.map((item, index) => {
               const isOpen = openCardId === item.id
-              const hasPenalties = item.saw_analysis_notes?.includes('⚠️ Data Belum Siap') || 
-                                   item.c3_score === 1 && (item.harga_sewa === 0 || item.harga_sewa === null)
+              const isDataIncomplete = !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at;
               
               const itemBranchId = item.profiles?.branch_id || ''
               const isCurrentUserBranch = userBranchId && itemBranchId === userBranchId
@@ -142,7 +141,7 @@ export default function PeringkatCabangPage() {
                   key={item.id} 
                   className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition duration-200 overflow-hidden ${
                     isCurrentUserBranch 
-                      ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-gradient-to-r from-emerald-50/20 to-white' 
+                      ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-linear-to-r from-emerald-50/20 to-white' 
                       : ''
                   } ${isOpen ? 'ring-2 ring-emerald-950/20' : ''}`}
                 >
@@ -153,7 +152,7 @@ export default function PeringkatCabangPage() {
                   >
                     {/* LEFT SIDE: RANK & TITLE */}
                     <div className="flex items-center gap-4 w-full md:w-auto">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {renderRankBadge(index)}
                       </div>
                       <div className="space-y-1 min-w-0">
@@ -166,9 +165,9 @@ export default function PeringkatCabangPage() {
                             </span>
                           )}
 
-                          {hasPenalties && (
-                            <span className="bg-red-50 text-red-600 border border-red-200 font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider">
-                              Penalti Aktif
+                          {isDataIncomplete && (
+                            <span className="bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider">
+                              Skor Berjalan
                             </span>
                           )}
                         </h3>
@@ -236,9 +235,9 @@ export default function PeringkatCabangPage() {
                             Skor: <strong className="text-slate-800 text-sm font-black">{item.c2_score || 1}</strong> dari 5
                           </span>
                           <p className="text-[10px] text-gray-400 mt-1">
-                            {item.c2_score === 1 && (item.saw_analysis_notes?.includes('dokumen wajib') || hasPenalties) 
-                              ? 'Terkena Penalti! Berkas wajib Non-Negotiable belum lengkap seluruhnya.' 
-                              : 'Semua berkas wajib lengkap terverifikasi.'}
+                            {!item.first_in_review_at 
+                              ? 'Proses review legal belum dimulai (Draft).' 
+                              : 'Proses review legal dinamis sedang berjalan.'}
                           </p>
                         </div>
                         <div className="bg-white p-3.5 rounded-xl border">
@@ -248,7 +247,7 @@ export default function PeringkatCabangPage() {
                           </span>
                           <p className="text-[10px] text-gray-400 mt-1">
                             {item.harga_sewa === null || item.harga_sewa === 0 
-                              ? 'Terkena Penalti! Nominal sewa belum di-input (bernilai 0).' 
+                              ? 'Nominal sewa belum di-input (bernilai 0).' 
                               : `Nominal Sewa: Rp ${(item.harga_sewa || 0).toLocaleString('id-ID')}`}
                           </p>
                         </div>
@@ -256,11 +255,11 @@ export default function PeringkatCabangPage() {
 
                       {/* Box Alert Indah saw_analysis_notes */}
                       <div className={`p-4 rounded-xl border flex gap-3 items-start ${
-                        hasPenalties 
+                        isDataIncomplete 
                           ? 'bg-amber-50/70 border-amber-200 text-amber-900' 
                           : 'bg-emerald-50/45 border-emerald-100 text-slate-800'
                       }`}>
-                        <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${hasPenalties ? 'text-amber-600' : 'text-emerald-700'}`} />
+                        <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${isDataIncomplete ? 'text-amber-600' : 'text-emerald-700'}`} />
                         <div className="space-y-1">
                           <h4 className="text-xs font-bold uppercase tracking-wider">Hasil Analisis Keputusan SPK:</h4>
                           <p className="text-xs font-semibold leading-relaxed">

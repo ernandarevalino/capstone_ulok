@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin' // Import fungsi notifikasi pusat
+import { calculateULOKSAW } from '@/actions/saw'
 
 /* ========================================================================== */
 /* #region MODUL MANAJEMEN USULAN LOKASI (ULOK) */
@@ -305,6 +306,13 @@ export async function updateUlokSubmission(id: string, payload: any) {
   try {
     const supabase = await createClient()
     
+    // Ambil data status saat ini sebelum update
+    const { data: currentUlok } = await supabase
+      .from('ulok_submissions')
+      .select('status, nama_lokasi, admin_id, first_in_review_at')
+      .eq('id', id)
+      .single()
+
     // Mapping selektif agar kolom yang tidak diubah tidak tertimpa NULL
     const updateData: any = { updated_at: new Date().toISOString() }
 
@@ -314,7 +322,12 @@ export async function updateUlokSubmission(id: string, payload: any) {
     if (payload.jenis_badan_hukum !== undefined) updateData.jenis_badan_hukum = payload.jenis_badan_hukum
     if (payload.alamat_koordinat !== undefined) updateData.alamat_koordinat = payload.alamat_koordinat
     if (payload.detail_alamat !== undefined) updateData.detail_alamat = payload.detail_alamat
-    if (payload.status !== undefined) updateData.status = payload.status
+    if (payload.status !== undefined) {
+      updateData.status = payload.status
+      if (payload.status === 'In Review' && !currentUlok?.first_in_review_at) {
+        updateData.first_in_review_at = new Date().toISOString()
+      }
+    }
 
     // Isian Dokumen Identitas & Pajak Dasar (Section 1)
     if (payload.jenis_identitas !== undefined) updateData.jenis_identitas = payload.jenis_identitas
@@ -366,6 +379,91 @@ export async function updateUlokSubmission(id: string, payload: any) {
       .eq('id', id)
 
     if (error) throw error
+
+    // Jika jenis_badan_hukum diubah, sinkronkan dokumen di database
+    if (payload.jenis_badan_hukum !== undefined) {
+      const newJbh = payload.jenis_badan_hukum
+      let allowedIds: number[] = []
+      
+      if (newJbh === 'PT') {
+        allowedIds = Array.from({ length: 11 }, (_, i) => 1 + i)
+      } else if (newJbh === 'Yayasan') {
+        allowedIds = Array.from({ length: 9 }, (_, i) => 12 + i)
+      } else if (newJbh === 'Koperasi') {
+        allowedIds = Array.from({ length: 9 }, (_, i) => 21 + i)
+      } else if (newJbh === 'Perorangan') {
+        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i)
+      } else if (newJbh === 'Kuasa') {
+        allowedIds = Array.from({ length: 11 }, (_, i) => 30 + i)
+      } else if (newJbh === 'Waris') {
+        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i).concat([41, 42, 43, 44])
+      } else if (newJbh === 'Hibah') {
+        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i).concat([45])
+      }
+
+      if (allowedIds.length > 0) {
+        const { data: existingDocs } = await supabase
+          .from('documents')
+          .select('id, checklist_id')
+          .eq('ulok_id', id)
+
+        if (existingDocs && existingDocs.length > 0) {
+          const docsToDelete = existingDocs.filter(doc => 
+            doc.checklist_id !== null && 
+            doc.checklist_id !== undefined && 
+            !allowedIds.includes(doc.checklist_id)
+          )
+
+          if (docsToDelete.length > 0) {
+            const deleteIds = docsToDelete.map(d => d.id)
+            await supabase
+              .from('documents')
+              .delete()
+              .in('id', deleteIds)
+          }
+        }
+      }
+    }
+
+    // Kirim notifikasi jika status diubah dari Draft ke Submitted
+    if (currentUlok && currentUlok.status === 'Draft' && payload.status === 'Submitted') {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select(`
+            full_name,
+            branches (
+              nama_cabang
+            )
+          `)
+          .eq('id', currentUlok.admin_id)
+          .single()
+
+        const adminName = profileData?.full_name || 'Admin';
+        const branchName = (profileData?.branches as any)?.nama_cabang || 'Cabang';
+
+        const { data: assessors } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'assessor')
+
+        if (assessors && assessors.length > 0) {
+          for (const ass of assessors) {
+            await createNotification(
+              'Usulan Baru Masuk',
+              `Admin ${adminName} dari ${branchName} telah mengajukan usulan lokasi baru: "${currentUlok.nama_lokasi}".`,
+              ass.id,
+              'submission'
+            )
+          }
+        }
+      } catch (notifErr) {
+        console.error("Gagal memicu notifikasi submission baru:", notifErr)
+      }
+    }
+
+    // Pemicu kalkulasi ulang skor SAW real-time agar dashboard sinkron
+    await calculateULOKSAW(id)
 
     // Melakukan purge cache secara komprehensif pada semua rute form kelompok agar data realtime berlanjut
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -446,7 +544,10 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     if (!commentError && commentList && commentList.length > 0) {
       const { error: statusError } = await supabase
         .from('ulok_submissions')
-        .update({ status: 'In Review' })
+        .update({ 
+          status: 'In Review',
+          first_in_review_at: new Date().toISOString()
+        })
         .eq('id', ulokId)
         .eq('status', 'Draft')
 
@@ -554,6 +655,50 @@ export async function createComment(ulokId: string, userId: string, message: str
 
     if (error) throw error
 
+    // Kirim notifikasi berdasarkan role komentator
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', userId)
+        .single()
+
+      const { data: ulok } = await supabase
+        .from('ulok_submissions')
+        .select('admin_id, nama_lokasi')
+        .eq('id', ulokId)
+        .single()
+
+      if (profile && ulok) {
+        if (profile.role === 'assessor') {
+          await createNotification(
+            'Komentar Baru dari Assessor',
+            `Assessor ${profile.full_name} memberikan komentar pada usulan "${ulok.nama_lokasi}": "${message}"`,
+            ulok.admin_id,
+            'comment'
+          )
+        } else if (profile.role === 'admin_cabang') {
+          const { data: assessors } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'assessor')
+
+          if (assessors && assessors.length > 0) {
+            for (const ass of assessors) {
+              await createNotification(
+                'Balasan Komentar Cabang',
+                `Admin Cabang ${profile.full_name} membalas komentar pada usulan "${ulok.nama_lokasi}": "${message}"`,
+                ass.id,
+                'comment'
+              )
+            }
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error("Gagal memicu notifikasi komentar baru:", notifErr)
+    }
+
     // =========================================================================
     // TRIGGER OTOMATIS STATUS 'IN REVIEW' (SISI ADMIN CABANG):
     // Jika Admin Cabang sudah mengupload dokumen DAN mengirimkan komentar pertama kali pada ULOK yang berstatus 'Draft', otomatis sistem akan menembakkan update status ULOK tersebut menjadi 'In Review'.
@@ -573,7 +718,10 @@ export async function createComment(ulokId: string, userId: string, message: str
       if (!docsError && docs && docs.length > 0) {
         await supabase
           .from('ulok_submissions')
-          .update({ status: 'In Review' })
+          .update({ 
+            status: 'In Review',
+            first_in_review_at: new Date().toISOString()
+          })
           .eq('id', ulokId)
       }
     }
