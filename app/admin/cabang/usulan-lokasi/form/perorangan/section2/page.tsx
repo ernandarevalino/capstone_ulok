@@ -18,7 +18,7 @@ export default function Section2PeroranganPage() {
   const [luasSertifikat, setLuasSertifikat] = useState('')
   const [masaBerlakuSertifikat, setMasaBerlakuSertifikat] = useState('')
   
-  // State Dokumen Pendukung Lainnya (Sesuai Revisi Kamu)
+  // State Dokumen Pendukung Lainnya
   const [isLainnya, setIsLainnya] = useState(false)
   const [namaAjbLainnya, setNamaAjbLainnya] = useState('')
   const [noAjbLainnya, setNoAjbLainnya] = useState('')
@@ -38,6 +38,11 @@ export default function Section2PeroranganPage() {
   // State Berkas Terupload
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
+  // State Custom Toast / Modal UI (Menyamakan Section 1)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successModalText, setSuccessModalText] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
+
   const loadDataDanDokumen = async () => {
     if (!ulokId) return
     setIsLoading(true)
@@ -56,7 +61,7 @@ export default function Section2PeroranganPage() {
       setNoAjbLainnya(d.no_ajb_lainnya || '')
       setLuasAjbLainnya(d.luas_ajb_lainnya || '')
 
-      setBentukObjek(d.bentuk_objek || '')
+      bentukObjek ? setBentukObjek(d.bentuk_objek || '') : setBentukObjek(d.bentuk_objek || '')
       setHargaSewa(d.harga_sewa ? d.harga_sewa.toString() : '')
       setIsJaminan(d.dokumen_jaminan ? 'Ya' : 'Tidak')
       setNamaBank(d.jaminan_bank_nama || '')
@@ -64,7 +69,6 @@ export default function Section2PeroranganPage() {
       setTanggalSuratJaminan(d.jaminan_bank_tanggal || '')
       setCatatanLainnya(d.data_pribadi_tambahan || '')
 
-      // Auto check UI kriteria penyesuaian baru jika data exist
       if (d.nama_ajb_lainnya || d.no_ajb_lainnya) setIsLainnya(true)
       if (d.tanggal_proses_sertifikat) setIsProsesSertifikat(true)
     }
@@ -73,7 +77,6 @@ export default function Section2PeroranganPage() {
     const resDocs = await getUploadedDocuments(ulokId)
     if (resDocs.success && resDocs.data) {
       setUploadedDocs(resDocs.data)
-      // Jika berkas proses sertifikat terdeteksi sudah pernah ada, nyalakan checkbox proses
       const berkasProsesExist = resDocs.data.some((doc: any) => 
         ['covernote_notaris', 'tanda_terima_bpn', 'surat_perintah_setor', 'bukti_pembayaran'].includes(doc.document_type)
       )
@@ -91,7 +94,7 @@ export default function Section2PeroranganPage() {
     loadDataDanDokumen()
   }, [ulokId])
 
-  // File Upload Handler
+  // File Upload Handler dengan Toast Modern
   const handleFileUpload = async (docType: string, file: File) => {
     if (!file || !ulokId) return
     const formData = new FormData()
@@ -100,7 +103,12 @@ export default function Section2PeroranganPage() {
     startTransition(async () => {
       const res = await uploadUlokFile(ulokId, docType, formData)
       if (res.success) {
-        alert(`Berhasil mengunggah dokumen!`)
+        setSuccessModalText('Berkas berhasil diperbarui!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
@@ -109,52 +117,27 @@ export default function Section2PeroranganPage() {
     })
   }
 
-  // File Delete Handler
-  const handleFileDelete = async (docId: string, fileUrl: string) => {
-    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus berkas ini?")
-    if (!confirmDelete) return
+  // File Delete Handler Melalui Modal Konfirmasi
+  const executeDelete = async () => {
+    if (!deleteTarget) return
 
     startTransition(async () => {
-      const res = await deleteUlokFile(docId, fileUrl)
+      const res = await deleteUlokFile(deleteTarget.id, deleteTarget.url)
       if (res.success) {
-        alert("Berkas berhasil dihapus!")
+        setDeleteTarget(null)
+        setSuccessModalText('Berkas berhasil dihapus!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
         alert("Gagal menghapus berkas: " + res.error)
+        setDeleteTarget(null)
       }
     })
-  }
-
-  const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
-    const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
-    return (
-      <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between gap-2 hover:border-blue-950/30 transition">
-        <div>
-          <span className="font-bold text-gray-700 text-[11px] block">{label}</span>
-          <p className="text-[10px] text-gray-400">{subLabel}</p>
-        </div>
-        {existingFile ? (
-          <div className="flex items-center justify-between gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-200">
-            <span className="text-[10px] text-emerald-700 font-bold truncate max-w-37.5">📄 Tersimpan</span>
-            <div className="flex gap-1">
-              <a href={existingFile.file_url} target="_blank" rel="noreferrer" className="bg-blue-950 text-white px-2 py-0.5 rounded text-[9px] font-bold transition hover:bg-blue-900">View</a>
-              <button type="button" onClick={() => handleFileDelete(existingFile.id, existingFile.file_url)} className="bg-red-600 text-white px-2 py-0.5 rounded text-[9px] font-bold transition hover:bg-red-700">Delete</button>
-            </div>
-          </div>
-        ) : (
-          <input 
-            type="file" 
-            accept=".pdf, .jpg, .jpeg, .png"
-            disabled={isPending}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
-            }}
-            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 file:cursor-pointer w-full text-gray-400" 
-          />
-        )}
-      </div>
-    )
   }
 
   // Submit Final / Simpan Saat Back
@@ -166,7 +149,7 @@ export default function Section2PeroranganPage() {
         no_sertifikat_alas_hak: noSertifikat,
         nama_sertifikat_alas_hak: namaSertifikat,
         luas_sertifikat: luasSertifikat || null,
-        masa_berlaku_sertifikat: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null), // Sesuai revisi: reset null jika HM
+        masa_berlaku_sertifikat: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null),
         
         nama_ajb_lainnya: isLainnya ? namaAjbLainnya : '',
         no_ajb_lainnya: isLainnya ? noAjbLainnya : '',
@@ -188,124 +171,188 @@ export default function Section2PeroranganPage() {
 
       const res = await updateUlokSubmission(ulokId, payload)
       if (res.success) {
-        if (showSuccessAlert) alert("Seluruh rangkaian data usulan lokasi berhasil disimpan secara lengkap!")
-        router.push(targetPath)
+        if (showSuccessAlert) {
+          setSuccessModalText('Data Telah Disimpan, Silakan Masuk Kembali Ke Form Saat Mengubahnya!..')
+          setShowSuccessModal(true)
+          setTimeout(() => {
+            setShowSuccessModal(false)
+            router.push(targetPath)
+          }, 2000)
+        } else {
+          router.push(targetPath)
+        }
       } else {
         alert("Gagal menyimpan data Section 2: " + res.error)
       }
     })
   }
 
-  if (isLoading) return <div className="p-8 text-center text-sm text-gray-500 font-medium">Memuat Formulir Section 2...</div>
+  // Reusable Slot Upload Berkas inline (Sinkron dengan UI Section 1)
+  const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
+    const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
+        <div>
+          <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
+        </div>
+        {existingFile ? (
+          <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
+            <div className="flex gap-1.5 items-center">
+              <a 
+                href={existingFile.file_url} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
+                title="View File"
+              >
+                <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+              </a>
+              <button 
+                type="button" 
+                onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
+                title="Delete File"
+              >
+                <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <input 
+            type="file" 
+            accept=".pdf, .jpg, .jpeg, .png"
+            disabled={isPending}
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
+            }}
+            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
+          />
+        )}
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-gray-400 dark:text-gray-500 italic text-sm font-medium transition-colors duration-300">
+        <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        Memuat Form Section 2...
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* BREADCRUMB NAVIGATION */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-6 select-none">
+        <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
-            className="cursor-pointer hover:text-blue-950 transition"
+            className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
             Usulan Lokasi
           </span>
-          <span className="text-gray-300">/</span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
             onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`)} 
-            className="cursor-pointer hover:text-blue-950 transition"
+            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Form Perorangan
           </span>
-          <span className="text-gray-300">/</span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`)} 
-            className="cursor-pointer hover:text-blue-950 transition"
+            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
+            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Section 1: Identitas
           </span>
-          <span className="text-gray-300">/</span>
-          <span className="text-gray-800 font-bold">Section 2: Kelayakan</span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          <span className="text-gray-800 dark:text-gray-100 font-bold">Section 2: Kelayakan</span>
         </nav>
 
         {/* HEADER */}
-        <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
+        <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
-            <p className="text-xs text-blue-200/80 mt-0.5">Lengkapi sertifikat fisik objek tanah beserta jaminan finansial perbankan di sini.</p>
+            <p className="text-xs text-blue-200/80 dark:text-gray-400 mt-0.5">Lengkapi sertifikat fisik objek tanah beserta jaminan finansial perbankan di sini.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">2 / 2</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">2 / 2</span>
         </div>
 
         {/* BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN */}
-        <div className="bg-white border rounded-xl p-5 space-y-5 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">📜 Alas Hak & Bukti Kepemilikan Lahan</h2>
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-file.svg" alt="Alas Hak" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
+            Alas Hak & Bukti Kepemilikan Lahan
+          </h2>
           
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-500">Pilihan Jenis Sertifikat:</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Pilihan Jenis Sertifikat:</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Hak Milik', 'Hak Guna Bangunan', 'Hak Pengelolaan', 'Hak Pakai'].map((type) => (
-                <label key={type} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${jenisAlasHak === type ? 'border-blue-950 bg-blue-50/50 text-blue-950' : 'bg-white hover:bg-gray-50'}`}>
-                  <input type="radio" name="jenisAlasHak" checked={jenisAlasHak === type} onChange={() => setJenisAlasHak(type)} className="accent-blue-950 w-4 h-4" />
+                <label key={type} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${jenisAlasHak === type ? 'border-blue-950 bg-blue-50/50 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                  <input type="radio" name="jenisAlasHak" checked={jenisAlasHak === type} onChange={() => setJenisAlasHak(type)} className="accent-blue-950 dark:accent-blue-500 w-4 h-4" />
                   {type}
                 </label>
               ))}
             </div>
           </div>
 
-          {/* DETAIL SERTIFIKAT (KONDISIONAL JIKA SERTIFIKAT DIPILIH) */}
+          {/* DETAIL SERTIFIKAT (KONDISIONAL) */}
           {jenisAlasHak !== '' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 border border-gray-200">
-              <p className="text-xs font-bold text-blue-950 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak}):</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 dark:bg-gray-800/15 border border-gray-200 dark:border-gray-800 animate-fadeIn">
+              <p className="text-xs font-bold text-blue-950 dark:text-blue-400 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak}):</p>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">No. Sertifikat</label>
-                <input type="text" value={noSertifikat} onChange={(e) => setNoSertifikat(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Nomor Sertifikat Resmi" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">No. Sertifikat</label>
+                <input type="text" value={noSertifikat} onChange={(e) => setNoSertifikat(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor Sertifikat Resmi" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Pemegang Hak</label>
-                <input type="text" value={namaSertifikat} onChange={(e) => setNamaSertifikat(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Nama Pemilik Tanah" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Nama Pemegang Hak</label>
+                <input type="text" value={namaSertifikat} onChange={(e) => setNamaSertifikat(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Pemilik Tanah" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Luas Tanah (m²)</label>
-                <input type="number" value={luasSertifikat} onChange={(e) => setLuasSertifikat(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Contoh: 150" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Luas Tanah (m²)</label>
+                <input type="number" value={luasSertifikat} onChange={(e) => setLuasSertifikat(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Contoh: 150" />
               </div>
               
-              {/* REVISI: SEMBUNYIKAN SELEKTIF MASA BERLAKU JIKA HAK MILIK */}
               {jenisAlasHak !== 'Hak Milik' ? (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Masa Berlaku Sertifikat</label>
-                  <input type="date" value={masaBerlakuSertifikat} onChange={(e) => setMasaBerlakuSertifikat(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" />
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Masa Berlaku Sertifikat</label>
+                  <input type="date" value={masaBerlakuSertifikat} onChange={(e) => setMasaBerlakuSertifikat(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:outline-blue-950" />
                 </div>
               ) : <div />}
 
-              <div className="md:col-span-2 pt-2 border-t mt-1">
+              <div className="md:col-span-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-1">
                 {renderUploadSlot("sertifikat_tanah", `Dokumen Scan Buku Sertifikat (${jenisAlasHak})`, "Unggah berkas halaman penuh buku sertifikat asli")}
               </div>
             </div>
           )}
 
-          {/* REVISI: KONDISIONAL CHECKBOX LAINNYA */}
-          <div className="border rounded-xl p-4 bg-gray-50/40 space-y-3">
-            <label className="flex items-center gap-2 font-bold text-gray-700 cursor-pointer text-xs">
-              <input type="checkbox" checked={isLainnya} onChange={(e) => setIsLainnya(e.target.checked)} className="rounded accent-blue-950 w-4 h-4" />
+          {/* DOKUMEN LAINNYA */}
+          <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
+            <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
+              <input type="checkbox" checked={isLainnya} onChange={(e) => setIsLainnya(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
               Lainnya (AJB / Girik / Surat Kelurahan)
             </label>
             
             {isLainnya && (
-              <div className="space-y-4 pt-2 pl-6 border-l-2 border-blue-950/30">
+              <div className="space-y-4 pt-2 pl-6 border-l-2 border-blue-950/30 dark:border-gray-700 animate-fadeIn">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama / Jenis Dokumen</label>
-                    <input type="text" value={namaAjbLainnya} onChange={(e) => setNamaAjbLainnya(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Contoh: AJB / Girik" />
+                    <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama / Jenis Dokumen</label>
+                    <input type="text" value={namaAjbLainnya} onChange={(e) => setNamaAjbLainnya(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Contoh: AJB / Girik" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">No. & Luas Objek AJB</label>
-                    <input type="text" value={noAjbLainnya} onChange={(e) => setNoAjbLainnya(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="No. Dokumen & Luas Objek" />
+                    <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">No. & Luas Objek AJB</label>
+                    <input type="text" value={noAjbLainnya} onChange={(e) => setNoAjbLainnya(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="No. Dokumen & Luas Objek" />
                   </div>
                   {renderUploadSlot("ajb_girik", "Dokumen Berkas AJB", "Format PDF scan lengkap")}
                 </div>
 
-                {/* SLOT UPLOAD KUMPULAN SURAT KELURAHAN (INLINE) */}
+                {/* SLOT SURAT KELURAHAN */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   {renderUploadSlot("surat_tidak_sengketa", "Surat Keterangan Tidak Sengketa TTD Lurah & Camat", "Format PDF")}
                   {renderUploadSlot("surat_riwayat_tanah", "Surat Keterangan Riwayat Tanah TTD Lurah & Camat", "Format PDF")}
@@ -313,14 +360,14 @@ export default function Section2PeroranganPage() {
                   {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
                 </div>
 
-                {/* REVISI: SUB-CHECKBOX PROSES SERTIFIKAT DI DALAMNYA */}
-                <div className="border rounded-xl p-3 bg-white space-y-3 shadow-2xl">
-                  <label className="flex items-center gap-2 font-bold text-red-900 cursor-pointer text-xs">
+                {/* PROSES SERTIFIKAT */}
+                <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-[#111827] space-y-3 shadow-sm">
+                  <label className="flex items-center gap-2 font-bold text-red-900 dark:text-red-400 cursor-pointer text-xs">
                     <input type="checkbox" checked={isProsesSertifikat} onChange={(e) => setIsProsesSertifikat(e.target.checked)} className="rounded accent-red-700 w-4 h-4" />
                     Sertifikat Masih Dalam Proses Pengurusan?
                   </label>
                   {isProsesSertifikat && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1 pl-4 border-l-2 border-red-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1 pl-4 border-l-2 border-red-200 dark:border-red-900/40 animate-fadeIn">
                       {renderUploadSlot("covernote_notaris", "Covernote Notaris", "Kondisional proses")}
                       {renderUploadSlot("tanda_terima_bpn", "Tanda Terima BPN", "Kondisional proses")}
                       {renderUploadSlot("surat_perintah_setor", "Surat Perintah Setor", "Kondisional proses")}
@@ -334,14 +381,17 @@ export default function Section2PeroranganPage() {
         </div>
 
         {/* BUNDEL 2: BENTUK OBJEK & IZIN PELENGKAP */}
-        <div className="bg-white border rounded-xl p-5 space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">🏢 Kondisi Fisik Objek & Izin Pelengkap</h2>
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-file.svg" alt="Fisik Objek" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
+            Kondisi Fisik Objek & Izin Pelengkap
+          </h2>
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2">Bentuk Objek Lahan / Bangunan:</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Bentuk Objek Lahan / Bangunan:</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Ruko', 'Rumah Tinggal', 'Tanah Kosong', 'Ruang Usaha'].map((item) => (
-                <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${bentukObjek === item ? 'border-blue-950 bg-blue-50/50 text-blue-950' : 'bg-white hover:bg-gray-50'}`}>
-                  <input type="radio" name="bentukObjek" checked={bentukObjek === item} onChange={() => setBentukObjek(item)} className="accent-blue-950 w-4 h-4" />
+                <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${bentukObjek === item ? 'border-blue-950 bg-blue-50/50 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                  <input type="radio" name="bentukObjek" checked={bentukObjek === item} onChange={() => setBentukObjek(item)} className="accent-blue-950 dark:accent-blue-500 w-4 h-4" />
                   {item}
                 </label>
               ))}
@@ -349,12 +399,12 @@ export default function Section2PeroranganPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Harga Sewa Total per 5 Tahun (Rp):</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Harga Sewa Total per 5 Tahun (Rp):</label>
             <input 
               type="number" 
               value={hargaSewa} 
               onChange={(e) => setHargaSewa(e.target.value)} 
-              className="w-full border p-2 bg-white rounded-lg text-xs font-medium focus:outline-blue-950" 
+              className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" 
               placeholder="Harga Sewa Total per 5 Tahun" 
             />
           </div>
@@ -370,14 +420,17 @@ export default function Section2PeroranganPage() {
         </div>
 
         {/* BUNDEL 3: STATUS JAMINAN BANK */}
-        <div className="bg-white border rounded-xl p-5 space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">🏦 Status Penjaminan Keuangan / Finansial</h2>
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-file.svg" alt="Jaminan Bank" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
+            Status Penjaminan Keuangan / Finansial
+          </h2>
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2">Apakah Lahan/Bangunan Sedang Menjadi Jaminan Bank?</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Apakah Lahan/Bangunan Sedang Menjadi Jaminan Bank?</label>
             <div className="flex gap-4">
               {['Tidak', 'Ya'].map((opt) => (
-                <label key={opt} className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-gray-700">
-                  <input type="radio" name="isJaminan" value={opt} checked={isJaminan === opt} onChange={(e) => setIsJaminan(e.target.value)} className="w-4 h-4 accent-blue-950" />
+                <label key={opt} className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-gray-700 dark:text-gray-300">
+                  <input type="radio" name="isJaminan" value={opt} checked={isJaminan === opt} onChange={(e) => setIsJaminan(e.target.value)} className="w-4 h-4 accent-blue-950 dark:accent-blue-500" />
                   {opt}
                 </label>
               ))}
@@ -385,18 +438,18 @@ export default function Section2PeroranganPage() {
           </div>
 
           {isJaminan === 'Ya' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/15 border border-gray-200 dark:border-gray-800 animate-fadeIn">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Bank Penjamin</label>
-                <input type="text" value={namaBank} onChange={(e) => setNamaBank(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="Nama Lembaga Perbankan" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Nama Bank Penjamin</label>
+                <input type="text" value={namaBank} onChange={(e) => setNamaBank(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Lembaga Perbankan" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nomor Surat Bank</label>
-                <input type="text" value={noSuratJaminan} onChange={(e) => setNoSuratJaminan(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="No. Surat Keterangan Bank" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Nomor Surat Bank</label>
+                <input type="text" value={noSuratJaminan} onChange={(e) => setNoSuratJaminan(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="No. Surat Keterangan Bank" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Tanggal Surat Jaminan</label>
-                <input type="date" value={tanggalSuratJaminan} onChange={(e) => setTanggalSuratJaminan(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" />
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Tanggal Surat Jaminan</label>
+                <input type="date" value={tanggalSuratJaminan} onChange={(e) => setTanggalSuratJaminan(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:outline-blue-950" />
               </div>
               {renderUploadSlot("surat_persetujuan_bank", "Surat Persetujuan Resmi Bank", "Scan dokumen persetujuan agunan bank")}
             </div>
@@ -404,11 +457,14 @@ export default function Section2PeroranganPage() {
         </div>
 
         {/* BUNDEL 4: DATA TAMBAHAN KETERANGAN */}
-        <div className="bg-white border rounded-xl p-5 space-y-3 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-800">📝 Data Catatan & Pendukung Tambahan</h2>
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-file.svg" alt="Catatan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
+            Data Catatan & Pendukung Tambahan
+          </h2>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Catatan Tambahan (Textarea)</label>
-            <textarea rows={3} value={catatanLainnya} onChange={(e) => setCatatanLainnya(e.target.value)} className="w-full border p-2 text-xs rounded-lg focus:outline-blue-950 font-medium" placeholder="Tambahkan informasi pelengkap opsional di sini..." />
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Catatan Tambahan (Textarea)</label>
+            <textarea rows={3} value={catatanLainnya} onChange={(e) => setCatatanLainnya(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 text-xs rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-blue-950 font-medium" placeholder="Tambahkan informasi pelengkap opsional di sini..." />
           </div>
           <div className="pt-2">
             {renderUploadSlot("dokumen_tambahan", "Dokumen Berkas Pendukung Tambahan Lainnya", "Format berkas bebas gabungan")}
@@ -416,12 +472,12 @@ export default function Section2PeroranganPage() {
         </div>
 
         {/* PANEL TOMBOL NAVIGASI */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
             disabled={isPending}
             onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
-            className="text-xs font-bold text-gray-500 hover:text-blue-950 transition disabled:opacity-40"
+            className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition disabled:opacity-50"
           >
             Prev
           </button>
@@ -430,13 +486,62 @@ export default function Section2PeroranganPage() {
             type="button"
             disabled={isPending}
             onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`, true)}
-            className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm"
+            className="bg-blue-950 dark:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 dark:hover:bg-blue-500 transition disabled:opacity-50 shadow-sm"
           >
             {isPending ? 'Saving...' : 'Selesai'}
           </button>
         </div>
 
       </div>
+
+      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm leading-relaxed">
+              {successModalText}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-hand.svg" alt="Confirm" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              Apakah Anda yakin ingin menghapus berkas ini?
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
+              >
+                No
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={isPending}
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+              >
+                {isPending ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </span>
+                ) : (
+                  'Yes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

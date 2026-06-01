@@ -84,7 +84,7 @@ export default function Section1PeroranganPage() {
       const res = await uploadUlokFile(ulokId, docType, formData)
       if (res.success) {
         // Tampilkan Custom Toast Sukses Auto-Close
-        setSuccessModalText('Data awal usulan berhasil diperbarui!')
+        setSuccessModalText('Berkas berhasil diperbarui!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -199,16 +199,22 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  if (isLoading) return <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-50 dark:bg-[#0B0F19] min-h-screen flex items-center justify-center">Memuat Formulir Section 1...</div>
-
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-gray-400 dark:text-gray-500 italic text-sm font-medium transition-colors duration-300">
+        <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        Memuat Form Section 1...
+      </div>
+    )
+  }
   return (
     <div>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* BREADCRUMB NAVIGATION */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 mb-6 select-none">
+        <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-8 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
-            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
+            className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
             Usulan Lokasi
           </span>
@@ -235,7 +241,7 @@ export default function Section1PeroranganPage() {
         {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
-            <img src="/icons/icon-perorangan.svg" alt="Perorangan" className="w-4 h-4 object-contain" />
+            <img src="/icons/icon-perorangan.svg" alt="Perorangan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Dokumen Identitas & Pajak Dasar
           </h3>
             
@@ -288,7 +294,7 @@ export default function Section1PeroranganPage() {
         {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
-            <img src="/icons/icon-family.svg" alt="Family" className="w-4 h-4 object-contain" />
+            <img src="/icons/icon-family.svg" alt="Family" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Kartu Keluarga & Status Pernikahan
           </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,7 +320,7 @@ export default function Section1PeroranganPage() {
         {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
-            <img src="/icons/icon-nama.svg" alt="Ganti Nama" className="w-4 h-4 object-contain" />
+            <img src="/icons/icon-nama.svg" alt="Ganti Nama" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Surat Penetapan Ganti Nama (Jika Ada)
           </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -333,7 +339,7 @@ export default function Section1PeroranganPage() {
         {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
-            <img src="/icons/icon-file.svg" alt="Status Khusus" className="w-4 h-4 object-contain" />
+            <img src="/icons/icon-file.svg" alt="Status Khusus" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Status Khusus Kepemilikan Lahan
           </h3>
             <div>
@@ -386,7 +392,7 @@ export default function Section1PeroranganPage() {
           <button 
             type="button" 
             disabled={isPending}
-            onClick={() => handleNavigation('/admin/cabang/usulan-lokasi')} 
+            onClick={() => handleNavigation('/admin/cabang/usulan-lokasi/form/perorangan?id=' + ulokId)} 
             className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Back
