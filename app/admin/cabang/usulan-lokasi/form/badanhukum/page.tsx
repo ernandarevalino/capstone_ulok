@@ -20,8 +20,9 @@ export default function DetailUlokBadanHukumPage() {
   const [namaPemegang, setNamaPemegang] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   
-  // State untuk kustom modal penanda sukses simpan otomatis
+  // State untuk kustom modal penanda sukses & teksnya secara dinamis
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   // State untuk chat/komentar dari assessor
   const [comments, setComments] = useState<any[]>([])
@@ -121,7 +122,7 @@ export default function DetailUlokBadanHukumPage() {
     setIsSending(false)
   }
 
-  // Handle update perubahan data awal
+  // Handle update perubahan seluruh data via tombol submit utama
   const handleUpdateDetail = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
@@ -134,12 +135,38 @@ export default function DetailUlokBadanHukumPage() {
       })
 
       if (res.success) {
+        setSuccessMessage('Data awal usulan berhasil diperbarui!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
         }, 1500)
       } else {
         alert('Gagal memperbarui data: ' + res.error)
+      }
+    })
+  }
+
+  // Handle Khusus saat Dropdown Status Kepemilikan Berubah (Auto-Save + Custom Alert Text)
+  const handleStatusBadanChange = async (newStatus: string) => {
+    setStatusBadan(newStatus) // Update state UI dulu
+    if (!ulokId) return
+
+    startTransition(async () => {
+      // Kirim data terupdate langsung ke server action
+      const res = await updateUlokSubmission(ulokId, {
+        nama_lokasi: namaLokasi,
+        jenis_badan_hukum: newStatus,
+        nama_pemegang_hak: namaPemegang
+      })
+
+      if (res.success) {
+        setSuccessMessage('Status kepemilikan berhasil diubah!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+      } else {
+        alert('Gagal memperbarui status kepemilikan: ' + res.error)
       }
     })
   }
@@ -225,7 +252,7 @@ export default function DetailUlokBadanHukumPage() {
           </div>
         </div>
 
-        {/* 1. PANEL FORM DATA UTAMA (DIBERIKAN ID AGAR SYNCHRONOUS DENGAN HEADER BUTTON) */}
+        {/* 1. PANEL FORM DATA UTAMA */}
         <form 
           id="form-badan-hukum"
           onSubmit={handleUpdateDetail} 
@@ -268,12 +295,14 @@ export default function DetailUlokBadanHukumPage() {
               />
             </div>
 
+            {/* DROPDOWN DENGAN REALTIME AUTO-SAVE DAN TEXT ALERT DINAMIS */}
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
               <select 
                 value={statusBadan} 
-                onChange={(e) => setStatusBadan(e.target.value)}
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors"
+                onChange={(e) => handleStatusBadanChange(e.target.value)}
+                disabled={isPending}
+                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60"
                 required
               >
                 <option value="PT">PT (Perseroan Terbatas)</option>
@@ -306,7 +335,6 @@ export default function DetailUlokBadanHukumPage() {
             ) : (
               <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto pr-2 flex flex-col">
                 {comments.map((item) => {
-                  // MULTI-LEVEL LOGIC CHECK AGAR TIDAK ADA SALAH POSISI LAGI
                   const isSelf = 
                     (currentUserId && (item.profile_id === currentUserId || item.profiles?.id === currentUserId)) || 
                     (currentProfile?.id && (item.profile_id === currentProfile.id || item.profiles?.id === currentProfile.id)) ||
@@ -396,13 +424,13 @@ export default function DetailUlokBadanHukumPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* REUSABLE CUSTOM TOAST MODAL (TEXT DINAMIS) */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
             <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Data awal usulan berhasil diperbarui!
+              {successMessage}
             </p>
           </div>
         </div>

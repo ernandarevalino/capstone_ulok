@@ -7,8 +7,7 @@ import { revalidatePath } from 'next/cache'
  * Server Action untuk menghitung skor SPK SAW (Simple Additive Weighting)
  * berdasarkan kriteria C1 (Kelengkapan Dokumen), C2 (Durasi Mobilisasi), dan C3 (Harga Sewa).
  * Dan menyimpan hasilnya kembali ke database.
- * 
- * @param ulokId - ID dari usulan lokasi yang akan dihitung
+ * * @param ulokId - ID dari usulan lokasi yang akan dihitung
  */
 export async function calculateULOKSAW(ulokId: string) {
   try {
@@ -324,14 +323,10 @@ export async function calculateULOKSAW(ulokId: string) {
     let c2_score = 1
     let durasi = 0
 
-    if (submission.status === 'In Review') {
-      c2_score = 1
-      durasi = 0
-    } else if (['Approved', 'Rejected', 'Revision'].includes(submission.status)) {
-      if (submission.first_in_review_at) {
-        const tanggalAkhir = (submission.status === 'Approved' && submission.approved_at)
-          ? new Date(submission.approved_at)
-          : new Date()
+    // PERBAIKAN: Perhitungan durasi C2 SEKARANG HANYA dikunci & dihitung jika status beneran 'Approved'
+    if (submission.status === 'Approved') {
+      if (submission.first_in_review_at && submission.approved_at) {
+        const tanggalAkhir = new Date(submission.approved_at)
         const diffTime = tanggalAkhir.getTime() - new Date(submission.first_in_review_at).getTime()
         let calculatedDurasi = Math.floor(diffTime / (1000 * 60 * 60 * 24))
         if (calculatedDurasi < 1) {
@@ -343,11 +338,14 @@ export async function calculateULOKSAW(ulokId: string) {
         durasi = 0
       }
     } else {
+      // Jika statusnya 'In Review', 'Revision', 'Rejected', atau 'Draft'
+      // Nilai otomatis balik ke default (1) / reset karena perhitungan belum selesai atau diulang
       c2_score = 1
       durasi = 0
     }
 
-    if (durasi > 0) {
+    // Penentuan bobot nilai C2 berdasarkan durasi (Hanya berlaku jika status Approved)
+    if (durasi > 0 && submission.status === 'Approved') {
       if (durasi < 5) {
         c2_score = 5
       } else if (durasi >= 5 && durasi <= 12) {

@@ -248,7 +248,7 @@ export default function AdminCabangPage() {
             </span>
           </div>
 
-          <div className="p-5 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[350px]">
+          <div className="p-5 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-87.5">
             {loading ? (
               <div className="text-center py-12 text-sm text-gray-400 dark:text-slate-500">Loading aktivitas...</div>
             ) : notifications.length === 0 ? (
@@ -256,13 +256,13 @@ export default function AdminCabangPage() {
             ) : (
               notifications.map((notif, idx) => (
                 <div key={notif.id || idx} className="py-3 first:pt-0 last:pb-0 flex gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition px-1 rounded-lg">
-                  <div className="mt-1 flex-shrink-0 w-2 h-2 rounded-full bg-blue-500" />
+                  <div className="mt-1 shrink-0 w-2 h-2 rounded-full bg-blue-500" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-bold text-xs text-gray-800 dark:text-slate-200">
                         {notif.title}
                       </h4>
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-semibold flex-shrink-0">
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-semibold shrink-0">
                         {notif.created_at ? new Date(notif.created_at).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
