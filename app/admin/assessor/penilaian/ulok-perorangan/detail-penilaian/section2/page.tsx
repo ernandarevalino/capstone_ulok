@@ -168,13 +168,39 @@ export default function Section2PeroranganAssessorPage() {
     <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 select-none">
+          <span 
+            onClick={() => router.push('/admin/assessor/penilaian')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Penilaian
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Detail Usulan Perorangan
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Section 1: Identitas
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Section 2: Kelayakan</span>
+        </nav>
+
         {/* HEADER */}
         <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
           <div>
-            <h1 className="text-lg font-bold">Penilaian Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank (Assessor)</h1>
+            <h1 className="text-lg font-bold">Penilaian Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
             <p className="text-xs text-blue-200/80 mt-0.5">Peninjauan sertifikat fisik objek tanah beserta jaminan finansial perbankan di sini.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 2 dari 2 (Assessor)</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">2 / 2</span>
         </div>
 
         {/* BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN */}
@@ -203,34 +229,32 @@ export default function Section2PeroranganAssessorPage() {
           </div>
 
           {/* DETAIL SERTIFIKAT */}
-          {jenisAlasHak !== '' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 border border-gray-200">
-              <p className="text-xs font-bold text-blue-950 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak}):</p>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">No. Sertifikat</label>
-                <input type="text" readOnly value={noSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Pemegang Hak</label>
-                <input type="text" readOnly value={namaSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Luas Tanah (m²)</label>
-                <input type="number" readOnly value={luasSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-              </div>
-              
-              {jenisAlasHak !== 'Hak Milik' ? (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Masa Berlaku Sertifikat</label>
-                  <input type="date" readOnly value={masaBerlakuSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500" />
-                </div>
-              ) : <div />}
-
-              <div className="md:col-span-2 pt-2 border-t mt-1">
-                {renderUploadSlot("sertifikat_tanah", `Dokumen Scan Buku Sertifikat (${jenisAlasHak})`, "Halaman penuh buku sertifikat asli")}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 border border-gray-200">
+            <p className="text-xs font-bold text-blue-950 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak || 'Sertifikat Lahan'}):</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">No. Sertifikat</label>
+              <input type="text" readOnly value={noSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
             </div>
-          )}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Pemegang Hak</label>
+              <input type="text" readOnly value={namaSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Luas Tanah (m²)</label>
+              <input type="number" readOnly value={luasSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
+            </div>
+            
+            {jenisAlasHak !== 'Hak Milik' ? (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Masa Berlaku Sertifikat</label>
+                <input type="date" readOnly value={masaBerlakuSertifikat} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500" />
+              </div>
+            ) : <div />}
+
+            <div className="md:col-span-2 pt-2 border-t mt-1">
+              {renderUploadSlot("sertifikat_tanah", `Dokumen Scan Buku Sertifikat (${jenisAlasHak || 'Lahan'})`, "Halaman penuh buku sertifikat asli")}
+            </div>
+          </div>
 
           {/* LAINNYA */}
           <div className="border rounded-xl p-4 bg-gray-50/40 space-y-3">
@@ -239,44 +263,40 @@ export default function Section2PeroranganAssessorPage() {
               Lainnya (AJB / Girik / Surat Kelurahan)
             </label>
             
-            {isLainnya && (
-              <div className="space-y-4 pt-2 pl-6 border-l-2 border-blue-950/30">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama / Jenis Dokumen</label>
-                    <input type="text" readOnly value={namaAjbLainnya} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">No. & Luas Objek AJB</label>
-                    <input type="text" readOnly value={noAjbLainnya} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-                  </div>
-                  {renderUploadSlot("ajb_girik", "Dokumen Berkas AJB", "Format PDF scan lengkap")}
+            <div className="space-y-4 pt-2 pl-6 border-l-2 border-blue-950/30">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama / Jenis Dokumen</label>
+                  <input type="text" readOnly value={namaAjbLainnya} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {renderUploadSlot("surat_tidak_sengketa", "Surat Keterangan Tidak Sengketa TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("surat_riwayat_tanah", "Surat Keterangan Riwayat Tanah TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("surat_penguasaan_fisik", "Surat Penguasaan Fisik Bidang Tanah TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">No. & Luas Objek AJB</label>
+                  <input type="text" readOnly value={noAjbLainnya} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
                 </div>
+                {renderUploadSlot("ajb_girik", "Dokumen Berkas AJB", "Format PDF scan lengkap")}
+              </div>
 
-                {/* SUB-CHECKBOX PROSES SERTIFIKAT */}
-                <div className="border rounded-xl p-3 bg-white space-y-3 shadow-sm">
-                  <label className="flex items-center gap-2 font-bold text-red-900 cursor-not-allowed text-xs">
-                    <input type="checkbox" disabled checked={isProsesSertifikat} className="rounded accent-red-700 w-4 h-4 cursor-not-allowed" />
-                    Sertifikat Masih Dalam Proses Pengurusan?
-                  </label>
-                  {isProsesSertifikat && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1 pl-4 border-l-2 border-red-200">
-                      {renderUploadSlot("covernote_notaris", "Covernote Notaris", "Kondisional proses")}
-                      {renderUploadSlot("tanda_terima_bpn", "Tanda Terima BPN", "Kondisional proses")}
-                      {renderUploadSlot("surat_perintah_setor", "Surat Perintah Setor", "Kondisional proses")}
-                      {renderUploadSlot("bukti_pembayaran", "Bukti Pembayaran SPS", "Kondisional proses")}
-                    </div>
-                  )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {renderUploadSlot("surat_tidak_sengketa", "Surat Keterangan Tidak Sengketa TTD Lurah & Camat", "Format PDF")}
+                {renderUploadSlot("surat_riwayat_tanah", "Surat Keterangan Riwayat Tanah TTD Lurah & Camat", "Format PDF")}
+                {renderUploadSlot("surat_penguasaan_fisik", "Surat Penguasaan Fisik Bidang Tanah TTD Lurah & Camat", "Format PDF")}
+                {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
+              </div>
+
+              {/* SUB-CHECKBOX PROSES SERTIFIKAT */}
+              <div className="border rounded-xl p-3 bg-white space-y-3 shadow-sm">
+                <label className="flex items-center gap-2 font-bold text-red-900 cursor-not-allowed text-xs">
+                  <input type="checkbox" disabled checked={isProsesSertifikat} className="rounded accent-red-700 w-4 h-4 cursor-not-allowed" />
+                  Sertifikat Masih Dalam Proses Pengurusan?
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1 pl-4 border-l-2 border-red-200">
+                  {renderUploadSlot("covernote_notaris", "Covernote Notaris", "Kondisional proses")}
+                  {renderUploadSlot("tanda_terima_bpn", "Tanda Terima BPN", "Kondisional proses")}
+                  {renderUploadSlot("surat_perintah_setor", "Surat Perintah Setor", "Kondisional proses")}
+                  {renderUploadSlot("bukti_pembayaran", "Bukti Pembayaran SPS", "Kondisional proses")}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -345,23 +365,21 @@ export default function Section2PeroranganAssessorPage() {
             </div>
           </div>
 
-          {isJaminan === 'Ya' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Bank Penjamin</label>
-                <input type="text" readOnly value={namaBank} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nomor Surat Bank</label>
-                <input type="text" readOnly value={noSuratJaminan} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Tanggal Surat Jaminan</label>
-                <input type="date" readOnly value={tanggalSuratJaminan} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500" />
-              </div>
-              {renderUploadSlot("surat_persetujuan_bank", "Surat Persetujuan Resmi Bank", "Scan dokumen persetujuan agunan bank")}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Bank Penjamin</label>
+              <input type="text" readOnly value={namaBank} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
             </div>
-          )}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nomor Surat Bank</label>
+              <input type="text" readOnly value={noSuratJaminan} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Tanggal Surat Jaminan</label>
+              <input type="date" readOnly value={tanggalSuratJaminan} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500" />
+            </div>
+            {renderUploadSlot("surat_persetujuan_bank", "Surat Persetujuan Resmi Bank", "Scan dokumen persetujuan agunan bank")}
+          </div>
         </div>
 
         {/* BUNDEL 4: DATA TAMBAHAN KETERANGAN */}
@@ -385,14 +403,14 @@ export default function Section2PeroranganAssessorPage() {
           </div>
         </div>
 
-        {/* NAVIGASI TOMBOL FOOTER */}
+        {/* PANEL TOMBOL NAVIGASI */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
           <button 
             type="button" 
             onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}`)} 
             className="text-xs font-bold text-gray-500 hover:text-blue-950 transition"
           >
-            ← Kembali ke Section 1
+            Prev
           </button>
           
           <button 
@@ -400,7 +418,7 @@ export default function Section2PeroranganAssessorPage() {
             onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)}
             className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm"
           >
-            Kembali ke Chat Penilaian
+            Selesai
           </button>
         </div>
 

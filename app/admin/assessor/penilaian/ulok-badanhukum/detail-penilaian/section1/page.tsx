@@ -143,13 +143,32 @@ export default function Section1BadanHukumAssessorPage() {
     <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 select-none">
+          <span 
+            onClick={() => router.push('/admin/assessor/penilaian')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Penilaian
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Detail Usulan Badan Hukum
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Section 1: Legalitas</span>
+        </nav>
+
         {/* HEADER */}
         <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 1: Legalitas Instansi & Berkas Manajemen Badan Hukum</h1>
             <p className="text-xs text-blue-200/80 mt-0.5">Peninjauan berkas otentik pendirian instansi, perizinan berusaha, perpajakan, dan dokumen direksi.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 1 dari 2 (Assessor)</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">1 / 2</span>
         </div>
 
         {/* BUNDEL 1: BERKAS UTAMA WAJIB */}
@@ -197,11 +216,9 @@ export default function Section1BadanHukumAssessorPage() {
                 </label>
               ))}
             </div>
-            <div className="pt-3 border-t mt-2">
-              {statusPajak === 'PKP' 
-                ? renderUploadSlot("sppkp", "Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)", "Format PDF scan resmi")
-                : renderUploadSlot("surat_pernyataan_nonpkp", "Surat Pernyataan Non-PKP", "Surat pernyataan resmi bermeterai")
-              }
+            <div className="pt-3 border-t mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {renderUploadSlot("sppkp", "Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)", "Format PDF scan resmi")}
+              {renderUploadSlot("surat_pernyataan_nonpkp", "Surat Pernyataan Non-PKP", "Surat pernyataan resmi bermeterai")}
             </div>
           </div>
 
@@ -211,11 +228,9 @@ export default function Section1BadanHukumAssessorPage() {
               <input type="checkbox" disabled checked={isDikuasakan} onChange={() => {}} className="rounded accent-blue-950 w-4 h-4 cursor-not-allowed" />
               Apakah Proses Pengurusan Berkas Dikuasakan?
             </label>
-            {isDikuasakan && (
-              <div className="pt-1 pl-6 border-l-2 border-blue-950/30">
-                {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi (Jika Dikuasakan)", "Berkas Surat Kuasa resmi")}
-              </div>
-            )}
+            <div className="pt-1 pl-6 border-l-2 border-blue-950/30">
+              {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi (Jika Dikuasakan)", "Berkas Surat Kuasa resmi")}
+            </div>
           </div>
         </div>
 
@@ -240,13 +255,13 @@ export default function Section1BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* FOOTER NAVIGATION */}
+        {/* PANEL TOMBOL NAVIGASI */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
           <button type="button" onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}`)} className="text-xs font-bold text-gray-500 hover:text-blue-950 transition">
-            ← Kembali ke Chat Penilaian
+            Back
           </button>
           <button type="button" onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2?id=${ulokId}`)} className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm">
-            Lanjut Ke Section 2 →
+            Next
           </button>
         </div>
 

@@ -12,7 +12,7 @@ import FooterGlobal from '@/components/footer_global';
  */
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50 transition-colors duration-300">
       {/* 1. Komponen Navigasi Desktop Super Admin (Aktif pada resolusi PC/Tablet) */}
       <HeaderDesktop />
 

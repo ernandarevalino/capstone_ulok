@@ -29,6 +29,11 @@ export default function Section1PeroranganPage() {
   // State Berkas Terupload
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
+  // State Custom Toast / Modal UI
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successModalText, setSuccessModalText] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
+
   const loadDataDanDokumen = async () => {
     if (!ulokId) return
     setIsLoading(true)
@@ -78,7 +83,13 @@ export default function Section1PeroranganPage() {
     startTransition(async () => {
       const res = await uploadUlokFile(ulokId, docType, formData)
       if (res.success) {
-        alert(`Berhasil mengunggah dokumen!`)
+        // Tampilkan Custom Toast Sukses Auto-Close
+        setSuccessModalText('Data awal usulan berhasil diperbarui!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+
         // Refresh status berkas
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
@@ -88,20 +99,28 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  // Proses Hapus Berkas Inline
-  const handleFileDelete = async (docId: string, fileUrl: string) => {
-    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus berkas ini?")
-    if (!confirmDelete) return
+  // Proses Eksekusi Hapus Berkas dari Modal Konfirmasi
+  const executeDelete = async () => {
+    if (!deleteTarget) return
 
     startTransition(async () => {
-      const res = await deleteUlokFile(docId, fileUrl)
+      const res = await deleteUlokFile(deleteTarget.id, deleteTarget.url)
       if (res.success) {
-        alert("Berkas berhasil dihapus!")
+        setDeleteTarget(null)
+        
+        // Tampilkan Custom Toast Sukses Hapus Auto-Close
+        setSuccessModalText('Berkas berhasil dihapus!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+
         // Refresh status berkas
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
         alert("Gagal menghapus berkas: " + res.error)
+        setDeleteTarget(null)
       }
     })
   }
@@ -110,17 +129,34 @@ export default function Section1PeroranganPage() {
   const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
     const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
     return (
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between gap-2 hover:border-blue-950/30 transition">
+      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
         <div>
-          <span className="font-bold text-gray-700 text-[11px] block">{label}</span>
-          <p className="text-[10px] text-gray-400">{subLabel}</p>
+          <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
         </div>
         {existingFile ? (
-          <div className="flex items-center justify-between gap-1 bg-emerald-50 p-1.5 rounded border border-emerald-200">
-            <span className="text-[10px] text-emerald-700 font-bold truncate max-w-30">📄 Tersimpan</span>
-            <div className="flex gap-1">
-              <a href={existingFile.file_url} target="_blank" rel="noreferrer" className="bg-blue-950 text-white px-2 py-0.5 rounded text-[9px] font-bold transition hover:bg-blue-900">View</a>
-              <button type="button" onClick={() => handleFileDelete(existingFile.id, existingFile.file_url)} className="bg-red-600 text-white px-2 py-0.5 rounded text-[9px] font-bold transition hover:bg-red-700">Delete</button>
+          <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
+            <div className="flex gap-1.5 items-center">
+              {/* View Icon Button */}
+              <a 
+                href={existingFile.file_url} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
+                title="View File"
+              >
+                <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+              </a>
+              {/* Delete Icon Button */}
+              <button 
+                type="button" 
+                onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
+                title="Delete File"
+              >
+                <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
+              </button>
             </div>
           </div>
         ) : (
@@ -131,7 +167,7 @@ export default function Section1PeroranganPage() {
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
             }}
-            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 file:cursor-pointer w-full text-gray-400" 
+            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
           />
         )}
       </div>
@@ -143,7 +179,7 @@ export default function Section1PeroranganPage() {
     if (!ulokId) return
     startTransition(async () => {
       const payload = {
-        jenis_badan_hukum: statusKepemilikan, // Menyimpan status pilihan ke kolom jenis_badan_hukum
+        jenis_badan_hukum: statusKepemilikan,
         nama_pemegang_hak: namaPemegang,
         nik_pemilik: nik,
         nama_kitas: namaKitas,
@@ -163,42 +199,61 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  if (isLoading) return <div className="p-8 text-center text-sm text-gray-500 font-medium">Memuat Formulir Section 1...</div>
+  if (isLoading) return <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-50 dark:bg-[#0B0F19] min-h-screen flex items-center justify-center">Memuat Formulir Section 1...</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl border shadow-sm overflow-hidden">
-        
+    <div>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 mb-6 select-none">
+          <span 
+            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
+            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
+          >
+            Usulan Lokasi
+          </span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          <span 
+            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
+          >
+            Form Perorangan
+          </span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          <span className="text-gray-800 dark:text-gray-100 font-bold">Section 1: Identitas</span>
+        </nav>
+
         {/* HEADER SECTION */}
-        <div className="bg-blue-950 text-white p-6 flex justify-between items-center">
+        <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Section 1: Identitas Pemilik & Status Kepemilikan</h1>
-            <p className="text-xs text-blue-200/80 mt-0.5">Seluruh inputan teks akan disimpan otomatis saat Anda klik tombol 'Selanjutnya'.</p>
+            <p className="text-xs text-blue-200/80 dark:text-gray-400 mt-0.5">Seluruh inputan teks akan disimpan otomatis saat Anda klik tombol 'Next'.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 1 dari 2</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>
 
-        <div className="p-6 space-y-6 text-sm">
-          
-          {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
-          <div className="space-y-4 border-b pb-5">
-            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">🪪 Dokumen Identitas & Pajak Dasar</h3>
+        {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-perorangan.svg" alt="Perorangan" className="w-4 h-4 object-contain" />
+            Dokumen Identitas & Pajak Dasar
+          </h3>
             
             {/* Checkbox E-KTP */}
-            <div className="border rounded-xl p-4 bg-gray-50/30 space-y-3">
-              <label className="flex items-center gap-2 font-bold text-gray-700 cursor-pointer text-xs">
-                <input type="checkbox" checked={hasEktp} onChange={(e) => setHasEktp(e.target.checked)} className="rounded accent-blue-950 w-4 h-4" />
+            <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
+              <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
+                <input type="checkbox" checked={hasEktp} onChange={(e) => setHasEktp(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
                 Dokumen E-KTP Pemilik
               </label>
               {hasEktp && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30 dark:border-gray-700">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama Lengkap Sesuai KTP</label>
-                    <input type="text" value={namaPemegang} onChange={(e) => setNamaPemegang(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="Nama Lengkap" />
+                    <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Lengkap Sesuai KTP</label>
+                    <input type="text" value={namaPemegang} onChange={(e) => setNamaPemegang(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Lengkap" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">NIK Pemilik (16 Digit)</label>
-                    <input type="text" maxLength={16} value={nik} onChange={(e) => setNik(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="Masukkan NIK" />
+                    <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">NIK Pemilik (16 Digit)</label>
+                    <input type="text" maxLength={16} value={nik} onChange={(e) => setNik(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Masukkan NIK" />
                   </div>
                   {renderUploadSlot("ktp_pemilik", "File Scan E-KTP", "Format PDF/JPG, Maksimal 2MB")}
                 </div>
@@ -206,16 +261,16 @@ export default function Section1PeroranganPage() {
             </div>
 
             {/* Checkbox KITAS/KITAP */}
-            <div className="border rounded-xl p-4 bg-gray-50/30 space-y-3">
-              <label className="flex items-center gap-2 font-bold text-gray-700 cursor-pointer text-xs">
-                <input type="checkbox" checked={hasKitas} onChange={(e) => setHasKitas(e.target.checked)} className="rounded accent-blue-950 w-4 h-4" />
+            <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
+              <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
+                <input type="checkbox" checked={hasKitas} onChange={(e) => setHasKitas(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
                 KITAS / KITAP (Khusus WNA)
               </label>
               {hasKitas && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30 dark:border-gray-700">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama Sesuai Paspor / KITAS</label>
-                    <input type="text" value={namaKitas} onChange={(e) => setNamaKitas(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="Nama Sesuai Paspor" />
+                    <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Sesuai Paspor / KITAS</label>
+                    <input type="text" value={namaKitas} onChange={(e) => setNamaKitas(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Sesuai Paspor" />
                   </div>
                   {renderUploadSlot("kitas_kitap", "File Scan KITAS / KITAP", "Format PDF, Maksimal 2MB")}
                 </div>
@@ -230,19 +285,22 @@ export default function Section1PeroranganPage() {
             </div>
           </div>
 
-          {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
-          <div className="space-y-4 border-b pb-5">
-            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">👨‍👩‍👧‍👦 Kartu Keluarga & Status Pernikahan</h3>
+        {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-family.svg" alt="Family" className="w-4 h-4 object-contain" />
+            Kartu Keluarga & Status Pernikahan
+          </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-500">No. Kartu Keluarga (KK)</label>
-                <input type="text" value={noKK} onChange={(e) => setNoKK(e.target.value)} className="w-full border p-2 rounded-lg text-xs" placeholder="Nomor KK 16 Digit" />
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">No. Kartu Keluarga (KK)</label>
+                <input type="text" value={noKK} onChange={(e) => setNoKK(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor KK 16 Digit" />
               </div>
               {renderUploadSlot("kartu_keluarga", "File Scan Kartu Keluarga", "Format PDF")}
               
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-500">No. Buku Nikah / Akta Perkawinan</label>
-                <input type="text" value={noBukuNikah} onChange={(e) => setNoBukuNikah(e.target.value)} className="w-full border p-2 rounded-lg text-xs" placeholder="Nomor Buku Nikah" />
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">No. Buku Nikah / Akta Perkawinan</label>
+                <input type="text" value={noBukuNikah} onChange={(e) => setNoBukuNikah(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor Buku Nikah" />
               </div>
               {renderUploadSlot("buku_nikah", "File Scan Buku Nikah", "Format PDF")}
             </div>
@@ -253,31 +311,37 @@ export default function Section1PeroranganPage() {
             </div>
           </div>
 
-          {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
-          <div className="space-y-4 border-b pb-5 bg-gray-50/50 p-4 rounded-xl border">
-            <h3 className="font-bold text-xs uppercase text-gray-500">🔄 Surat Penetapan Ganti Nama (Jika Ada)</h3>
+        {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-nama.svg" alt="Ganti Nama" className="w-4 h-4 object-contain" />
+            Surat Penetapan Ganti Nama (Jika Ada)
+          </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama Sebelum Ganti</label>
-                <input type="text" value={namaSebelumGanti} onChange={(e) => setNamaSebelumGanti(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Nama Lama" />
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Sebelum Ganti</label>
+                <input type="text" value={namaSebelumGanti} onChange={(e) => setNamaSebelumGanti(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Lama" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 mb-1">Nama Sesudah Ganti</label>
-                <input type="text" value={namaSesudahGanti} onChange={(e) => setNamaSesudahGanti(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs" placeholder="Nama Baru" />
+                <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Sesudah Ganti</label>
+                <input type="text" value={namaSesudahGanti} onChange={(e) => setNamaSesudahGanti(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Baru" />
               </div>
               {renderUploadSlot("dokumen_ganti_nama", "Dokumen Penetapan Resmi", "Format PDF")}
             </div>
           </div>
 
-          {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">👑 Status Khusus Kepemilikan Lahan</h3>
+        {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+            <img src="/icons/icon-file.svg" alt="Status Khusus" className="w-4 h-4 object-contain" />
+            Status Khusus Kepemilikan Lahan
+          </h3>
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-2">Pilihan Hubungan Status Kepemilikan:</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Pilihan Hubungan Status Kepemilikan:</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {['Perorangan', 'Kuasa', 'Waris', 'Hibah'].map((item) => (
-                  <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${statusKepemilikan === item ? 'border-blue-950 bg-blue-50/50 text-blue-950' : 'bg-white hover:bg-gray-50'}`}>
-                    <input type="radio" name="statusKepemilikan" checked={statusKepemilikan === item} onChange={() => setStatusKepemilikan(item)} className="accent-blue-950 w-4 h-4" />
+                  <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-pointer transition font-bold text-xs ${statusKepemilikan === item ? 'border-blue-950 bg-blue-50/50 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                    <input type="radio" name="statusKepemilikan" checked={statusKepemilikan === item} onChange={() => setStatusKepemilikan(item)} className="accent-blue-950 dark:accent-blue-500 w-4 h-4" />
                     {item === 'Perorangan' ? 'Pemilik Langsung' : item}
                   </label>
                 ))}
@@ -286,15 +350,15 @@ export default function Section1PeroranganPage() {
 
             {/* DOKUMEN KONDISIOAL STATUS KEPEMILIKAN */}
             {statusKepemilikan === 'Kuasa' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/40 p-4 rounded-xl border border-amber-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/40 dark:bg-amber-950/10 p-4 rounded-xl border border-amber-200 dark:border-amber-900/40 animate-fadeIn">
                 {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi", "Scan dokumen kuasa resmi")}
                 {renderUploadSlot("ktp_kuasa", "KTP Penerima Kuasa", "Scan identitas penerima kuasa")}
               </div>
             )}
 
             {statusKepemilikan === 'Waris' && (
-              <div className="bg-red-50/30 p-4 rounded-xl border border-red-100 space-y-4">
-                <p className="text-xs font-bold text-red-800 uppercase tracking-wider">⚠️ Berkas Tambahan Khusus Ahli Waris:</p>
+              <div className="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100 dark:border-red-900/40 space-y-4 animate-fadeIn">
+                <p className="text-xs font-bold text-red-800 dark:text-red-400 uppercase tracking-wider">⚠️ Berkas Tambahan Khusus Ahli Waris:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {renderUploadSlot("akta_waris", "Akta Waris / SK Waris Resmi", "Scan seluruh lembar ket. waris")}
                   {renderUploadSlot("ktp_ahli_waris", "KTP Ahli Waris", "Format PDF/JPG")}
@@ -302,8 +366,8 @@ export default function Section1PeroranganPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">No. Surat Keterangan Kematian</label>
-                    <input type="text" value={noSuratKematian} onChange={(e) => setNoSuratKematian(e.target.value)} className="w-full border p-2 bg-white rounded-lg text-xs font-medium" placeholder="Nomor Surat Kematian" />
+                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">No. Surat Keterangan Kematian</label>
+                    <input type="text" value={noSuratKematian} onChange={(e) => setNoSuratKematian(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor Surat Kematian" />
                   </div>
                   {renderUploadSlot("surat_kematian", "Scan Berkas Surat Kematian Asli", "Format PDF")}
                 </div>
@@ -311,33 +375,82 @@ export default function Section1PeroranganPage() {
             )}
 
             {statusKepemilikan === 'Hibah' && (
-              <div className="bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
+              <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-4 rounded-3xl animate-fadeIn">
                 {renderUploadSlot("akta_hibah", "Akta Hibah Resmi", "Scan berkas akta hibah notariil/PPAT")}
               </div>
             )}
           </div>
 
-          {/* PANEL TOMBOL NAVIGASI */}
-          <div className="flex justify-end gap-3 border-t pt-5 mt-4">
-            <button 
-              type="button" 
-              onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`)} 
-              className="px-5 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition"
-            >
-              ← Kembali ke Detail
-            </button>
-            <button 
-              type="button" 
-              disabled={isPending}
-              onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/perorangan/section2?id=${ulokId}`)} 
-              className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition disabled:opacity-50"
-            >
-              {isPending ? 'Menyimpan...' : 'Selanjutnya: Data Lahan & Perizinan →'}
-            </button>
-          </div>
-
+        {/* PANEL TOMBOL NAVIGASI */}
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <button 
+            type="button" 
+            disabled={isPending}
+            onClick={() => handleNavigation('/admin/cabang/usulan-lokasi')} 
+            className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition"
+          >
+            Back
+          </button>
+          <button 
+            type="button" 
+            disabled={isPending}
+            onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/perorangan/section2?id=${ulokId}`)} 
+            className="bg-blue-950 dark:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 dark:hover:bg-blue-500 transition disabled:opacity-50"
+          >
+            {isPending ? 'Saving...' : 'Next'}
+          </button>
         </div>
+
       </div>
+
+      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              {successModalText}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-hand.svg" alt="Confirm" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              Apakah Anda yakin ingin menghapus berkas ini?
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
+              >
+                No
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={isPending}
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+              >
+                {isPending ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </span>
+                ) : (
+                  'Yes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

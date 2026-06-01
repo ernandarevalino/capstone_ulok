@@ -147,23 +147,40 @@ export default function Section1PeroranganAssessorPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl border shadow-sm overflow-hidden">
+      <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 select-none">
+          <span 
+            onClick={() => router.push('/admin/assessor/penilaian')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Penilaian
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Detail Usulan Perorangan
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Section 1: Identitas</span>
+        </nav>
+
         {/* HEADER SECTION */}
-        <div className="bg-blue-950 text-white p-6 flex justify-between items-center">
+        <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
           <div>
-            <h1 className="text-lg font-bold">Penilaian Section 1: Identitas Pemilik & Status Kepemilikan (Assessor)</h1>
+            <h1 className="text-lg font-bold">Penilaian Section 1: Identitas Pemilik & Status Kepemilikan</h1>
             <p className="text-xs text-blue-200/80 mt-0.5">Peninjauan isian identitas, kartu keluarga, surat keterangan perorangan.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 1 dari 2 (Assessor)</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">1 / 2</span>
         </div>
 
-        <div className="p-6 space-y-6 text-sm">
-          
-          {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
-          <div className="space-y-4 border-b pb-5">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">🪪 Dokumen Identitas & Pajak Dasar</h3>
+        {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
+        <div className="bg-white border rounded-xl p-5 space-y-5 shadow-sm">
+          <div className="flex justify-between items-center pb-2 border-b">
+            <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">🪪 Dokumen Identitas & Pajak Dasar</h3>
               <button
                 type="button"
                 onClick={() => handleReplyGroup("Dokumen Identitas & Pajak Dasar")}
@@ -179,19 +196,17 @@ export default function Section1PeroranganAssessorPage() {
                 <input type="checkbox" disabled checked={hasEktp} className="rounded accent-blue-950 w-4 h-4 cursor-not-allowed" />
                 Dokumen E-KTP Pemilik
               </label>
-              {hasEktp && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-400 mb-1">Nama Lengkap Sesuai KTP</label>
-                    <input type="text" readOnly value={namaPemegang} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-400 mb-1">NIK Pemilik (16 Digit)</label>
-                    <input type="text" readOnly value={nik} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-                  </div>
-                  {renderUploadSlot("ktp_pemilik", "File Scan E-KTP", "Format PDF/JPG, Maksimal 2MB")}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Nama Lengkap Sesuai KTP</label>
+                  <input type="text" readOnly value={namaPemegang} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
                 </div>
-              )}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">NIK Pemilik (16 Digit)</label>
+                  <input type="text" readOnly value={nik} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
+                </div>
+                {renderUploadSlot("ktp_pemilik", "File Scan E-KTP", "Format PDF/JPG, Maksimal 2MB")}
+              </div>
             </div>
 
             {/* Checkbox KITAS/KITAP */}
@@ -200,15 +215,13 @@ export default function Section1PeroranganAssessorPage() {
                 <input type="checkbox" disabled checked={hasKitas} className="rounded accent-blue-950 w-4 h-4 cursor-not-allowed" />
                 KITAS / KITAP (Khusus WNA)
               </label>
-              {hasKitas && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-400 mb-1">Nama Sesuai Paspor / KITAS</label>
-                    <input type="text" readOnly value={namaKitas} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
-                  </div>
-                  {renderUploadSlot("kitas_kitap", "File Scan KITAS / KITAP", "Format PDF, Maksimal 2MB")}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 pl-6 border-l-2 border-blue-950/30">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Nama Sesuai Paspor / KITAS</label>
+                  <input type="text" readOnly value={namaKitas} className="w-full border p-2 bg-gray-100 rounded-lg text-xs cursor-not-allowed outline-none text-gray-500 font-medium" />
                 </div>
-              )}
+                {renderUploadSlot("kitas_kitap", "File Scan KITAS / KITAP", "Format PDF, Maksimal 2MB")}
+              </div>
             </div>
 
             {/* Dokumen Pajak */}
@@ -219,10 +232,10 @@ export default function Section1PeroranganAssessorPage() {
             </div>
           </div>
 
-          {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
-          <div className="space-y-4 border-b pb-5">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">👨‍👩‍👧‍👦 Kartu Keluarga & Status Pernikahan</h3>
+        {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
+        <div className="bg-white border rounded-xl p-5 space-y-5 shadow-sm">
+          <div className="flex justify-between items-center pb-2 border-b">
+            <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">👨‍👩‍👧‍👦 Kartu Keluarga & Status Pernikahan</h3>
               <button
                 type="button"
                 onClick={() => handleReplyGroup("Kartu Keluarga & Status Pernikahan")}
@@ -251,10 +264,10 @@ export default function Section1PeroranganAssessorPage() {
             </div>
           </div>
 
-          {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
-          <div className="space-y-4 border-b pb-5 bg-gray-50/50 p-4 rounded-xl border">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <h3 className="font-bold text-xs uppercase text-gray-500">🔄 Surat Penetapan Ganti Nama (Jika Ada)</h3>
+        {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
+        <div className="bg-white border rounded-xl p-5 space-y-5 shadow-sm">
+          <div className="flex justify-between items-center pb-2 border-b">
+            <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">🔄 Surat Penetapan Ganti Nama (Jika Ada)</h3>
               <button
                 type="button"
                 onClick={() => handleReplyGroup("Surat Penetapan Ganti Nama")}
@@ -276,10 +289,10 @@ export default function Section1PeroranganAssessorPage() {
             </div>
           </div>
 
-          {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">👑 Status Khusus Kepemilikan Lahan</h3>
+        {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
+        <div className="bg-white border rounded-xl p-5 space-y-5 shadow-sm">
+          <div className="flex justify-between items-center pb-2 border-b">
+            <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">👑 Status Khusus Kepemilikan Lahan</h3>
               <button
                 type="button"
                 onClick={() => handleReplyGroup("Status Khusus Kepemilikan Lahan")}
@@ -300,17 +313,16 @@ export default function Section1PeroranganAssessorPage() {
               </div>
             </div>
 
-            {/* DOKUMEN KONDISIOAL STATUS KEPEMILIKAN */}
-            {statusKepemilikan === 'Kuasa' && (
+            {/* DOKUMEN STATUS KEPEMILIKAN (SELALU DI-RENDER BERURUTAN) */}
+            <div className="space-y-4 pt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/40 p-4 rounded-xl border border-amber-200">
+                <p className="text-xs font-bold text-amber-800 md:col-span-2 uppercase tracking-wider">⚠️ Berkas Pelimpahan Kuasa (Kuasa):</p>
                 {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi", "Scan dokumen kuasa resmi")}
                 {renderUploadSlot("ktp_kuasa", "KTP Penerima Kuasa", "Scan identitas penerima kuasa")}
               </div>
-            )}
 
-            {statusKepemilikan === 'Waris' && (
               <div className="bg-red-50/30 p-4 rounded-xl border border-red-100 space-y-4">
-                <p className="text-xs font-bold text-red-800 uppercase tracking-wider">⚠️ Berkas Tambahan Ahli Waris:</p>
+                <p className="text-xs font-bold text-red-800 uppercase tracking-wider">⚠️ Berkas Tambahan Ahli Waris (Waris):</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {renderUploadSlot("akta_waris", "Akta Waris / SK Waris Resmi", "Scan seluruh lembar ket. waris")}
                   {renderUploadSlot("ktp_ahli_waris", "KTP Ahli Waris", "Format PDF/JPG")}
@@ -324,34 +336,32 @@ export default function Section1PeroranganAssessorPage() {
                   {renderUploadSlot("surat_kematian", "Scan Berkas Surat Kematian Asli", "Format PDF")}
                 </div>
               </div>
-            )}
 
-            {statusKepemilikan === 'Hibah' && (
               <div className="bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
+                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-3">⚠️ Berkas Penerimaan Hibah (Hibah):</p>
                 {renderUploadSlot("akta_hibah", "Akta Hibah Resmi", "Scan berkas akta hibah notariil/PPAT")}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* PANEL TOMBOL NAVIGASI */}
-          <div className="flex justify-between items-center border-t pt-5 mt-4">
-            <button 
-              type="button" 
-              onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)} 
-              className="text-xs font-bold text-gray-500 hover:text-blue-950 transition"
-            >
-              ← Kembali ke Chat Penilaian
-            </button>
-            <button 
-              type="button" 
-              onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section2?id=${ulokId}`)} 
-              className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition"
-            >
-              Lanjut ke Section 2 →
-            </button>
-          </div>
-
+        {/* PANEL TOMBOL NAVIGASI */}
+        <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
+          <button 
+            type="button" 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)} 
+            className="text-xs font-bold text-gray-500 hover:text-blue-950 transition"
+          >
+            Back
+          </button>
+          <button 
+            type="button" 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section2?id=${ulokId}`)} 
+            className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition"
+          >
+            Next
+          </button>
         </div>
+
       </div>
     </div>
   )

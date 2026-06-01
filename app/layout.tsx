@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { FloatingControls } from "@/components/floating-controls";
 
 // Inisialisasi konfigurasi font tipe Sans-Serif menggunakan paket library Google Fonts
 const geistSans = Geist({
@@ -41,9 +43,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full bg-gray-100 text-gray-900 flex flex-col">
-        {children}
+      <body className="min-h-full bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-50 flex flex-col transition-colors duration-300">
+        <ThemeProvider>
+          {children}
+          <FloatingControls />
+        </ThemeProvider>
       </body>
     </html>
   );

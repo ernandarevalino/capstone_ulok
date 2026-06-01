@@ -79,7 +79,7 @@ export default function Section2BadanHukumPage() {
   const handleFinalSave = async (targetUrl: string, isSubmit = false) => {
     if (!ulokId) return
     startTransition(async () => {
-      const payload = {
+      const payload: any = {
         jenis_alas_hak: jenisAlasHak,
         no_sertifikat_alas_hak: noSertifikat,
         nama_sertifikat_alas_hak: namaSertifikat,
@@ -93,8 +93,11 @@ export default function Section2BadanHukumPage() {
         jaminan_bank_nama: isJaminan === 'Ya' ? namaBank : null,
         jaminan_bank_no_surat: isJaminan === 'Ya' ? noSuratJaminan : null,
         jaminan_bank_tanggal: isJaminan === 'Ya' ? tanggalSuratJaminan : null,
-        data_pribadi_tambahan: catatanLainnya,
-        status: isSubmit ? 'In Review' : 'Draft'
+        data_pribadi_tambahan: catatanLainnya
+      }
+
+      if (isSubmit) {
+        payload.status = 'In Review'
       }
 
       const res = await updateUlokSubmission(ulokId, payload)
@@ -175,13 +178,39 @@ export default function Section2BadanHukumPage() {
     <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1 select-none">
+          <span 
+            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Usulan Lokasi
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Form Badan Hukum
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum/section1?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Section 1: Legalitas
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Section 2: Kelayakan</span>
+        </nav>
+
         {/* HEADER */}
         <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
           <div>
             <h1 className="text-lg font-bold">Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
             <p className="text-xs text-blue-200/80 mt-0.5">Lengkapi sertifikat fisik objek tanah beserta jaminan finansial perbankan di sini.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 2 dari 2</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">2 / 2</span>
         </div>
 
         {/* BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN */}
@@ -361,7 +390,7 @@ export default function Section2BadanHukumPage() {
           </div>
         </div>
 
-        {/* NAVIGASI TOMBOL FOOTER */}
+        {/* PANEL TOMBOL NAVIGASI */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
           <button 
             type="button" 
@@ -369,7 +398,7 @@ export default function Section2BadanHukumPage() {
             onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/badanhukum/section1?id=${ulokId}`)} 
             className="text-xs font-bold text-gray-500 hover:text-blue-950 transition disabled:opacity-40"
           >
-            ← Kembali & Edit Section 1
+            Prev
           </button>
           
           <button 
@@ -378,7 +407,7 @@ export default function Section2BadanHukumPage() {
             onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi`, true)}
             className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm"
           >
-            {isPending ? 'Menyimpan Form...' : '💾 Selesai & Kirim Usulan'}
+            {isPending ? 'Saving...' : 'Selesai'}
           </button>
         </div>
 

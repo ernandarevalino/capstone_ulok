@@ -46,12 +46,21 @@ export default function Section1BadanHukumPage() {
     initLoad()
   }, [ulokId])
 
+  const handleSaveAndBack = async () => {
+    if (!ulokId) {
+      router.push('/admin/cabang/usulan-lokasi')
+      return
+    }
+    startTransition(async () => {
+      const res = await updateUlokSubmission(ulokId, {})
+      router.push('/admin/cabang/usulan-lokasi')
+    })
+  }
+
   const handleSaveAndNext = async () => {
     if (!ulokId) return
     startTransition(async () => {
-      const res = await updateUlokSubmission(ulokId, {
-        status: 'Draft' // Menjaga status tetap Draft selama proses pengisian
-      })
+      const res = await updateUlokSubmission(ulokId, {})
       if (res.success) {
         router.push(`/admin/cabang/usulan-lokasi/form/badanhukum/section2?id=${ulokId}`)
       } else {
@@ -130,13 +139,32 @@ export default function Section1BadanHukumPage() {
     <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-6 select-none">
+          <span 
+            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Usulan Lokasi
+          </span>
+          <span className="text-gray-300">/</span>
+          <span 
+            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}`)} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Form Badan Hukum
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Section 1: Legalitas</span>
+        </nav>
+
         {/* HEADER */}
         <div className="bg-blue-950 text-white p-6 rounded-xl flex justify-between items-center shadow-sm">
           <div>
             <h1 className="text-lg font-bold">Section 1: Legalitas Instansi & Berkas Manajemen Badan Hukum</h1>
             <p className="text-xs text-blue-200/80 mt-0.5">Unggah berkas otentik pendirian instansi, perizinan berusaha, perpajakan, dan dokumen direksi.</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">Langkah 1 dari 2</span>
+          <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">1 / 2</span>
         </div>
 
         {/* BUNDEL 1: BERKAS UTAMA WAJIB */}
@@ -200,13 +228,13 @@ export default function Section1BadanHukumPage() {
           </div>
         </div>
 
-        {/* FOOTER NAVIGATION */}
+        {/* PANEL TOMBOL NAVIGASI */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
-          <button type="button" onClick={() => router.push('/admin/cabang/usulan-lokasi')} className="text-xs font-bold text-gray-500 hover:text-blue-950 transition">
-            ✕ Batalkan
+          <button type="button" disabled={isPending} onClick={handleSaveAndBack} className="text-xs font-bold text-gray-500 hover:text-blue-950 transition">
+            Back
           </button>
           <button type="button" disabled={isPending} onClick={handleSaveAndNext} className="bg-blue-950 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm">
-            {isPending ? 'Menyimpan...' : 'Simpan & Lanjut Ke Section 2 →'}
+            {isPending ? 'Saving...' : 'Next'}
           </button>
         </div>
 

@@ -156,6 +156,18 @@ export default function DetailPenilaianBadanHukumPage() {
     <div className="min-h-screen bg-gray-50 p-8 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* BREADCRUMB NAVIGATION */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 select-none">
+          <span 
+            onClick={() => router.push('/admin/assessor/penilaian')} 
+            className="cursor-pointer hover:text-blue-950 transition"
+          >
+            Penilaian
+          </span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-bold">Detail Usulan Badan Hukum</span>
+        </nav>
+
         {/* HEADER & NAVIGASI BALIK */}
         <div className="flex items-center justify-between border-b pb-4">
           <div className="flex items-center gap-3">

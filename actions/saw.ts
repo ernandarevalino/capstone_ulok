@@ -324,19 +324,14 @@ export async function calculateULOKSAW(ulokId: string) {
     let c2_score = 1
     let durasi = 0
 
-    if (submission.status === 'In Review' && !submission.first_in_review_at) {
+    if (submission.status === 'In Review') {
       c2_score = 1
       durasi = 0
-    } else if (submission.status === 'In Review' && submission.first_in_review_at) {
-      const diffTime = new Date().getTime() - new Date(submission.first_in_review_at).getTime()
-      let calculatedDurasi = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-      if (calculatedDurasi < 1) {
-        calculatedDurasi = 1
-      }
-      durasi = calculatedDurasi
-    } else if (submission.status === 'Approved') {
+    } else if (['Approved', 'Rejected', 'Revision'].includes(submission.status)) {
       if (submission.first_in_review_at) {
-        const tanggalAkhir = submission.approved_at ? new Date(submission.approved_at) : new Date()
+        const tanggalAkhir = (submission.status === 'Approved' && submission.approved_at)
+          ? new Date(submission.approved_at)
+          : new Date()
         const diffTime = tanggalAkhir.getTime() - new Date(submission.first_in_review_at).getTime()
         let calculatedDurasi = Math.floor(diffTime / (1000 * 60 * 60 * 24))
         if (calculatedDurasi < 1) {
@@ -402,7 +397,7 @@ export async function calculateULOKSAW(ulokId: string) {
     let base_notes = ''
     if (submission.status === 'Draft') {
       base_notes = '⚠️ Berkas belum diajukan oleh Cabang.'
-    } else if (submission.status === 'In Review' && !submission.first_in_review_at) {
+    } else if (submission.status === 'In Review') {
       base_notes = '⏳ **Menunggu Review.** Skor saat ini belum dapat ditentukan karena proses review legal belum dimulai oleh Assessor.'
     } else if (final_score >= 0.75) {
       const maxScore = Math.max(c1_score, c2_score, c3_score)
