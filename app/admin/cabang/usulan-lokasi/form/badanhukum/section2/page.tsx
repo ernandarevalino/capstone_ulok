@@ -164,10 +164,6 @@ export default function Section2BadanHukumPage() {
         data_pribadi_tambahan: catatanLainnya
       }
 
-      if (isSubmit) {
-        payload.status = 'In Review'
-      }
-
       const res = await updateUlokSubmission(ulokId, payload)
       if (res.success) {
         if (isSubmit) {

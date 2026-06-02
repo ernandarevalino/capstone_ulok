@@ -533,15 +533,17 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     }
 
     // =========================================================================
-    // TRIGGER OTOMATIS STATUS 'IN REVIEW' (SISI ADMIN CABANG):
-    // Jika Admin Cabang sudah mengupload dokumen DAN mengirimkan komentar pertama kali pada ULOK yang berstatus 'Draft', otomatis sistem akan menembakkan update status ULOK tersebut menjadi 'In Review'.
+    // TRIGGER OTOMATIS STATUS 'IN REVIEW' PADA UPLOAD PERTAMA KALI:
+    // Mengecek status ULOK saat ini. Jika masih 'Draft', otomatis diubah ke 'In Review'.
+    // Jika sudah 'In Review', 'Revisi', atau status lainnya, proses dilewati (menjadi save biasa).
     // =========================================================================
-    const { data: commentList, error: commentError } = await supabase
-      .from('comments')
-      .select('id')
-      .eq('ulok_id', ulokId)
+    const { data: currentUlok, error: ulokError } = await supabase
+      .from('ulok_submissions')
+      .select('status')
+      .eq('id', ulokId)
+      .single()
 
-    if (!commentError && commentList && commentList.length > 0) {
+    if (!ulokError && currentUlok && currentUlok.status === 'Draft') {
       const { error: statusError } = await supabase
         .from('ulok_submissions')
         .update({ 
@@ -549,10 +551,9 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
           first_in_review_at: new Date().toISOString()
         })
         .eq('id', ulokId)
-        .eq('status', 'Draft')
 
       if (statusError) {
-        console.error("Gagal update status ULOK:", statusError)
+        console.error("Gagal update status ULOK ke In Review:", statusError)
         throw new Error(`Gagal memperbarui status ke In Review: ${statusError.message}`)
       }
     }
@@ -698,34 +699,6 @@ export async function createComment(ulokId: string, userId: string, message: str
     } catch (notifErr) {
       console.error("Gagal memicu notifikasi komentar baru:", notifErr)
     }
-
-    // =========================================================================
-    // TRIGGER OTOMATIS STATUS 'IN REVIEW' (SISI ADMIN CABANG):
-    // Jika Admin Cabang sudah mengupload dokumen DAN mengirimkan komentar pertama kali pada ULOK yang berstatus 'Draft', otomatis sistem akan menembakkan update status ULOK tersebut menjadi 'In Review'.
-    // =========================================================================
-    const { data: ulok, error: ulokError } = await supabase
-      .from('ulok_submissions')
-      .select('status')
-      .eq('id', ulokId)
-      .single()
-
-    if (!ulokError && ulok && ulok.status === 'Draft') {
-      const { data: docs, error: docsError } = await supabase
-        .from('documents')
-        .select('id')
-        .eq('ulok_id', ulokId)
-
-      if (!docsError && docs && docs.length > 0) {
-        await supabase
-          .from('ulok_submissions')
-          .update({ 
-            status: 'In Review',
-            first_in_review_at: new Date().toISOString()
-          })
-          .eq('id', ulokId)
-      }
-    }
-    // =========================================================================
 
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum`)

@@ -13,6 +13,12 @@ export default function ProfileGlobal() {
   const fileInputRef = useRef<HTMLInputElement>(null);        
   const router = useRouter();                                
 
+  // State Baru untuk Custom Modal & Loading Animasi
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   useEffect(() => {
     fetchProfileData();
   }, []);
@@ -43,23 +49,40 @@ export default function ProfileGlobal() {
     const res = await updateAvatarAction(formData);
     if (res && res.success) {
       setProfile((prev: any) => ({ ...prev, avatar_url: res.avatarUrl }));
-      alert('Foto profil berhasil diperbarui! 🎉');
+      setSuccessMessage('Foto profil berhasil diperbarui! 🎉');
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
     } else {
       alert(`Gagal upload: ${res.error}`);
     }
     setUploading(false);
   };
 
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi PRIOLO?");
-    if (!confirmLogout) return;
+  // Pemicu awal ketika button Keluar diklik
+  const handleLogoutTrigger = () => {
+    setShowLogoutConfirm(true);
+  };
 
+  // Eksekusi Log Out dari Sistem dengan Custom Modal Animasi
+  const executeLogout = async () => {
+    setIsLoggingOut(true);
+    
     const res = await logoutAction();
     if (res && res.success) {
-      router.push('/');
-      router.refresh();
+      setShowLogoutConfirm(false);
+      setSuccessMessage(`Berhasil keluar. Sampai jumpa kembali, ${profile?.full_name || 'User'}!`);
+      setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        router.push('/');
+        router.refresh();
+      }, 1800);
     } else {
       alert(`Gagal logout: ${res.error}`);
+      setIsLoggingOut(false);
     }
   };
 
@@ -239,7 +262,7 @@ export default function ProfileGlobal() {
         {/* SEKTOR BAWAH: AKSI SESSION KELUAR */}
         <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex justify-end">
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutTrigger}
             className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs md:text-sm rounded-xl transition-all duration-200 active:scale-95 shadow-md shadow-red-600/10 hover:shadow-red-600/20 flex items-center gap-2"
           >
             <LogOut className="w-4 h-4" />
@@ -248,6 +271,61 @@ export default function ProfileGlobal() {
         </div>
         
       </div>
+
+      {/* ========================================================================= */}
+      {/* CUSTOM MODAL KONFIRMASI KELUAR (LOGOUT) */}
+      {/* ========================================================================= */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-hand.svg" alt="Confirm Logout" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              Apakah Anda yakin ingin keluar dari aplikasi PRIOLO?
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+              >
+                No
+              </button>
+              <button
+                onClick={executeLogout}
+                disabled={isLoggingOut}
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+              >
+                {isLoggingOut ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </span>
+                ) : (
+                  'Yes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CUSTOM MODAL SUKSES (UNIVERSAL UNTUK LOGOUT / AVATAR UPDATE) */}
+      {/* ========================================================================= */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
+              {successMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

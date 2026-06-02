@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { getSAWLeaderboard, getCurrentUserBranchId } from '@/actions/saw'
-import { Trophy, Medal, AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Award, UserCheck, Star } from 'lucide-react'
+import { Trophy, Medal, AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Award, UserCheck, Star, Sparkles } from 'lucide-react'
 
 export default function PeringkatCabangPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
@@ -87,11 +87,33 @@ export default function PeringkatCabangPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-8">
 
+        {/* HEADER HERO BANNER PRESTASI INTERNAL CABANG */}
+        <div className="bg-linear-to-r from-blue-950 via-slate-950 to-blue-950 text-white p-6 md:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-blue-900/40">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <Award className="w-48 h-48" />
+          </div>
+          <div className="space-y-2.5 z-10">
+            <div className="flex items-center gap-2">
+              <span className="bg-amber-400 dark:bg-amber-500 text-blue-950 font-black px-3 py-1 rounded-full text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                <Sparkles className="w-3 h-3 fill-current" /> SPK SAW Internal Cabang
+              </span>
+            </div>
+            <h1 className="text-xl md:text-2xl font-black tracking-tight">Leaderboard Kelayakan Usulan Lokasi Wilayah</h1>
+            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+              Hasil analisis komparatif usulan lokasi internal pada wilayah cabang Anda berdasarkan pembobotan *Simple Additive Weighting*. Kriteria penilaian mencakup pemenuhan aspek Persentase Kelengkapan Dokumen (45%), Durasi Review Legal (35%), dan Harga Sewa per 5 Tahun (20%).
+            </p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center z-10 w-full md:w-auto shrink-0">
+            <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Total Usulan Cabang</p>
+            <p className="text-3xl font-black text-amber-400">{filteredLeaderboard.length}</p>
+          </div>
+        </div>
+
         {filteredLeaderboard.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800/60 p-12 text-center shadow-sm text-gray-500">
             <AlertCircle className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
             <p className="font-bold text-sm text-gray-700 dark:text-gray-300">Belum ada usulan lokasi di cabang Anda.</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Harap lakukan pengisian dan pengajuan berkas ruko terlebih dahulu.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Harap lakukan pengisian dan pengajuan berkas ULOK terlebih dahulu.</p>
           </div>
         ) : (
           <>
@@ -102,7 +124,7 @@ export default function PeringkatCabangPage() {
               {top3Data[1] && (
                 <div 
                   onClick={() => toggleCard(top3Data[1].id)}
-                  className={`order-2 md:order-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-[210px] ${openCardId === top3Data[1].id ? 'ring-2 ring-blue-500/40' : ''}`}
+                  className={`order-2 md:order-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openCardId === top3Data[1].id ? 'ring-2 ring-blue-500/40' : ''}`}
                 >
                   <div className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 p-2 rounded-xl">
                     <Medal className="w-5 h-5 text-slate-400" />
@@ -134,7 +156,7 @@ export default function PeringkatCabangPage() {
               {top3Data[0] && (
                 <div 
                   onClick={() => toggleCard(top3Data[0].id)}
-                  className={`order-1 md:order-2 bg-gradient-to-b from-amber-50/40 to-white dark:from-amber-950/20 dark:to-gray-900 border-2 border-amber-400 dark:border-amber-500/60 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-[240px] md:-translate-y-2 ${openCardId === top3Data[0].id ? 'ring-4 ring-amber-400/20' : ''}`}
+                  className={`order-1 md:order-2 bg-linear-to-b from-amber-50/40 to-white dark:from-amber-950/20 dark:to-gray-900 border-2 border-amber-400 dark:border-amber-500/60 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-60 md:-translate-y-2 ${openCardId === top3Data[0].id ? 'ring-4 ring-amber-400/20' : ''}`}
                 >
                   <div className="absolute top-5 right-5 bg-amber-400 dark:bg-amber-500 text-amber-950 p-2.5 rounded-xl shadow-sm animate-bounce">
                     <Trophy className="w-5 h-5 fill-current" />
@@ -168,7 +190,7 @@ export default function PeringkatCabangPage() {
               {top3Data[2] && (
                 <div 
                   onClick={() => toggleCard(top3Data[2].id)}
-                  className={`order-3 md:order-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-[210px] ${openCardId === top3Data[2].id ? 'ring-2 ring-blue-500/40' : ''}`}
+                  className={`order-3 md:order-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openCardId === top3Data[2].id ? 'ring-2 ring-blue-500/40' : ''}`}
                 >
                   <div className="absolute top-4 right-4 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 p-2 rounded-xl">
                     <Medal className="w-5 h-5 text-amber-700 dark:text-amber-600" />
@@ -210,19 +232,19 @@ export default function PeringkatCabangPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-50 dark:bg-gray-950 p-3.5 rounded-xl border border-gray-100 dark:border-gray-800/60">
-                      <span className="text-[10px] text-gray-400 uppercase font-black block">C1 (Legalitas)</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-black block">C1 (Persentase Kelengkapan Dokumen)</span>
                       <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 block">
                         Skor: <strong className="text-gray-900 dark:text-white text-sm font-black">{item.c1_score || 1}</strong> / 5
                       </span>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-950 p-3.5 rounded-xl border border-gray-100 dark:border-gray-800/60">
-                      <span className="text-[10px] text-gray-400 uppercase font-black block">C2 (Kecepatan Mobilisasi)</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-black block">C2 (Durasi Review Legal)</span>
                       <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 block">
                         Skor: <strong className="text-gray-900 dark:text-white text-sm font-black">{item.c2_score || 1}</strong> / 5
                       </span>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-950 p-3.5 rounded-xl border border-gray-100 dark:border-gray-800/60">
-                      <span className="text-[10px] text-gray-400 uppercase font-black block">C3 (Harga Sewa)</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-black block">C3 (Harga Sewa per 5 Tahun)</span>
                       <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 block">
                         Skor: <strong className="text-gray-900 dark:text-white text-sm font-black">{item.c3_score || 1}</strong> / 5
                       </span>
@@ -315,19 +337,19 @@ export default function PeringkatCabangPage() {
                         <div className="bg-gray-50/50 dark:bg-gray-950/30 border-t border-gray-100 dark:border-gray-800 p-4 space-y-4 animate-fadeIn">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800/80">
-                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C1 (Legalitas)</span>
+                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C1 (Persentase Kelengkapan Dokumen)</span>
                               <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-0.5 block">
                                 Skor: <strong className="text-gray-900 dark:text-white font-black">{item.c1_score || 1}</strong> / 5
                               </span>
                             </div>
                             <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800/80">
-                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C2 (Kecepatan)</span>
+                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C2 (Durasi Review Legal)</span>
                               <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-0.5 block">
                                 Skor: <strong className="text-gray-900 dark:text-white font-black">{item.c2_score || 1}</strong> / 5
                               </span>
                             </div>
                             <div className="bg-white dark:bg-gray-950 p-3 rounded-lg border border-gray-100 dark:border-gray-800/80">
-                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C3 (Harga Sewa)</span>
+                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider block">C3 (Harga Sewa per 5 Tahun)</span>
                               <span className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-0.5 block">
                                 Skor: <strong className="text-gray-900 dark:text-white font-black">{item.c3_score || 1}</strong> / 5
                               </span>

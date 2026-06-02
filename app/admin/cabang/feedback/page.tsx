@@ -10,12 +10,11 @@ export default function FeedbackPage() {
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState<any[]>([])
   
-  // Pagination State for main table
+  // Pagination State for main table (Maksimal 10 baris usulan per halaman)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
   // Track sub-pagination indices for feedback comments of each submission
-  // key: submissionId, value: index of current shown assessor comment (0-based)
   const [feedbackIndices, setFeedbackIndices] = useState<Record<string, number>>({})
 
   // Fetch feedback submissions from Server Action
@@ -38,10 +37,7 @@ export default function FeedbackPage() {
     fetchSubmissions()
   }, [])
 
-  // Process and filter submissions according to the specifications:
-  // 1. Must have at least one comment from an Assessor.
-  // 2. Clear Ticket: The last comment must NOT be from role 'admin_cabang'
-  // 3. Fluid Order: Submissions with the newest assessor comment should be placed first.
+  // Process, filter, and sort submissions strictly by date (Newest First)
   const processedSubmissions = React.useMemo(() => {
     return submissions
       .map((sub) => {
@@ -67,8 +63,7 @@ export default function FeedbackPage() {
         // Rule 1: Must have at least one comment from Assessor
         if (sub.assessorComments.length === 0) return false
 
-        // Rule 2: Clear Ticket - Must NOT have been replied to yet.
-        // If the absolute last comment on the ticket was by 'admin_cabang', then it has been replied. Filter it out.
+        // Rule 2: Clear Ticket - Must NOT have been replied to yet by Admin Cabang
         if (sub.lastComment && sub.lastComment.profiles?.role === 'admin_cabang') {
           return false
         }
@@ -76,9 +71,9 @@ export default function FeedbackPage() {
         return true
       })
       .sort((a, b) => {
-        // Rule 3: Fluid ordering - Sort by the created_at of the latest assessor comment (descending)
-        const dateA = new Date(a.assessorComments[0].created_at).getTime()
-        const dateB = new Date(b.assessorComments[0].created_at).getTime()
+        // Sort strictly by the latest activity date (newest activity first)
+        const dateA = new Date(a.lastComment?.created_at || a.created_at).getTime()
+        const dateB = new Date(b.lastComment?.created_at || b.created_at).getTime()
         return dateB - dateA
       })
   }, [submissions])
@@ -108,7 +103,7 @@ export default function FeedbackPage() {
     })
   }
 
-  // Handle "Next ->" feedback sub-pagination
+  // Handle "Next Feedback" internal pagination inside bubble
   const handleNextFeedback = (subId: string, maxComments: number) => {
     setFeedbackIndices((prev) => {
       const currentIdx = prev[subId] || 0
@@ -129,7 +124,7 @@ export default function FeedbackPage() {
     })
   }
 
-  // Format status UI helper (Mendukung Dark Mode)
+  // Format status UI helper
   const getStatusBadge = (status: string) => {
     const s = status ? status.toLowerCase() : ''
     if (s === 'approved' || s === 'telah disetujui') {
@@ -177,7 +172,7 @@ export default function FeedbackPage() {
               Kolom Feedback & Catatan Revisi
             </h3>
             <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold">
-              {processedSubmissions.length} Message
+              {processedSubmissions.length} Batch
             </span>
           </div>
 
@@ -203,7 +198,6 @@ export default function FeedbackPage() {
                 ) : paginatedSubmissions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-10 text-center text-gray-400 dark:text-gray-500">
-                      <span className="text-4xl block mb-2 opacity-50">🎉</span>
                       <p className="font-bold text-gray-500 dark:text-gray-400">Tidak ada feedback baru!</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Seluruh catatan revisi dari Assessor telah diselesaikan atau dibalas.
@@ -252,15 +246,16 @@ export default function FeedbackPage() {
                         {/* FEEDBACK ROW */}
                         <tr>
                           <td colSpan={5} className="bg-gray-50/40 dark:bg-gray-950/20 p-5 pl-6 pr-6 md:pl-10 border-b border-gray-100 dark:border-gray-800/60">
-                            <div className="relative bg-white dark:bg-gray-950 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-md shadow-gray-100/50 dark:shadow-none space-y-3 transition-all duration-300 hover:shadow-lg dark:hover:border-gray-700">
+                            {/* FIX BALON CHAT: Menggunakan warna abu standar gray-900 dan border gray-800 untuk dark mode */}
+                            <div className="relative bg-white dark:bg-gray-900 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-3 transition-all duration-300 hover:shadow-md dark:hover:border-gray-700">
                               
-                              {/* Speech bubble pointer */}
-                              <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-950 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
+                              {/* Segitiga Pointer Balon Chat */}
+                              <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-900 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
                               
                               {/* Comment Header info */}
-                              <div className="flex items-center justify-between text-[11px] border-b border-gray-150 dark:border-gray-800 pb-2 relative z-10">
+                              <div className="flex items-center justify-between text-[11px] border-b border-gray-200 dark:border-gray-800 pb-2 relative z-10">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-lg">
+                                  <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
                                     {currentComment?.profiles?.full_name || 'Assessor'}
                                   </span>
                                   <span className="text-gray-400 dark:text-gray-500 font-medium">
@@ -270,7 +265,7 @@ export default function FeedbackPage() {
                                 <div className="text-gray-400 dark:text-gray-500 flex items-center gap-2.5">
                                   <span className="font-medium">{formatDate(currentComment?.created_at)}</span>
                                   {assessorComments.length > 1 && (
-                                    <span className="bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-lg font-bold">
+                                    <span className="bg-blue-50 dark:bg-gray-800 text-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-lg font-bold">
                                       {currentFeedbackIdx + 1} of {assessorComments.length}
                                     </span>
                                   )}
@@ -287,7 +282,7 @@ export default function FeedbackPage() {
                                 <div className="flex justify-end pt-1 relative z-10">
                                   <button
                                     onClick={() => handleNextFeedback(item.id, assessorComments.length)}
-                                    className="text-[10px] font-extrabold text-blue-950 dark:text-blue-300 bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-800 px-3 py-1.5 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-800 transition-all active:scale-95 flex items-center gap-1 shadow-sm"
+                                    className="text-[10px] font-extrabold text-blue-950 dark:text-blue-300 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-1.5 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-700 transition-all active:scale-95 flex items-center gap-1 shadow-sm"
                                   >
                                     Next Feedback &rarr;
                                   </button>
@@ -304,7 +299,7 @@ export default function FeedbackPage() {
             </table>
           </div>
 
-          {/* MAIN PAGINATION CONTROLS */}
+          {/* MAIN PAGINATION CONTROLS (Maksimal 10 usulan per halaman) */}
           {totalPages > 1 && (
             <div className="p-5 bg-gray-50/80 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">

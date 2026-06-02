@@ -10,7 +10,7 @@ export default function AssessorHistoriPage() {
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState<any[]>([])
   
-  // Pagination State for main table
+  // Pagination State for main table (Maksimal 10 baris per halaman)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -37,10 +37,7 @@ export default function AssessorHistoriPage() {
     fetchSubmissions()
   }, [])
 
-  // Process and filter submissions according to specifications:
-  // 1. Must have at least one comment from an Assessor.
-  // 2. Clear Ticket: The last comment must NOT be from role 'admin_cabang'
-  // 3. Fluid Order: Submissions with the newest assessor comment should be placed first.
+  // Process, filter, and sort submissions strictly by date (Newest First)
   const processedSubmissions = React.useMemo(() => {
     return submissions
       .map((sub) => {
@@ -66,8 +63,7 @@ export default function AssessorHistoriPage() {
         // Rule 1: Must have at least one comment from Assessor
         if (sub.assessorComments.length === 0) return false
 
-        // Rule 2: Clear Ticket - Must NOT have been replied to yet by Admin Cabang.
-        // If the absolute last comment on the ticket was by 'admin_cabang', then it has been replied. Filter it out.
+        // Rule 2: Clear Ticket - Must NOT have been replied to yet by Admin Cabang
         if (sub.lastComment && sub.lastComment.profiles?.role === 'admin_cabang') {
           return false
         }
@@ -75,9 +71,9 @@ export default function AssessorHistoriPage() {
         return true
       })
       .sort((a, b) => {
-        // Rule 3: Fluid ordering - Sort by the created_at of the latest assessor comment (descending)
-        const dateA = new Date(a.assessorComments[0].created_at).getTime()
-        const dateB = new Date(b.assessorComments[0].created_at).getTime()
+        // Sort strictly by the latest activity date (newest submission or latest comment first)
+        const dateA = new Date(a.lastComment?.created_at || a.created_at).getTime()
+        const dateB = new Date(b.lastComment?.created_at || b.created_at).getTime()
         return dateB - dateA
       })
   }, [submissions])
@@ -90,13 +86,13 @@ export default function AssessorHistoriPage() {
     return processedSubmissions.slice(startIndex, startIndex + itemsPerPage)
   }, [processedSubmissions, currentPage])
 
-  // Helper to determine the path based on jenis_badan_hukum
+  // RUTE DIBAWAH INI SUDAH DIPERBAIKI KE HALAMAN UTAMA COMMENT/PENILAIAN ASSESSOR
   const getDetailRoute = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     if (kelompokPerorangan.includes(jenisBadanHukum)) {
-      return `/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${id}`
+      return `/admin/assessor/penilaian/ulok-perorangan?id=${id}`
     }
-    return `/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1?id=${id}`
+    return `/admin/assessor/penilaian/ulok-badanhukum?id=${id}`
   }
 
   // Handle "Lihat Detail" button click
@@ -107,7 +103,7 @@ export default function AssessorHistoriPage() {
     })
   }
 
-  // Handle "Next ->" feedback sub-pagination
+  // Handle "Next Feedback" internal pagination inside bubble
   const handleNextFeedback = (subId: string, maxComments: number) => {
     setFeedbackIndices((prev) => {
       const currentIdx = prev[subId] || 0
@@ -131,56 +127,58 @@ export default function AssessorHistoriPage() {
   // Format status UI helper
   const getStatusBadge = (status: string) => {
     const s = status ? status.toLowerCase() : ''
-    if (s === 'approved') {
+    if (s === 'approved' || s === 'telah disetujui') {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-emerald-600 bg-emerald-50 border-emerald-200">
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-green-600 bg-green-50 border-green-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60">
           Approved
         </span>
       )
     }
-    if (s === 'revision') {
+    if (s === 'revision' || s === 'perlu revisi') {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-rose-600 bg-rose-50 border-rose-200">
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60">
           Revision
         </span>
       )
     }
-    if (s === 'rejected') {
+    if (s === 'rejected' || s === 'ditolak') {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-slate-600 bg-slate-50 border-slate-200">
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-gray-600 bg-gray-50 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700">
           Rejected
         </span>
       )
     }
     return (
-      <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-amber-600 bg-amber-50 border-amber-200">
+      <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
         In Review
       </span>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 text-gray-800">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* HEADER PAGE */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">
+        <div className="max-w-255 mx-auto mb-10">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Histori Penilaian Assessor
           </h1>
-          <p className="text-gray-500 text-xs md:text-sm mt-1">
+          <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
             Daftar usulan lokasi yang pernah Anda komentari / beri catatan revisi.
           </p>
         </div>
 
         {/* CARD TABLE */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
+          
           {/* HEADER NAVY BLUE */}
-          <div className="bg-[#142B4D] p-5 flex items-center justify-between">
+          <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2">
-              <span>📋</span> Daftar Histori Komentar & Revisi
+              <img src="/icons/icon-comment.svg" alt="Comment Icon" className="w-5 h-5 object-contain brightness-0 invert" /> 
+              Daftar Histori Komentar & Revisi
             </h3>
-            <span className="bg-[#EAB308] text-[#142B4D] text-xs px-3 py-1 rounded-full font-bold">
+            <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold">
               {processedSubmissions.length} Data Aktif
             </span>
           </div>
@@ -188,36 +186,35 @@ export default function AssessorHistoriPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b">
-                  <th className="p-4 pl-6 text-center w-16">No</th>
-                  <th className="p-4">Nama ULOK</th>
+                <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100 dark:border-gray-800">
+                  <th className="p-4 pl-6">Nama ULOK</th>
+                  <th className="p-4">Nama Pemilik</th>
                   <th className="p-4">Asal Cabang</th>
                   <th className="p-4 w-48">Tanggal Diajukan</th>
-                  <th className="p-4 text-center w-36">Status</th>
-                  <th className="p-4 text-center w-32">Skor ULOK</th>
-                  <th className="p-4 text-center w-32">Aksi</th>
+                  <th className="p-4 text-center w-32">Status</th>
+                  <th className="p-4 text-center w-28">Skor ULOK</th>
+                  <th className="p-4 text-center w-28">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-gray-700">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60 text-gray-700 dark:text-gray-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-10 text-center text-gray-400 italic">
+                    <td colSpan={7} className="p-12 text-center text-gray-400 dark:text-gray-500 italic text-sm">
+                      <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                       Memuat daftar histori usulan...
                     </td>
                   </tr>
                 ) : paginatedSubmissions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-10 text-center text-gray-400">
-                      <span className="text-4xl block mb-2 opacity-50">🎉</span>
-                      <p className="font-bold text-gray-500">Tidak ada data histori!</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                    <td colSpan={7} className="p-10 text-center text-gray-400 dark:text-gray-500">
+                      <p className="font-bold text-gray-500 dark:text-gray-400">Tidak ada data histori</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Belum ada usulan lokasi yang dikomentari atau semua usulan yang Anda beri catatan telah dibalas oleh Admin Cabang.
                       </p>
                     </td>
                   </tr>
                 ) : (
-                  paginatedSubmissions.map((item, idx) => {
-                    const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1
+                  paginatedSubmissions.map((item) => {
                     const assessorComments = item.assessorComments
                     const currentFeedbackIdx = feedbackIndices[item.id] || 0
                     const currentComment = assessorComments[currentFeedbackIdx]
@@ -226,28 +223,28 @@ export default function AssessorHistoriPage() {
                     return (
                       <React.Fragment key={item.id}>
                         {/* MAIN ROW */}
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4 pl-6 text-center font-bold text-gray-400">
-                            {rowNumber}
-                          </td>
-                          <td className="p-4 font-bold text-gray-900">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">📍</span>
-                              {item.nama_lokasi}
+                        <tr className="hover:bg-blue-50/20 dark:hover:bg-gray-800/40 transition-all duration-300 ease-in-out border-b border-gray-100 dark:border-gray-800/60">
+                          <td className="p-4 pl-6 font-bold text-gray-900 dark:text-gray-100">
+                            <div className="flex items-center gap-2.5">
+                              <img src="/icons/icon-current.svg" alt="Location Icon" className="w-4 h-4 object-contain" />
+                              <span className="hover:text-blue-900 dark:hover:text-blue-400 transition-colors">{item.nama_lokasi}</span>
                             </div>
                           </td>
+                          <td className="p-4 font-semibold text-gray-700 dark:text-gray-300">
+                            {item.nama_pemegang_hak || '-'}
+                          </td>
                           <td className="p-4">
-                            <span className="bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 rounded-md text-[11px] border">
+                            <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2.5 py-1 rounded-md text-[11px] border border-gray-200 dark:border-gray-700">
                               {branchName}
                             </span>
                           </td>
-                          <td className="p-4 text-gray-500">
+                          <td className="p-4 text-gray-500 dark:text-gray-400 font-medium">
                             {formatDate(item.created_at)}
                           </td>
                           <td className="p-4 text-center">
                             {getStatusBadge(item.status)}
                           </td>
-                          <td className="p-4 text-center font-black text-blue-950">
+                          <td className="p-4 text-center font-extrabold text-blue-950 dark:text-blue-400">
                             {item.final_score !== null && item.final_score !== undefined 
                               ? item.final_score.toFixed(2) 
                               : '0.00'}
@@ -256,31 +253,36 @@ export default function AssessorHistoriPage() {
                             <button
                               onClick={() => handleViewDetail(item.id, item.jenis_badan_hukum)}
                               disabled={isPending}
-                              className="bg-blue-950 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-900 transition shadow-sm flex items-center justify-center gap-1 mx-auto disabled:opacity-50 whitespace-nowrap"
+                              title="Lihat Detail Penilaian"
+                              className="p-2 text-blue-950 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-900 dark:hover:text-blue-400 hover:scale-105 active:scale-95 transition-all duration-200 rounded-xl flex items-center justify-center mx-auto disabled:opacity-50"
                             >
-                              🔍 Lihat Detail
+                              <img src="/icons/icon-message-now.svg" alt="Detail" className="w-5 h-5 object-contain dark:brightness-0 dark:invert" />
                             </button>
                           </td>
                         </tr>
 
                         {/* FEEDBACK ROW */}
                         <tr>
-                          <td colSpan={7} className="bg-gray-50/70 p-4 pl-12 pr-6 border-b">
-                            <div className="relative bg-white border border-gray-150 rounded-xl p-4 shadow-sm space-y-2">
-                              {/* Comment Header info */}
-                              <div className="flex items-center justify-between text-[11px] border-b pb-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-extrabold text-blue-950 bg-blue-50 px-2 py-0.5 rounded">
+                          <td colSpan={7} className="bg-gray-50/40 dark:bg-gray-950/20 p-5 pl-6 pr-6 md:pl-12 border-b border-gray-100 dark:border-gray-800/60">
+                            <div className="relative bg-white dark:bg-gray-900 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-3 transition-all duration-300 hover:shadow-md dark:hover:border-gray-700">
+                              
+                              {/* Segitiga Pointer Balon Chat */}
+                              <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-900 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
+                              
+                              {/* Comment Header */}
+                              <div className="flex items-center justify-between text-[11px] border-b border-gray-200 dark:border-gray-800 pb-2 relative z-10">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
                                     {currentComment?.profiles?.full_name || 'Assessor'}
                                   </span>
-                                  <span className="text-gray-400">
+                                  <span className="text-gray-400 dark:text-gray-500 font-medium">
                                     ({currentComment?.profiles?.role || 'Assessor'})
                                   </span>
                                 </div>
-                                <div className="text-gray-400 flex items-center gap-2">
-                                  <span>{formatDate(currentComment?.created_at)}</span>
+                                <div className="text-gray-400 dark:text-gray-500 flex items-center gap-2.5">
+                                  <span className="font-medium">{formatDate(currentComment?.created_at)}</span>
                                   {assessorComments.length > 1 && (
-                                    <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-bold">
+                                    <span className="bg-blue-50 dark:bg-gray-800 text-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-lg font-bold">
                                       {currentFeedbackIdx + 1} of {assessorComments.length}
                                     </span>
                                   )}
@@ -288,18 +290,18 @@ export default function AssessorHistoriPage() {
                               </div>
 
                               {/* Comment Body */}
-                              <p className="text-xs md:text-sm text-gray-700 font-medium whitespace-pre-line leading-relaxed italic pl-1">
+                              <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed italic pl-1 relative z-10">
                                 "{currentComment?.message}"
                               </p>
 
                               {/* Sub-pagination button */}
                               {assessorComments.length > 1 && (
-                                <div className="flex justify-end pt-1">
+                                <div className="flex justify-end pt-1 relative z-10">
                                   <button
                                     onClick={() => handleNextFeedback(item.id, assessorComments.length)}
-                                    className="text-[10px] font-extrabold text-blue-950 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded hover:bg-blue-100 transition flex items-center gap-1 shadow-xs"
+                                    className="text-[10px] font-extrabold text-blue-950 dark:text-blue-300 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-1.5 rounded-xl hover:bg-blue-100 dark:hover:bg-gray-700 transition-all active:scale-95 flex items-center gap-1 shadow-sm"
                                   >
-                                    Next <span>➔</span>
+                                    Next Feedback &rarr;
                                   </button>
                                 </div>
                               )}
@@ -314,26 +316,26 @@ export default function AssessorHistoriPage() {
             </table>
           </div>
 
-          {/* MAIN PAGINATION CONTROLS */}
+          {/* MAIN PAGINATION CONTROLS (Maksimal 10 Baris) */}
           {totalPages > 1 && (
-            <div className="p-4 bg-gray-50 border-t flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500">
-                Menampilkan halaman {currentPage} dari {totalPages} ({totalItems} usulan)
+            <div className="p-5 bg-gray-50/80 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Menampilkan <span className="font-semibold text-gray-700 dark:text-gray-200">{currentPage}</span> dari <span className="font-semibold text-gray-700 dark:text-gray-200">{totalPages}</span> ({totalItems} usulan)
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 border bg-white rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+                  className="px-3.5 py-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-40 transition-all active:scale-95 flex items-center justify-center gap-1"
                 >
-                  Prev
+                  &larr; Prev
                 </button>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 border bg-white rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+                  className="px-3.5 py-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-40 transition-all active:scale-95 flex items-center justify-center gap-1"
                 >
-                  Next
+                  Next &rarr;
                 </button>
               </div>
             </div>

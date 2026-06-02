@@ -165,10 +165,6 @@ export default function Section2PeroranganPage() {
         data_pribadi_tambahan: catatanLainnya
       }
 
-      if (showSuccessAlert) {
-        payload.status = 'In Review'
-      }
-
       const res = await updateUlokSubmission(ulokId, payload)
       if (res.success) {
         if (showSuccessAlert) {

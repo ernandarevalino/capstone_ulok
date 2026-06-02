@@ -3,13 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { getNotificationsAction, deleteNotificationAction, markAllNotificationsAsReadAction } from '@/actions/superadmin';
 import { getCurrentProfile } from '@/actions/auth';
-import { Trash2, Bell, AlertCircle } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 export default function NotificationPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // State Baru untuk Custom Modal & Animasi (Sesuai Standar UI Premium PRIOLO)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     initPage();
@@ -45,21 +50,38 @@ export default function NotificationPage() {
     if (res.success) {
       setNotifications(prev => prev.filter(item => item.id !== id));
     } else {
-      alert('Gagal menghapus pemberitahuan.');
+      setSuccessMessage('Gagal menghapus pemberitahuan.');
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 1500);
     }
   };
 
-  const handleDeleteAll = async () => {
+  // Pemicu awal ketika button Clear All diklik
+  const handleDeleteAllTrigger = () => {
     if (notifications.length === 0) return;
-    if (!confirm('Apakah Anda yakin ingin menghapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) return;
+    setShowDeleteAllConfirm(true);
+  };
 
+  // Eksekusi Penghapusan Massal dengan Custom Modal Animasi
+  const executeDeleteAll = async () => {
     setIsDeletingAll(true);
     try {
-      // Mengeksekusi penghapusan massal secara paralel aman via Server Action bawaan Anda
       await Promise.all(notifications.map(notif => deleteNotificationAction(notif.id)));
       setNotifications([]);
+      setShowDeleteAllConfirm(false);
+      
+      // Setup Informasi Berhasil
+      setSuccessMessage('Semua notifikasi berhasil dibersihkan! 🎉');
+      setShowSuccessModal(true);
+      
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
     } catch (err) {
-      alert('Terjadi kesalahan saat menghapus semua notifikasi.');
+      setShowDeleteAllConfirm(false);
+      setSuccessMessage('Terjadi kesalahan saat menghapus semua notifikasi.');
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 1500);
     } finally {
       setIsDeletingAll(false);
     }
@@ -69,7 +91,7 @@ export default function NotificationPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* HEADER PAGE (Identik dengan Feedback Page) */}
+        {/* HEADER PAGE */}
         <div className="max-w-255 mx-auto mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Notifikasi Sistem
@@ -82,7 +104,7 @@ export default function NotificationPage() {
         {/* MAIN CARD CONTAINER */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
           
-          {/* HEADER NAVY BLUE (Sesuai Spesifikasi Baru) */}
+          {/* HEADER NAVY BLUE */}
           <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2.5">
               <img 
@@ -99,13 +121,13 @@ export default function NotificationPage() {
               </span>
               {notifications.length > 0 && (
                 <button
-                  onClick={handleDeleteAll}
+                  onClick={handleDeleteAllTrigger}
                   disabled={isDeletingAll}
                   className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg font-bold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm"
                   title="Hapus semua notifikasi"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  {isDeletingAll ? 'Proses...' : 'Clear All'}
+                  Clear All
                 </button>
               )}
             </div>
@@ -168,6 +190,61 @@ export default function NotificationPage() {
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* CUSTOM MODAL KONFIRMASI HAPUS ALL (SINKRON DENGAN GLOBAL PROFILE) */}
+      {/* ========================================================================= */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-hand.svg" alt="Confirm Delete All" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              Apakah Anda yakin ingin menghapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => setShowDeleteAllConfirm(false)}
+                disabled={isDeletingAll}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+              >
+                No
+              </button>
+              <button
+                onClick={executeDeleteAll}
+                disabled={isDeletingAll}
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+              >
+                {isDeletingAll ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Proses...
+                  </span>
+                ) : (
+                  'Yes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CUSTOM MODAL SUKSES (UNIVERSAL UNTUK NOTIFICATION ACTION) */}
+      {/* ========================================================================= */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
+              {successMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
