@@ -464,20 +464,14 @@ export default function UsulanLokasiPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
+            
+            {/* HEADER MODAL */}
             <div className="bg-linear-to-r from-blue-950 to-slate-900 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
-                <img src="/icons/icon-location.svg" alt="" className="w-5 h-5 brightness-0 invert" /> Tambah Lokasi Baru
+                <img src="/icons/icon-location.svg" alt="" className="w-5 h-4 brightness-0 invert" /> Tambah Lokasi Baru
               </div>
               <div className="flex items-center gap-2">
-                <button 
-                  type="submit" 
-                  form="form-ulok"
-                  disabled={isPending}
-                  className="hover:bg-white/15 p-2 rounded-lg transition-all duration-200 hover:scale-90 active:scale-95 disabled:opacity-50 flex items-center justify-center"
-                  title="Buat Usulan"
-                >
-                  <img src="/icons/icon-add.svg" alt="Buat" className="w-4 h-4 text-blue-950" />
-                </button>
+                {/* Tombol submit di sini sudah dihapus */}
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
@@ -488,6 +482,8 @@ export default function UsulanLokasiPage() {
                 </button>
               </div>
             </div>
+
+            {/* CARD FORM */}
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden">
               <form id="form-ulok" onSubmit={handleCreateLocation} className="p-6 space-y-4">
                 <div>
@@ -536,6 +532,21 @@ export default function UsulanLokasiPage() {
                 </div>
               </form>
             </div>
+
+            {/* CARD/DIV BARU UNTUK TOMBOL ACTION (POJOK KANAN BAWAH) */}
+            <div className="flex justify-end">
+              <button 
+                type="submit" 
+                form="form-ulok"
+                disabled={isPending}
+                className="bg-linear-to-r from-blue-950 to-slate-900 text-white px-32 py-3 mt-1 rounded-lg font-bold text-sm hover:bg-blue-900 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 shadow-xs"
+                title="Simpan Usulan"
+              >
+                <img src="/icons/icon-add.svg" alt="" className="w-4 h-4 brightness-0 invert" />
+                Simpan
+              </button>
+            </div>
+
           </div>
         </div>
       )}
