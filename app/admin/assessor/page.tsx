@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getCurrentProfile } from '@/actions/auth';
-import { getAssessorHistoriSubmissions } from '@/actions/assessor'; // Menggunakan action assessor untuk mengambil seluruh data usulan
+import { getAssessorHistoriSubmissions } from '@/actions/assessor';
 import { 
   ClipboardCheck, 
   Building2, 
@@ -28,7 +28,6 @@ import {
 } from 'recharts';
 import { useRouter } from 'next/navigation';
 
-// Custom Tooltip Recharts untuk mendukung Dark Mode
 const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -53,13 +52,11 @@ export default function AssessorDashboardPage() {
     async function initAssessorDashboard() {
       setLoading(true);
       try {
-        // 1. Fetch Profile
         const profileRes = await getCurrentProfile();
         if (profileRes && profileRes.success && profileRes.profile) {
           setFullName(profileRes.profile.full_name);
         }
 
-        // 2. Fetch All Submissions across branches
         const res = await getAssessorHistoriSubmissions();
         if (res.success && res.data) {
           setSubmissions(res.data);
@@ -74,9 +71,6 @@ export default function AssessorDashboardPage() {
     initAssessorDashboard();
   }, []);
 
-  // --- KUMPULAN LOGIKA STATISTIK (DITUNJANG OLEH STRUKTUR DATABASE) ---
-  
-  // Filter out Drafts (Assessor hanya memproses data yang sudah disubmit oleh cabang)
   const incomingSubmissions = submissions.filter(s => s.status !== 'Draft');
 
   const totalIncoming = incomingSubmissions.length;
@@ -84,7 +78,6 @@ export default function AssessorDashboardPage() {
   const revisionCount = incomingSubmissions.filter(s => s.status === 'Revision').length;
   const completedCount = incomingSubmissions.filter(s => s.status === 'Approved' || s.status === 'Rejected').length;
 
-  // Menghitung Jumlah Cabang yang Berpartisipasi (Berdasarkan relasi sub.profiles.branches)
   const uniqueBranches = new Set(
     submissions
       .map(s => s.profiles?.branches?.nama_cabang)
@@ -92,11 +85,10 @@ export default function AssessorDashboardPage() {
   );
   const activeBranchesCount = uniqueBranches.size;
 
-  // 1. Data Pie Chart: Distribusi Status Review Global
   const pieData = [
-    { name: 'Belum Direview', value: inReviewCount, color: '#F59E0B' }, // Amber
-    { name: 'Sedang Revisi', value: revisionCount, color: '#F43F5E' }, // Rose
-    { name: 'Selesai (Approve/Reject)', value: completedCount, color: '#10B981' } // Emerald
+    { name: 'Belum Direview', value: inReviewCount, color: '#F59E0B' },
+    { name: 'Sedang Revisi', value: revisionCount, color: '#F43F5E' },
+    { name: 'Selesai (Approve/Reject)', value: completedCount, color: '#10B981' }
   ].filter(item => item.value > 0);
 
   const displayPieData = pieData.length > 0 ? pieData : [
@@ -104,7 +96,6 @@ export default function AssessorDashboardPage() {
     { name: 'Sedang Revisi', value: 0, color: '#F43F5E' }
   ];
 
-  // 2. Data Bar Chart: Top 5 Cabang dengan Pengajuan Terbanyak
   const branchDistribution = React.useMemo(() => {
     const counts: Record<string, number> = {};
     submissions.forEach(s => {
@@ -120,19 +111,16 @@ export default function AssessorDashboardPage() {
       .slice(0, 5);
   }, [submissions]);
 
-  // Antrean Usulan yang perlu segera dinilai (In Review) - Maksimal 5 data terbaru
   const reviewQueue = [...submissions]
     .filter(s => s.status === 'In Review')
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
-  // Top 5 Skor ULOK Tertinggi Nasional (Sistem SAW)
   const topNationalScores = [...submissions]
     .filter(s => s.final_score !== null && s.final_score !== undefined)
     .sort((a, b) => b.final_score - a.final_score)
     .slice(0, 5);
 
-  // Helper navigasi ke halaman penilaian
   const handleGoToReview = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa'];
     const path = kelompokPerorangan.includes(jenisBadanHukum) ? 'ulok-perorangan' : 'ulok-badanhukum';
@@ -142,7 +130,7 @@ export default function AssessorDashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-2 md:p-4 text-gray-800 dark:text-slate-100">
       
-      {/* WELCOME BANNER */}
+      {/* === WELCOME BANNER === */}
       <div className="bg-[#142B4D] dark:bg-slate-950 text-white p-6 rounded-2xl shadow-md relative overflow-hidden border border-transparent dark:border-slate-800">
         <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-y-6 translate-x-6">
           <ClipboardCheck className="w-64 h-64 text-white" />
@@ -155,10 +143,10 @@ export default function AssessorDashboardPage() {
         </p>
       </div>
 
-      {/* 4 SUMMARY CARDS (FOKUS BEBAN KERJA ASSESSOR) */}
+      {/* === SUMMARY CARDS === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
-        {/* Card 1: Antrean Review (Mendesak) */}
+        {/* === CARD: ANTREAN REVIEW === */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-amber-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">Antrean Review</p>
@@ -170,7 +158,7 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        {/* Card 2: Sedang Direvisi Cabang */}
+        {/* === CARD: SEDANG DIREVISI === */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-rose-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">Sedang Direvisi</p>
@@ -182,7 +170,7 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        {/* Card 3: Usulan Selesai Dinilai */}
+        {/* === CARD: SELESAI DINILAI === */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-emerald-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">Selesai Dinilai</p>
@@ -194,7 +182,7 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        {/* Card 4: Total Cabang Aktif */}
+        {/* === CARD: CABANG AKTIF === */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-blue-900 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-blue-900 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Cabang Berpartisipasi</p>
@@ -207,10 +195,10 @@ export default function AssessorDashboardPage() {
         </div>
       </div>
 
-      {/* CHARTS ROW (DUAL GRAPH: STATUS VS CABANG) */}
+      {/* === CHARTS ROW === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Kiri: Pie Chart Status Usulan */}
+        {/* === CHART: STATUS REVIEW === */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800">
           <div className="border-b border-gray-100 dark:border-slate-800 pb-4 mb-4">
             <h3 className="font-bold text-gray-800 dark:text-slate-100 text-base flex items-center gap-2">
@@ -254,7 +242,7 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        {/* Kanan: Bar Chart Distribusi Pengajuan Per Cabang */}
+        {/* === CHART: DISTRIBUSI PENGAJUAN === */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800">
           <div className="border-b border-gray-100 dark:border-slate-800 pb-4 mb-4">
             <h3 className="font-bold text-gray-800 dark:text-slate-100 text-base flex items-center gap-2">
@@ -285,10 +273,10 @@ export default function AssessorDashboardPage() {
         </div>
       </div>
 
-      {/* TWO COLUMN BOTTOM LAYOUT */}
+      {/* === TWO COLUMN BOTTOM === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Kolom Kiri: Antrean Usulan Masuk (Perlu Tindakan Assessor Segera) */}
+        {/* === QUEUE: BERKAS MASUK === */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between">
             <h3 className="font-bold text-sm flex items-center gap-2">
@@ -330,7 +318,7 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        {/* Kolom Kanan: Top 5 Lokasi Skor Tertinggi (Leaderboard Nasional) */}
+        {/* === LEADERBOARD: ULOK TERBAIK === */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between">
             <h3 className="font-bold text-sm flex items-center gap-2">

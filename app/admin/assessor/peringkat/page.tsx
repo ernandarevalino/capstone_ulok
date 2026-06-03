@@ -31,11 +31,9 @@ export default function PeringkatAssessorPage() {
     setOpenCardId(prev => (prev === id ? null : id))
   }
 
-  // Split Top 3 dan Data Selebihnya (Nasional - Tanpa Filter Branch)
   const top3Data = useMemo(() => leaderboard.slice(0, 3), [leaderboard])
   const remainingData = useMemo(() => leaderboard.slice(3), [leaderboard])
 
-  // Konfigurasi Paginasi untuk daftar peringkat 4+
   const itemsPerPage = 10
   const totalPages = Math.ceil(remainingData.length / itemsPerPage) || 1
   const displayedRemainingData = useMemo(() => {
@@ -43,7 +41,6 @@ export default function PeringkatAssessorPage() {
     return remainingData.slice(start, start + itemsPerPage)
   }, [remainingData, currentPage])
 
-  // Helper untuk mengecek kelengkapan data ULOK berjalan
   const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at
 
   if (isLoading) {
@@ -76,7 +73,7 @@ export default function PeringkatAssessorPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        {/* HEADER HERO BANNER PRESTASI */}
+        {/* === HEADER HERO BANNER PRESTASI === */}
         <div className="bg-linear-to-r from-blue-950 via-slate-950 to-blue-950 text-white p-6 md:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-blue-900/40">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
             <Award className="w-48 h-48" />
@@ -106,10 +103,10 @@ export default function PeringkatAssessorPage() {
           </div>
         ) : (
           <>
-            {/* ROW 1: PODIUM TOP 3 NASIONAL */}
+            {/* === PODIUM: TOP 3 NASIONAL === */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end pt-4">
               
-              {/* JUARA 2 (KIRI) */}
+              {/* === PODIUM: JUARA 2 === */}
               {top3Data[1] && (
                 <div 
                   onClick={() => toggleCard(top3Data[1].id)}
@@ -141,7 +138,7 @@ export default function PeringkatAssessorPage() {
                 </div>
               )}
 
-              {/* JUARA 1 (TENGAH - MENONJOL) */}
+              {/* === PODIUM: JUARA 1 === */}
               {top3Data[0] && (
                 <div 
                   onClick={() => toggleCard(top3Data[0].id)}
@@ -175,7 +172,7 @@ export default function PeringkatAssessorPage() {
                 </div>
               )}
 
-              {/* JUARA 3 (KANAN) */}
+              {/* === PODIUM: JUARA 3 === */}
               {top3Data[2] && (
                 <div 
                   onClick={() => toggleCard(top3Data[2].id)}
@@ -209,7 +206,7 @@ export default function PeringkatAssessorPage() {
 
             </div>
 
-            {/* ACCORDION EXPANDABLE KHUSUS PODIUM TOP 3 */}
+            {/* === DETAIL ACCORDION: TOP 3 === */}
             {top3Data.map((item) => {
               if (openCardId !== item.id) return null
               const isIncomplete = checkIncomplete(item)
@@ -254,7 +251,7 @@ export default function PeringkatAssessorPage() {
               )
             })}
 
-            {/* ROW 2: DAFTAR LIST BARIS LANJUTAN (PERINGKAT 4+) */}
+            {/* === LIST: PERINGKAT LANJUTAN === */}
             <div className="space-y-3">
               <div className="flex items-center justify-between pl-1 pt-4">
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -280,13 +277,13 @@ export default function PeringkatAssessorPage() {
                       key={item.id}
                       className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800/80 shadow-xs overflow-hidden transition-all duration-200"
                     >
-                      {/* BARIS UTAMA DATA */}
+                      {/* === ITEM ROW === */}
                       <div 
                         onClick={() => toggleCard(item.id)}
                         className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer select-none hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-all"
                       >
                         <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                          {/* NOMOR URUT LINGKARAN */}
+                          {/* === RANK NUMBER === */}
                           <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-bold text-xs text-gray-500 dark:text-gray-400 shrink-0">
                             {actualRank}
                           </div>
@@ -311,7 +308,7 @@ export default function PeringkatAssessorPage() {
                           </div>
                         </div>
 
-                        {/* SKOR AKHIR & DETAIL TRIGGERS */}
+                        {/* === RANK SCORE & ACTIONS === */}
                         <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto border-t sm:border-none pt-2.5 sm:pt-0 border-gray-100 dark:border-gray-800">
                           <div className="text-left sm:text-right">
                             <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Skor SAW</p>
@@ -325,7 +322,7 @@ export default function PeringkatAssessorPage() {
                         </div>
                       </div>
 
-                      {/* DETAIL COLLAPSIBLE BARIS */}
+                      {/* === ITEM COLLAPSIBLE DETAIL === */}
                       {isOpen && (
                         <div className="bg-gray-50/50 dark:bg-gray-950/30 border-t border-gray-100 dark:border-gray-800 p-4 space-y-4 animate-fadeIn">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -361,7 +358,7 @@ export default function PeringkatAssessorPage() {
               )}
             </div>
 
-            {/* INTERACTIVE NUMBERED PAGINATION */}
+            {/* === PAGINATION === */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-4 py-3 rounded-xl shadow-xs transition-colors">
                 <button
@@ -372,7 +369,7 @@ export default function PeringkatAssessorPage() {
                   Prev
                 </button>
                 
-                {/* NOMOR HALAMAN DEKTOP */}
+                {/* === PAGINATION: DESKTOP === */}
                 <div className="hidden sm:flex items-center gap-1.5">
                   {Array.from({ length: totalPages }, (_, idx) => {
                     const pageNum = idx + 1
@@ -392,7 +389,7 @@ export default function PeringkatAssessorPage() {
                   })}
                 </div>
 
-                {/* TAMPILAN HALAMAN MOBILE */}
+                {/* === PAGINATION: MOBILE === */}
                 <span className="sm:hidden text-xs font-semibold text-gray-500">
                   Halaman {currentPage} / {totalPages}
                 </span>

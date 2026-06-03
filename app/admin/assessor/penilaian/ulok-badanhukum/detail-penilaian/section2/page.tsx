@@ -12,24 +12,20 @@ export default function Section2BadanHukumAssessorPage() {
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
 
-  // State Utama
   const [isLoading, setIsLoading] = useState(true)
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
 
-  // State Utama Komponen Section 2
   const [jenisAlasHak, setJenisAlasHak] = useState('')
   const [noSertifikat, setNoSertifikat] = useState('')
   const [namaSertifikat, setNamaSertifikat] = useState('')
   const [luasSertifikat, setLuasSertifikat] = useState('')
   const [masaBerlakuSertifikat, setMasaBerlakuSertifikat] = useState('')
   
-  // State Dokumen Lainnya / Kelurahan
   const [isLainnya, setIsLainnya] = useState(false)
   const [namaAjbLainnya, setNamaAjbLainnya] = useState('')
   const [noAjbLainnya, setNoAjbLainnya] = useState('')
   const [isProsesSertifikat, setIsProsesSertifikat] = useState(false)
 
-  // State Kondisi Objek & Finansial
   const [bentukObjek, setBentukObjek] = useState('')
   const [hargaSewa, setHargaSewa] = useState<number | null>(null)
   const [isJaminan, setIsJaminan] = useState('Tidak')
@@ -40,14 +36,12 @@ export default function Section2BadanHukumAssessorPage() {
 
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
-  // State Baru untuk Custom Toast Modal Success
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
 
   const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
     setVerifyingDocId(docId)
     
-    // Optimistic Update
     setUploadedDocs(prev => prev.map(doc => {
       if (doc.id === docId) {
         return { ...doc, is_verified: !currentStatus }
@@ -58,7 +52,6 @@ export default function Section2BadanHukumAssessorPage() {
     const res = await toggleDocumentVerification(docId, currentStatus)
     
     if (!res.success) {
-      // Rollback jika gagal
       setUploadedDocs(prev => prev.map(doc => {
         if (doc.id === docId) {
           return { ...doc, is_verified: currentStatus }
@@ -72,7 +65,6 @@ export default function Section2BadanHukumAssessorPage() {
         setShowSuccessModal(false)
       }, 1500)
     } else {
-      // Sukses verifikasi individual berkas
       setSuccessModalText(!currentStatus ? 'Verifikasi berhasil!' : 'Verifikasi dibatalkan!')
       setShowSuccessModal(true)
       setTimeout(() => {
@@ -131,19 +123,16 @@ export default function Section2BadanHukumAssessorPage() {
     router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}&prefill=${encodeURIComponent(`⚠️ [Catatan Assessor - Grup: ${groupName}]: `)}`)
   }
 
-  // Handle ketika penilai menekan tombol Selesai
   const handleSelesaiPenilaian = () => {
     setSuccessModalText("Penilaian Selesai Anda bisa menilainya lagi lain kali")
     setShowSuccessModal(true)
     
-    // Hold routing selama 1.5 detik agar user sempat membaca toast sukses dengan nyaman
     setTimeout(() => {
       setShowSuccessModal(false)
       router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}`)
     }, 1500)
   }
 
-  // Komponen Reusable Slot Render Berkas (Sesuai Section 1)
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
     const existingDoc = uploadedDocs.find(d => d.document_type === docType)
 
@@ -158,7 +147,6 @@ export default function Section2BadanHukumAssessorPage() {
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
             <div className="flex gap-1.5 items-center">
               
-              {/* Button View */}
               <a 
                 href={existingDoc.file_url} 
                 target="_blank" 
@@ -169,7 +157,6 @@ export default function Section2BadanHukumAssessorPage() {
                 <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
               </a>
 
-              {/* Button Verify Action */}
               <button
                 type="button"
                 disabled={verifyingDocId === existingDoc.id}
@@ -212,7 +199,7 @@ export default function Section2BadanHukumAssessorPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/assessor/penilaian')} 
@@ -238,7 +225,7 @@ export default function Section2BadanHukumAssessorPage() {
           <span className="text-gray-800 dark:text-gray-100 font-bold">Section 2: Kelayakan</span>
         </nav>
 
-        {/* HEADER SECTION */}
+        {/* === HEADER === */}
         <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
@@ -247,7 +234,7 @@ export default function Section2BadanHukumAssessorPage() {
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">2 / 2</span>
         </div>
 
-        {/* BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN */}
+        {/* === FORM: ALAS HAK & KEPEMILIKAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -277,7 +264,7 @@ export default function Section2BadanHukumAssessorPage() {
             </div>
           </div>
 
-          {/* DETAIL SERTIFIKAT */}
+          {/* === FORM: DETAIL SERTIFIKAT === */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 dark:bg-gray-800/15 border border-gray-200 dark:border-gray-800">
             <p className="text-xs font-bold text-blue-950 dark:text-blue-400 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak || 'Sertifikat Lahan'}):</p>
             <div>
@@ -305,7 +292,7 @@ export default function Section2BadanHukumAssessorPage() {
             </div>
           </div>
 
-          {/* DOKUMEN LAINNYA / KELURAHAN */}
+          {/* === FORM: DOKUMEN LAINNYA === */}
           <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 bg-gray-50/40 dark:bg-gray-800/5 space-y-3">
             <label className="flex items-center gap-2 font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed text-xs">
               <input type="checkbox" disabled checked={isLainnya} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4 cursor-not-allowed" />
@@ -332,7 +319,7 @@ export default function Section2BadanHukumAssessorPage() {
                 {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
               </div>
 
-              {/* SUB-CHECKBOX PROSES SERTIFIKAT */}
+              {/* === FORM: PROSES SERTIFIKAT === */}
               <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-900/50 space-y-3 shadow-sm">
                 <label className="flex items-center gap-2 font-bold text-red-950 dark:text-red-400 cursor-not-allowed text-xs">
                   <input type="checkbox" disabled checked={isProsesSertifikat} className="rounded accent-red-700 w-4 h-4 cursor-not-allowed" />
@@ -349,7 +336,7 @@ export default function Section2BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* BUNDEL 2: BENTUK OBJEK & IZIN PELENGKAP */}
+        {/* === FORM: FISIK OBJEK & IZIN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -396,7 +383,7 @@ export default function Section2BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* BUNDEL 3: STATUS JAMINAN BANK */}
+        {/* === FORM: STATUS JAMINAN BANK === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -443,7 +430,7 @@ export default function Section2BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* BUNDEL 4: DATA TAMBAHAN KETERANGAN */}
+        {/* === FORM: DATA TAMBAHAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -469,7 +456,7 @@ export default function Section2BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* PANEL TOMBOL NAVIGASI */}
+        {/* === NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
@@ -490,7 +477,7 @@ export default function Section2BadanHukumAssessorPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.15s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.15s_ease-out]">

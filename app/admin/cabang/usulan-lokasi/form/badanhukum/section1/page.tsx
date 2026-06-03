@@ -11,32 +11,25 @@ export default function Section1BadanHukumPage() {
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(true)
 
-  // State untuk Kondisional Berkas (Pajak & Kuasa)
   const [statusPajak, setStatusPajak] = useState('Non-PKP')
   const [isDikuasakan, setIsDikuasakan] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
-  // State Custom Toast / Modal UI
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
 
-  // Fungsi memuat ulang daftar dokumen yang sudah diunggah
   const loadDataDanDokumen = async () => {
     if (!ulokId) return
     setIsLoading(true)
 
-    // 1. Ambil data teks/detail dari database
     const detailRes = await getUlokDetail(ulokId)
-    // Logika asli Badan Hukum tidak merubah database field
 
-    // 2. Ambil data dokumen terupload
     const resDocs = await getUploadedDocuments(ulokId)
     if (resDocs.success && resDocs.data) {
       setUploadedDocs(resDocs.data)
       const docs = resDocs.data
       
-      // Otomatisasi deteksi checkbox/radio berdasarkan berkas terunggah sebelumnya
       const hasSppkp = docs.some((d: any) => d.document_type === 'sppkp')
       if (hasSppkp) {
         setStatusPajak('PKP')
@@ -61,7 +54,6 @@ export default function Section1BadanHukumPage() {
     loadDataDanDokumen()
   }, [ulokId])
 
-  // Proses Upload File Berkas Inline dengan Toast Modern
   const handleFileUpload = async (docType: string, file: File) => {
     if (!file || !ulokId) return
     const formData = new FormData()
@@ -76,7 +68,6 @@ export default function Section1BadanHukumPage() {
           setShowSuccessModal(false)
         }, 1500)
 
-        // Refresh list dokumen
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
@@ -89,7 +80,6 @@ export default function Section1BadanHukumPage() {
     })
   }
 
-  // Proses Eksekusi Hapus Berkas dari Modal Konfirmasi
   const executeDelete = async () => {
     if (!deleteTarget) return
 
@@ -103,7 +93,6 @@ export default function Section1BadanHukumPage() {
           setShowSuccessModal(false)
         }, 1500)
 
-        // Refresh list dokumen
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
@@ -117,7 +106,6 @@ export default function Section1BadanHukumPage() {
     })
   }
 
-  // Komponen Reusable Slot Upload Berkas inline
   const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
     const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
     return (
@@ -130,7 +118,6 @@ export default function Section1BadanHukumPage() {
           <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
             <div className="flex gap-1.5 items-center">
-              {/* View Icon Button */}
               <a 
                 href={existingFile.file_url} 
                 target="_blank" 
@@ -140,7 +127,6 @@ export default function Section1BadanHukumPage() {
               >
                 <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
               </a>
-              {/* Delete Icon Button */}
               <button 
                 type="button" 
                 onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
@@ -166,7 +152,6 @@ export default function Section1BadanHukumPage() {
     )
   }
 
-  // Navigasi Sekaligus Auto-Save Data Teks Halaman Section 1 (Badan Hukum menggunakan payload kosong {})
   const handleNavigation = async (targetPath: string) => {
     if (!ulokId) return
     startTransition(async () => {
@@ -194,7 +179,7 @@ export default function Section1BadanHukumPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB NAVIGATION === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
@@ -213,7 +198,7 @@ export default function Section1BadanHukumPage() {
           <span className="text-gray-800 dark:text-gray-100 font-bold">Section 1: Legalitas</span>
         </nav>
 
-        {/* HEADER SECTION */}
+        {/* === HEADER SECTION === */}
         <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Section 1: Legalitas Instansi & Berkas Manajemen Badan Hukum</h1>
@@ -222,7 +207,7 @@ export default function Section1BadanHukumPage() {
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>
 
-        {/* BUNDEL 1: BERKAS UTAMA WAJIB */}
+        {/* === BUNDEL 1: BERKAS UTAMA WAJIB === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-law.svg" alt="Legalitas" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -237,14 +222,13 @@ export default function Section1BadanHukumPage() {
           </div>
         </div>
 
-        {/* BUNDEL 2: KONDISIONAL PERPAJAKAN & KUASA */}
+        {/* === BUNDEL 2: KONDISIONAL PERPAJAKAN & KUASA === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Pajak" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Status Pajak & Pelimpahan Kuasa
           </h3>
           
-          {/* Pajak Radio Group */}
           <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Opsi Perpajakan Perusahaan:</label>
             <div className="grid grid-cols-2 gap-3">
@@ -263,7 +247,6 @@ export default function Section1BadanHukumPage() {
             </div>
           </div>
 
-          {/* Kuasa Checkbox */}
           <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
             <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
               <input type="checkbox" checked={isDikuasakan} onChange={(e) => setIsDikuasakan(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
@@ -277,7 +260,7 @@ export default function Section1BadanHukumPage() {
           </div>
         </div>
 
-        {/* BUNDEL 3: DOKUMEN SPESIFIK STRUKTUR ORGANISASI */}
+        {/* === BUNDEL 3: DOKUMEN SPESIFIK STRUKTUR ORGANISASI === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-family.svg" alt="Pengurus" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -292,7 +275,7 @@ export default function Section1BadanHukumPage() {
           </div>
         </div>
 
-        {/* PANEL TOMBOL NAVIGASI */}
+        {/* === PANEL TOMBOL NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
@@ -314,7 +297,7 @@ export default function Section1BadanHukumPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -326,7 +309,7 @@ export default function Section1BadanHukumPage() {
         </div>
       )}
 
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

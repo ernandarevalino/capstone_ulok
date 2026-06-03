@@ -3,13 +3,11 @@
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Inisialisasi Supabase Client dengan Service Role Key untuk bypass RLS (Row Level Security)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
-// Interface untuk parameter pencarian user
 interface GetUsersParams {
   role: 'admin_cabang' | 'assessor'
   search?: string
@@ -18,14 +16,7 @@ interface GetUsersParams {
   branchFilter?: string
 }
 
-/* ========================================================================= */
-/* #region 1. FITUR MANAJEMEN NOTIFIKASI SISTERM */
-/* ========================================================================= */
-
-/**
- * Ubah dari async function biasa menjadi export async function
- * agar bisa di-import oleh file action lain (seperti action berkas/ulok)
- */
+// === ACTIONS: BUAT NOTIFIKASI SISTEM ===
 export async function createNotification(
   title: string,
   message: string,
@@ -41,9 +32,7 @@ export async function createNotification(
   }
 }
 
-/**
- * Mengambil daftar seluruh notifikasi terbaru (Maksimal 100 baris dikontrol oleh DB Trigger)
- */
+// === ACTIONS: AMBIL NOTIFIKASI ===
 export async function getNotificationsAction(userId: string | null = null) {
   try {
     let query = supabaseAdmin
@@ -66,9 +55,7 @@ export async function getNotificationsAction(userId: string | null = null) {
   }
 }
 
-/**
- * Menghapus satu record data notifikasi berdasarkan ID spesifik
- */
+// === ACTIONS: HAPUS NOTIFIKASI ===
 export async function deleteNotificationAction(id: number) {
   try {
     const { error } = await supabaseAdmin.from('notifications').delete().eq('id', id);
@@ -79,9 +66,7 @@ export async function deleteNotificationAction(id: number) {
   }
 }
 
-/**
- * Mengubah status semua notifikasi yang belum dibaca menjadi sudah dibaca
- */
+// === ACTIONS: TANDAI SEMUA NOTIFIKASI SEBAGAI DIBACA ===
 export async function markAllNotificationsAsReadAction(userId: string | null = null) {
   try {
     let query = supabaseAdmin
@@ -103,10 +88,7 @@ export async function markAllNotificationsAsReadAction(userId: string | null = n
   }
 }
 
-/* ========================================================================= */
-/* #region 2. READ USERS BY ROLE (WITH FILTER & PAGINATION) */
-/* ========================================================================= */
-
+// === ACTIONS: AMBIL USERS BERDASARKAN ROLE ===
 export async function getUsersByRoleAction({ role, search = '', page = 1, limit = 7, branchFilter = '' }: GetUsersParams) {
   try {
     const from = (page - 1) * limit
@@ -156,6 +138,7 @@ export async function getUsersByRoleAction({ role, search = '', page = 1, limit 
   }
 }
 
+// === ACTIONS: AMBIL SEMUA CABANG ===
 export async function getAllBranchesAction() {
   try {
     const { data, error } = await supabaseAdmin
@@ -170,10 +153,7 @@ export async function getAllBranchesAction() {
   }
 }
 
-/* ========================================================================= */
-/* #region 3. DASHBOARD STATISTIK */
-/* ========================================================================= */
-
+// === ACTIONS: AMBIL STATISTIK DASHBOARD ===
 export async function getDashboardStatsAction() {
   try {
     const { count: totalCabang, error: err1 } = await supabaseAdmin
@@ -205,10 +185,6 @@ export async function getDashboardStatsAction() {
   }
 }
 
-/* ========================================================================= */
-/* #region 4. CREATE USER (AUTO CONVERT NIK TO EMAIL LOGIN) */
-/* ========================================================================= */
-
 interface CreateUserParams {
   password: string
   fullName: string
@@ -217,6 +193,7 @@ interface CreateUserParams {
   branchId?: number | null
 }
 
+// === ACTIONS: TAMBAH USER BARU ===
 export async function createUserAction({ password, fullName, nik, role, branchId }: CreateUserParams) {
   try {
     const cleanNik = nik.trim();
@@ -259,7 +236,6 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       throw profileError
     }
 
-    // Pemicu otomatis log notifikasi ke sistem pusat superadmin
     const roleLabel = role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
     await createNotification(
       'Pengguna Baru Terdaftar',
@@ -272,19 +248,16 @@ export async function createUserAction({ password, fullName, nik, role, branchId
   }
 }
 
-/* ========================================================================= */
-/* #region 5. UPDATE USER DATA (WITH AUTO NOTIFICATION TRIGGER) */
-/* ========================================================================= */
-
 interface UpdateUserParams {
   id: string
   fullName: string
   nik: string
   deleteAvatar: boolean
   branchId?: number | null
-  password?: string // ✏️ Tambahkan opsional password di interface
+  password?: string 
 }
 
+// === ACTIONS: UPDATE USER DATA ===
 export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password }: UpdateUserParams) {
   try {
     const cleanNik = nik.trim();
@@ -310,7 +283,6 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       }
     }
 
-    // 🔥 PROSES UPDATE KREDENSIAL AUTH (EMAIL & PASSWORD) SECARA EFISIEN
     const authUpdatePayload: any = {}
     
     if (cleanNik !== existingUser.nik) {
@@ -327,7 +299,6 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       }
     }
 
-    // PROSES UPDATE DATA PROFIL DATABASE
     const updatePayload: any = {}
 
     if (fullName.trim() !== existingUser.full_name) {
@@ -343,7 +314,6 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       updatePayload.branch_id = branchId || null
     }
 
-    // Jika tidak ada perubahan di profil database & auth, langsung return sukses
     if (Object.keys(updatePayload).length === 0 && !authUpdatePayload.password) {
       return { success: true }
     }
@@ -357,17 +327,13 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       if (error) throw error
     }
 
-    // Pemicu otomatis log notifikasi perubahan data profil ke sistem
     const roleLabel = existingUser.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
-    
-    // Sesuaikan pesan notifikasi jika ada pergantian password
     const passwordMsg = password && password.trim() !== '' ? ' dan kata sandi' : '';
     await createNotification(
       'Pembaruan Data Pengguna',
       `Profil${passwordMsg} ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
     );
 
-    // Kirim notifikasi terarah ke user yang bersangkutan
     await createNotification(
       'Akun Diperbarui Super Admin',
       'Data profil atau kredensial akun Anda telah disesuaikan oleh Super Admin.',
@@ -381,13 +347,9 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
   }
 }
 
-/* ========================================================================= */
-/* #region 6. DELETE USER TOTAL (WITH AUTO NOTIFICATION TRIGGER) */
-/* ========================================================================= */
-
+// === ACTIONS: HAPUS USER ===
 export async function deleteUserAction(id: string) {
   try {
-    // Ambil info user sebelum entitas dihapus demi kebutuhan rekaman pesan notifikasi
     const { data: userTarget } = await supabaseAdmin
       .from('profiles')
       .select('full_name, nik, role')
@@ -404,7 +366,6 @@ export async function deleteUserAction(id: string) {
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(id)
     if (authErr) throw authErr
 
-    // Pemicu otomatis log notifikasi penghapusan akun ke sistem pusat superadmin
     if (userTarget) {
       const roleLabel = userTarget.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
       await createNotification(

@@ -11,8 +11,7 @@ export default function Section1PeroranganPage() {
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(true)
 
-  // State Form Teks
-  const [statusKepemilikan, setStatusKepemilikan] = useState('Perorangan') // Pilihan Status: Pemilik Langsung (Perorangan) / Kuasa / Waris / Hibah
+  const [statusKepemilikan, setStatusKepemilikan] = useState('Perorangan')
   const [namaPemegang, setNamaPemegang] = useState('')
   const [nik, setNik] = useState('')
   const [namaKitas, setNamaKitas] = useState('')
@@ -22,14 +21,11 @@ export default function Section1PeroranganPage() {
   const [namaSesudahGanti, setNamaSesudahGanti] = useState('')
   const [noSuratKematian, setNoSuratKematian] = useState('')
 
-  // State Kontrol Checkbox UI (Biar Form Ringkas)
   const [hasEktp, setHasEktp] = useState(false)
   const [hasKitas, setHasKitas] = useState(false)
 
-  // State Berkas Terupload
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
-  // State Custom Toast / Modal UI
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
@@ -38,7 +34,6 @@ export default function Section1PeroranganPage() {
     if (!ulokId) return
     setIsLoading(true)
     
-    // 1. Ambil data teks dari database
     const resDetail = await getUlokDetail(ulokId)
     if (resDetail.success && resDetail.data) {
       const d = resDetail.data
@@ -52,12 +47,10 @@ export default function Section1PeroranganPage() {
       setNamaSesudahGanti(d.nama_sesudah_ganti || '')
       setNoSuratKematian(d.no_surat_kematian || '')
 
-      // Auto check checkbox UI jika data di DB sudah ada isinya
       if (d.nik_pemilik || d.nama_pemegang_hak) setHasEktp(true)
       if (d.nama_kitas) setHasKitas(true)
     }
 
-    // 2. Ambil data dokumen terupload
     const resDocs = await getUploadedDocuments(ulokId)
     if (resDocs.success && resDocs.data) {
       setUploadedDocs(resDocs.data)
@@ -74,7 +67,6 @@ export default function Section1PeroranganPage() {
     loadDataDanDokumen()
   }, [ulokId])
 
-  // Proses Upload File Berkas Inline
   const handleFileUpload = async (docType: string, file: File) => {
     if (!file || !ulokId) return
     const formData = new FormData()
@@ -83,14 +75,12 @@ export default function Section1PeroranganPage() {
     startTransition(async () => {
       const res = await uploadUlokFile(ulokId, docType, formData)
       if (res.success) {
-        // Tampilkan Custom Toast Sukses Auto-Close
         setSuccessModalText('Berkas berhasil diperbarui!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
         }, 1500)
 
-        // Refresh status berkas
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
@@ -99,7 +89,6 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  // Proses Eksekusi Hapus Berkas dari Modal Konfirmasi
   const executeDelete = async () => {
     if (!deleteTarget) return
 
@@ -108,14 +97,12 @@ export default function Section1PeroranganPage() {
       if (res.success) {
         setDeleteTarget(null)
         
-        // Tampilkan Custom Toast Sukses Hapus Auto-Close
         setSuccessModalText('Berkas berhasil dihapus!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
         }, 1500)
 
-        // Refresh status berkas
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
@@ -125,7 +112,6 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  // Komponen Reusable Slot Upload Berkas inline
   const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
     const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
     return (
@@ -138,7 +124,6 @@ export default function Section1PeroranganPage() {
           <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
             <div className="flex gap-1.5 items-center">
-              {/* View Icon Button */}
               <a 
                 href={existingFile.file_url} 
                 target="_blank" 
@@ -148,7 +133,6 @@ export default function Section1PeroranganPage() {
               >
                 <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
               </a>
-              {/* Delete Icon Button */}
               <button 
                 type="button" 
                 onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
@@ -174,7 +158,6 @@ export default function Section1PeroranganPage() {
     )
   }
 
-  // Navigasi Sekaligus Auto-Save Data Teks Halaman Section 1
   const handleNavigation = async (targetPath: string) => {
     if (!ulokId) return
     startTransition(async () => {
@@ -210,7 +193,7 @@ export default function Section1PeroranganPage() {
   return (
     <div>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-8 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
@@ -229,7 +212,7 @@ export default function Section1PeroranganPage() {
           <span className="text-gray-800 dark:text-gray-100 font-bold">Section 1: Identitas</span>
         </nav>
 
-        {/* HEADER SECTION */}
+        {/* === HEADER === */}
         <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Section 1: Identitas Pemilik & Status Kepemilikan</h1>
@@ -238,14 +221,13 @@ export default function Section1PeroranganPage() {
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>
 
-        {/* GRUP 1: IDENTITAS & PAJAK DASAR */}
+        {/* === FORM: IDENTITAS & PAJAK === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-perorangan.svg" alt="Perorangan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Dokumen Identitas & Pajak Dasar
           </h3>
             
-            {/* Checkbox E-KTP */}
             <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
               <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
                 <input type="checkbox" checked={hasEktp} onChange={(e) => setHasEktp(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
@@ -266,7 +248,6 @@ export default function Section1PeroranganPage() {
               )}
             </div>
 
-            {/* Checkbox KITAS/KITAP */}
             <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
               <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
                 <input type="checkbox" checked={hasKitas} onChange={(e) => setHasKitas(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
@@ -283,7 +264,7 @@ export default function Section1PeroranganPage() {
               )}
             </div>
 
-            {/* Dokumen Pajak */}
+            {/* === FORM: DOKUMEN PAJAK === */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               {renderUploadSlot("npwp", "Scan NPWP Asli", "Format PDF/PNG")}
               {renderUploadSlot("pkp_sppkp", "Scan PKP / SPPKP", "Format PDF")}
@@ -291,7 +272,7 @@ export default function Section1PeroranganPage() {
             </div>
           </div>
 
-        {/* GRUP 2: KARTU KELUARGA & PERNIKAHAN */}
+        {/* === FORM: KK & PERNIKAHAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-family.svg" alt="Family" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -317,7 +298,7 @@ export default function Section1PeroranganPage() {
             </div>
           </div>
 
-        {/* GRUP 3: SURAT PENETAPAN GANTI NAMA */}
+        {/* === FORM: GANTI NAMA === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-nama.svg" alt="Ganti Nama" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -336,7 +317,7 @@ export default function Section1PeroranganPage() {
             </div>
           </div>
 
-        {/* GRUP 4: STATUS KHUSUS KEPEMILIKAN */}
+        {/* === FORM: STATUS KEPEMILIKAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Status Khusus" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -354,7 +335,6 @@ export default function Section1PeroranganPage() {
               </div>
             </div>
 
-            {/* DOKUMEN KONDISIOAL STATUS KEPEMILIKAN */}
             {statusKepemilikan === 'Kuasa' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/40 dark:bg-amber-950/10 p-4 rounded-xl border border-amber-200 dark:border-amber-900/40 animate-fadeIn">
                 {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi", "Scan dokumen kuasa resmi")}
@@ -387,7 +367,7 @@ export default function Section1PeroranganPage() {
             )}
           </div>
 
-        {/* PANEL TOMBOL NAVIGASI */}
+        {/* === NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
@@ -409,7 +389,7 @@ export default function Section1PeroranganPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -421,7 +401,7 @@ export default function Section1PeroranganPage() {
         </div>
       )}
 
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

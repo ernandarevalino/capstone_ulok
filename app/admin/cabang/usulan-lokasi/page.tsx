@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-// Import fungsi deleteUlokSubmission yang baru dibuat
 import { getUlokSubmissions, createUlokSubmission, deleteUlokSubmission } from '@/actions/cabang'
 
 export default function UsulanLokasiPage() {
@@ -12,24 +11,19 @@ export default function UsulanLokasiPage() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // State baru untuk Custom Modal Konfirmasi & Sukses Hapus
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, namaLokasi: string } | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
 
-  // State untuk form modal
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
 
-  // State untuk Search
   const [searchQuery, setSearchQuery] = useState('')
 
-  // State untuk Accordion Grouping dan Pagination
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
 
-  // State untuk sorting kolom
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
 
@@ -82,7 +76,6 @@ export default function UsulanLokasiPage() {
     )
   }
 
-  // Ambil data dari server/database
   const fetchSubmissions = async () => {
     const res = await getUlokSubmissions()
     if (res.success && res.data) {
@@ -101,10 +94,6 @@ export default function UsulanLokasiPage() {
     fetchSubmissions()
   }, [router])
 
-  /**
-   * HELPER ROUTING
-   * Menentukan halaman form berdasarkan value jenis_badan_hukum dari database / select option
-   */
   const getFormRoute = (jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     
@@ -115,7 +104,6 @@ export default function UsulanLokasiPage() {
     return `/admin/cabang/usulan-lokasi/form/badanhukum`
   }
 
-  // Handle submit pembuatan ULOK baru
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!namaLokasi || !statusBadan || !namaPemegang) return
@@ -149,12 +137,10 @@ export default function UsulanLokasiPage() {
     })
   } 
 
-  // Handle aksi menghapus data usulan lokasi (Memicu custom confirm modal)
   const handleDeleteLocation = async (id: string, namaLokasi: string) => {
     setDeleteTarget({ id, namaLokasi })
   }
 
-  // Eksekusi penghapusan usulan lokasi setelah konfirmasi
   const executeDelete = async () => {
     if (!deleteTarget) return
     const idToDelete = deleteTarget.id
@@ -176,7 +162,6 @@ export default function UsulanLokasiPage() {
     })
   }
 
-  // Filter submissions berdasarkan search query
   const filteredSubmissions = submissions.filter((item) => {
     const searchLower = searchQuery.toLowerCase()
     const dateStr = item.created_at
@@ -196,7 +181,6 @@ export default function UsulanLokasiPage() {
     return matchesSearch
   })
 
-  // Komponen pembantu untuk merender kelompok tabel berdasarkan status
   const renderTableGroup = (title: string, allowedStatuses: string[], colorStyles: string) => {
     const dataSorted = [...filteredSubmissions].filter((item) => allowedStatuses.includes(item.status))
 
@@ -229,7 +213,6 @@ export default function UsulanLokasiPage() {
 
     const isExpanded = expandedGroup === title
 
-    // Slicing logic
     let displayedData = []
     const itemsPerPage = 12
     const totalItems = dataSorted.length
@@ -342,7 +325,7 @@ export default function UsulanLokasiPage() {
             </tbody>
           </table>
 
-          {/* Pagination Controls */}
+          {/* === KONTROL PAGINASI === */}
           {isExpanded && totalItems > itemsPerPage && (
             <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800">
               <button
@@ -411,7 +394,7 @@ export default function UsulanLokasiPage() {
         {renderTableGroup("Disetujui / Ditolak", ["Approved", "Rejected"], "bg-green-50 text-green-700 border border-green-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60")}
       </div>
 
-      {/* CUSTOM MODAL KONFIRMASI HAPUS */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -448,7 +431,7 @@ export default function UsulanLokasiPage() {
         </div>
       )}
 
-      {/* CUSTOM MODAL SUKSES */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -460,18 +443,17 @@ export default function UsulanLokasiPage() {
         </div>
       )}
 
-      {/* POP UP FORM MODAL */}
+      {/* === MODAL: FORM ULOK === */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
             
-            {/* HEADER MODAL */}
+            {/* === HEADER MODAL === */}
             <div className="bg-linear-to-r from-blue-950 to-slate-900 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
                 <img src="/icons/icon-location.svg" alt="" className="w-5 h-4 brightness-0 invert" /> Tambah Lokasi Baru
               </div>
               <div className="flex items-center gap-2">
-                {/* Tombol submit di sini sudah dihapus */}
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
@@ -483,7 +465,7 @@ export default function UsulanLokasiPage() {
               </div>
             </div>
 
-            {/* CARD FORM */}
+            {/* === FORM INPUT === */}
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden">
               <form id="form-ulok" onSubmit={handleCreateLocation} className="p-6 space-y-4">
                 <div>
@@ -533,7 +515,6 @@ export default function UsulanLokasiPage() {
               </form>
             </div>
 
-            {/* CARD/DIV BARU UNTUK TOMBOL ACTION (POJOK KANAN BAWAH) */}
             <div className="flex justify-end">
               <button 
                 type="submit" 

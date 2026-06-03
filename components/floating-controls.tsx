@@ -9,7 +9,6 @@ export function FloatingControls() {
   const [mounted, setMounted] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
 
-  // Prevent SSR Hydration Mismatch
   useEffect(() => {
     setMounted(true)
 
@@ -40,7 +39,7 @@ export function FloatingControls() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-      {/* Scroll to Top Button */}
+      {/* === TOMBOL: SCROLL TO TOP === */}
       <button
         onClick={scrollToTop}
         className={`p-3 bg-white/75 dark:bg-gray-800/75 text-gray-800 dark:text-gray-200 backdrop-blur-md rounded-full shadow-lg border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer ${
@@ -54,7 +53,7 @@ export function FloatingControls() {
         <ArrowUp className="w-5 h-5 animate-bounce" />
       </button>
 
-      {/* Theme Toggle Button */}
+      {/* === TOMBOL: THEME TOGGLE === */}
       <button
         onClick={toggleTheme}
         className="p-3 bg-white/75 dark:bg-gray-800/75 text-gray-800 dark:text-gray-200 backdrop-blur-md rounded-full shadow-lg border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"

@@ -24,7 +24,6 @@ import {
   Tooltip
 } from 'recharts';
 
-// Custom Tooltip Recharts untuk mendukung Dark Mode
 const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -49,7 +48,6 @@ export default function AdminCabangPage() {
     async function initDashboard() {
       setLoading(true);
       try {
-        // Fetch Profile
         const profileRes = await getCurrentProfile();
         if (profileRes && profileRes.success && profileRes.profile) {
           setFullName(profileRes.profile.full_name);
@@ -57,17 +55,14 @@ export default function AdminCabangPage() {
           setFullName("Pengguna");
         }
 
-        // Fetch Submissions
         const submissionsRes = await getUlokSubmissions();
         if (submissionsRes && submissionsRes.success && submissionsRes.data) {
           setSubmissions(submissionsRes.data);
 
-          // Background calculation for items with 0 or null final_score which are not draft
           const uncalculated = submissionsRes.data.filter((s: any) => s.status !== 'Draft' && (s.final_score === 0 || s.final_score === null));
           if (uncalculated.length > 0) {
             Promise.all(uncalculated.map((s: any) => calculateULOKSAW(s.id)))
               .then(() => {
-                // Fetch again to get updated scores
                 getUlokSubmissions().then((updatedRes) => {
                   if (updatedRes && updatedRes.success && updatedRes.data) {
                     setSubmissions(updatedRes.data);
@@ -78,7 +73,6 @@ export default function AdminCabangPage() {
           }
         }
 
-        // Fetch Notifications as Recent Activity
         const notificationsRes = await getNotificationsAction();
         if (notificationsRes && notificationsRes.success && notificationsRes.data) {
           setNotifications(notificationsRes.data.slice(0, 5));
@@ -93,7 +87,6 @@ export default function AdminCabangPage() {
     initDashboard();
   }, []);
 
-  // Calculate stats dynamically
   const totalSubmissions = submissions.length;
   const draftCount = submissions.filter(s => s.status === 'Draft').length;
   const inReviewCount = submissions.filter(s => s.status === 'In Review').length;
@@ -101,23 +94,20 @@ export default function AdminCabangPage() {
   const approvedCount = submissions.filter(s => s.status === 'Approved').length;
   const rejectedCount = submissions.filter(s => s.status === 'Rejected').length;
 
-  // Pie chart data
   const chartData = [
-    { name: 'Draft (Belum Diajukan)', value: draftCount, color: '#64748B' }, // Slate
-    { name: 'Dalam Review', value: inReviewCount, color: '#F59E0B' }, // Amber
-    { name: 'Butuh Revisi', value: revisionCount, color: '#F43F5E' }, // Rose
-    { name: 'Selesai / Approved', value: approvedCount, color: '#10B981' }, // Emerald
-    { name: 'Ditolak / Rejected', value: rejectedCount, color: '#3B82F6' } // Blue (Disesuaikan agar pop di dark mode)
+    { name: 'Draft (Belum Diajukan)', value: draftCount, color: '#64748B' }, 
+    { name: 'Dalam Review', value: inReviewCount, color: '#F59E0B' }, 
+    { name: 'Butuh Revisi', value: revisionCount, color: '#F43F5E' }, 
+    { name: 'Selesai / Approved', value: approvedCount, color: '#10B981' }, 
+    { name: 'Ditolak / Rejected', value: rejectedCount, color: '#3B82F6' } 
   ].filter(item => item.value > 0);
 
-  // Default mock data if no submissions have statuses yet to show the chart beautifully
   const displayChartData = chartData.length > 0 ? chartData : [
     { name: 'Draft', value: 1, color: '#64748B' },
     { name: 'Dalam Review', value: 1, color: '#F59E0B' },
     { name: 'Butuh Revisi', value: 1, color: '#F43F5E' }
   ];
 
-  // Top 5 highest final scores
   const topScores = [...submissions]
     .filter(s => s.final_score !== null && s.final_score !== undefined)
     .sort((a, b) => b.final_score - a.final_score)
@@ -125,7 +115,7 @@ export default function AdminCabangPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-2 md:p-4 text-gray-800 dark:text-slate-100">
-      {/* WELCOME BANNER */}
+      {/* === BANNER: WELCOME === */}
       <div className="bg-[#142B4D] dark:bg-slate-950 text-white p-6 rounded-2xl shadow-md relative overflow-hidden border border-transparent dark:border-slate-800">
         <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-y-6 translate-x-6">
           <Layers className="w-64 h-64 text-white" />
@@ -138,9 +128,8 @@ export default function AdminCabangPage() {
         </p>
       </div>
 
-      {/* 4 SUMMARY CARDS */}
+      {/* === SUMMARY: CARDS === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Total Pengajuan (Navy) */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] dark:border-t-blue-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-gray-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Total Pengajuan</p>
@@ -152,7 +141,6 @@ export default function AdminCabangPage() {
           </div>
         </div>
 
-        {/* Card 2: Status Draft (Gray/Slate) */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-slate-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Status Draft</p>
@@ -164,7 +152,6 @@ export default function AdminCabangPage() {
           </div>
         </div>
 
-        {/* Card 3: Dalam Review (Amber/Kuning) */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-amber-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">Dalam Review</p>
@@ -176,7 +163,6 @@ export default function AdminCabangPage() {
           </div>
         </div>
 
-        {/* Card 4: Butuh Revisi (Rose/Merah Muda) */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-rose-500 shadow-sm flex items-center justify-between hover:shadow-md transition">
           <div>
             <p className="text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">Butuh Revisi</p>
@@ -189,7 +175,7 @@ export default function AdminCabangPage() {
         </div>
       </div>
 
-      {/* CHART ROW */}
+      {/* === GRAFIK: STATUS PENGAJUAN === */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800">
         <div className="border-b border-gray-100 dark:border-slate-800 pb-4 mb-4">
           <h3 className="font-bold text-gray-800 dark:text-slate-100 text-lg flex items-center gap-2">
@@ -234,9 +220,8 @@ export default function AdminCabangPage() {
         </div>
       </div>
 
-      {/* TWO COLUMN BOTTOM LAYOUT */}
+      {/* === GRID: LAYOUT BAWAH === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Kolom Kiri: Recent Activity */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between border-b dark:border-slate-800">
             <h3 className="font-bold text-sm md:text-base flex items-center gap-2">
@@ -274,7 +259,6 @@ export default function AdminCabangPage() {
           </div>
         </div>
 
-        {/* Kolom Kanan: Top 5 Lokasi Skor Tertinggi */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
           <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between border-b dark:border-slate-800">
             <h3 className="font-bold text-sm md:text-base flex items-center gap-2">

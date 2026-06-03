@@ -5,11 +5,6 @@ import { useRouter } from 'next/navigation';
 import { getCurrentProfile, logoutAction, updateProfileNameAction } from '@/actions/auth';
 import { User, Shield, Info, LogOut, Save, Lock } from 'lucide-react';
 
-/**
- * Komponen Halaman Pengaturan Profil Khusus Akun Super Admin.
- * Mengelola pembaruan nama tampilan (Display Name) secara mandiri dan fungsionalitas
- * pemutusan sesi (Logout) melalui integrasi Next.js Client Component dan Server Actions.
- */
 export default function SuperAdminProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
@@ -17,15 +12,11 @@ export default function SuperAdminProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // State Baru untuk Custom Modal & Loading Animasi (Sinkronisasi UI Global)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  /**
-   * Mengambil data profil otoritas keamanan Super Admin saat halaman pertama kali dimuat.
-   */
   useEffect(() => {
     async function loadProfile() {
       setLoading(true);
@@ -41,9 +32,6 @@ export default function SuperAdminProfilePage() {
     loadProfile();
   }, []);
 
-  /**
-   * Menangani proses modifikasi nama lengkap Super Admin ke database service.
-   */
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) return;
@@ -64,16 +52,10 @@ export default function SuperAdminProfilePage() {
     setSaving(false);
   };
 
-  /**
-   * Pemicu awal ketika button Keluar diklik (Membuka Custom Modal)
-   */
   const handleLogoutTrigger = () => {
     setShowLogoutConfirm(true);
   };
 
-  /**
-   * Menangani fungsi destruksi sesi autentikasi (Logout akun) dengan Custom Modal Animasi
-   */
   const executeLogout = async () => {
     setIsLoggingOut(true);
     
@@ -103,13 +85,12 @@ export default function SuperAdminProfilePage() {
     );
   }
 
-  // Ekstraksi karakter pertama nama sebagai representasi visual avatar fallback
   const initialLetter = fullName ? fullName.charAt(0).toUpperCase() : 'S';
 
   return (
     <div className="space-y-6">
 
-      {/* HEADER PAGE (Satu Tema dengan Feedback & Notifikasi) */}
+      {/* === HEADER PAGE === */}
       <div className="mx-auto mb-10 mt-10">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
           Pengaturan Profil Super Admin
@@ -119,10 +100,10 @@ export default function SuperAdminProfilePage() {
         </p>
       </div>
       
-      {/* BLOK FORM KONTEN UTAMA */}
+      {/* === KONTEN UTAMA === */}
       <div className="mb-15 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden space-y-0 transition-colors">
         
-        {/* HEADER CARD NAVY BLUE */}
+        {/* === HEADER PANEL === */}
         <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
           <h3 className="text-white font-bold text-base flex items-center gap-2.5">
             <User className="w-5 h-5 text-blue-400 dark:text-blue-300" /> 
@@ -133,10 +114,10 @@ export default function SuperAdminProfilePage() {
           </span>
         </div>
 
-        {/* BODY KONTEN */}
+        {/* === BODY KONTEN === */}
         <div className="p-6 space-y-8">
           
-          {/* SEKTOR ATAS: INDIKATOR VISUAL AVATAR DAN BADGE ROLE (READ-ONLY FOR PHOTO) */}
+          {/* === PROFIL: DATA AVATAR === */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 dark:border-gray-800/60">
             <div className="relative overflow-hidden rounded-full ring-4 ring-gray-100 dark:ring-gray-800/50 shrink-0 select-none">
               {profile?.avatar_url ? (
@@ -166,11 +147,10 @@ export default function SuperAdminProfilePage() {
             </div>
           </div>
 
-          {/* SEKTOR TENGAH: FORM DATA INPUT */}
+          {/* === FORM DATA INPUT === */}
           <form id="super-admin-profile-form" onSubmit={handleSaveProfile} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
-              {/* Field Input Pengubahan Nama Lengkap (AKTIF & BISA DIUBAH) */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
                   Nama Lengkap Anda
@@ -190,7 +170,6 @@ export default function SuperAdminProfilePage() {
                 </div>
               </div>
 
-              {/* Field NIK Karyawan (TERKUNCI / DISABLED) */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
                   Nomor Induk Karyawan (NIK)
@@ -211,18 +190,17 @@ export default function SuperAdminProfilePage() {
             </div>
           </form>
 
-          {/* KOTAK INFORMASI KEBIJAKAN */}
+          {/* === INFO KEBIJAKAN === */}
           <div className="p-4 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 rounded-2xl text-xs flex items-start gap-3 leading-relaxed font-medium shadow-xs">
             <Info className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400 mt-0.5" />
             <span>
-              <strong>Informasi Sistem:</strong> Sebagai Super Admin, Anda berhak mengubah nama display yang muncul pada log cetak dokumen penilaian SAW. NIK terkunci permanen demi validitas audit log database.
+              <strong>Informasi Sistem:</strong> Sebagai Super Admin, Anda berhak mengubah nama, mengatur akun admin cabang dan assessor namun anda tidak diperbolehkan mengganti foto profil. Pastikan untuk selalu menjaga kerahasiaan data akun Anda.
             </span>
           </div>
 
-          {/* SEKTOR BAWAH: PANEL AKSI UTAMA */}
+          {/* === PANEL AKSI === */}
           <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex items-center justify-end gap-3">
             
-            {/* Tombol Simpan Perubahan */}
             <button
               type="submit"
               form="super-admin-profile-form"
@@ -233,7 +211,6 @@ export default function SuperAdminProfilePage() {
               {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
 
-            {/* Tombol Logout Akun */}
             <button
               type="button"
               onClick={handleLogoutTrigger}
@@ -249,9 +226,7 @@ export default function SuperAdminProfilePage() {
 
       </div>
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL KONFIRMASI KELUAR (LOGOUT) */}
-      {/* ========================================================================= */}
+      {/* === MODAL: KONFIRMASI KELUAR === */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -289,9 +264,7 @@ export default function SuperAdminProfilePage() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL SUKSES */}
-      {/* ========================================================================= */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

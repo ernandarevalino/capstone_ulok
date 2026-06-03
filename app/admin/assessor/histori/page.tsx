@@ -10,14 +10,11 @@ export default function AssessorHistoriPage() {
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState<any[]>([])
   
-  // Pagination State for main table (Maksimal 10 baris per halaman)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Track sub-pagination indices for feedback comments of each submission
   const [feedbackIndices, setFeedbackIndices] = useState<Record<string, number>>({})
 
-  // Fetch feedback submissions from Server Action
   const fetchSubmissions = async () => {
     setLoading(true)
     const res = await getAssessorHistoriSubmissions()
@@ -37,17 +34,13 @@ export default function AssessorHistoriPage() {
     fetchSubmissions()
   }, [])
 
-  // Process, filter, and sort submissions strictly by date (Newest First)
   const processedSubmissions = React.useMemo(() => {
     return submissions
       .map((sub) => {
-        // Find comments by Assessor (role === 'assessor')
         const assessorComments = (sub.comments || [])
           .filter((c: any) => c.profiles?.role === 'assessor')
-          // Sort assessor comments descending by created_at (newest first)
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-        // Get overall comments sorted ascending to determine the absolute last/latest comment on this submission
         const allCommentsSorted = [...(sub.comments || [])].sort(
           (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         )
@@ -60,10 +53,8 @@ export default function AssessorHistoriPage() {
         }
       })
       .filter((sub) => {
-        // Rule 1: Must have at least one comment from Assessor
         if (sub.assessorComments.length === 0) return false
 
-        // Rule 2: Clear Ticket - Must NOT have been replied to yet by Admin Cabang
         if (sub.lastComment && sub.lastComment.profiles?.role === 'admin_cabang') {
           return false
         }
@@ -71,14 +62,12 @@ export default function AssessorHistoriPage() {
         return true
       })
       .sort((a, b) => {
-        // Sort strictly by the latest activity date (newest submission or latest comment first)
         const dateA = new Date(a.lastComment?.created_at || a.created_at).getTime()
         const dateB = new Date(b.lastComment?.created_at || b.created_at).getTime()
         return dateB - dateA
       })
   }, [submissions])
 
-  // Pagination calculations
   const totalItems = processedSubmissions.length
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1
   const paginatedSubmissions = React.useMemo(() => {
@@ -86,7 +75,6 @@ export default function AssessorHistoriPage() {
     return processedSubmissions.slice(startIndex, startIndex + itemsPerPage)
   }, [processedSubmissions, currentPage])
 
-  // RUTE DIBAWAH INI SUDAH DIPERBAIKI KE HALAMAN UTAMA COMMENT/PENILAIAN ASSESSOR
   const getDetailRoute = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     if (kelompokPerorangan.includes(jenisBadanHukum)) {
@@ -95,7 +83,6 @@ export default function AssessorHistoriPage() {
     return `/admin/assessor/penilaian/ulok-badanhukum?id=${id}`
   }
 
-  // Handle "Lihat Detail" button click
   const handleViewDetail = (subId: string, jenisBadanHukum: string) => {
     startTransition(() => {
       const targetRoute = getDetailRoute(subId, jenisBadanHukum)
@@ -103,7 +90,6 @@ export default function AssessorHistoriPage() {
     })
   }
 
-  // Handle "Next Feedback" internal pagination inside bubble
   const handleNextFeedback = (subId: string, maxComments: number) => {
     setFeedbackIndices((prev) => {
       const currentIdx = prev[subId] || 0
@@ -115,7 +101,6 @@ export default function AssessorHistoriPage() {
     })
   }
 
-  // Format date helper
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -123,8 +108,6 @@ export default function AssessorHistoriPage() {
       year: 'numeric',
     })
   }
-
-  // Format status UI helper
   const getStatusBadge = (status: string) => {
     const s = status ? status.toLowerCase() : ''
     if (s === 'approved' || s === 'telah disetujui') {
@@ -159,7 +142,7 @@ export default function AssessorHistoriPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* HEADER PAGE */}
+        {/* === HEADER PAGE === */}
         <div className="max-w-255 mx-auto mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Histori Penilaian Assessor
@@ -169,10 +152,10 @@ export default function AssessorHistoriPage() {
           </p>
         </div>
 
-        {/* CARD TABLE */}
+        {/* === CARD TABLE === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
           
-          {/* HEADER NAVY BLUE */}
+          {/* === CARD HEADER: ASSESSOR HISTORI === */}
           <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2">
               <img src="/icons/icon-comment.svg" alt="Comment Icon" className="w-5 h-5 object-contain brightness-0 invert" /> 
@@ -222,7 +205,7 @@ export default function AssessorHistoriPage() {
 
                     return (
                       <React.Fragment key={item.id}>
-                        {/* MAIN ROW */}
+                        {/* === TABLE ROW: MAIN DATA === */}
                         <tr className="hover:bg-blue-50/20 dark:hover:bg-gray-800/40 transition-all duration-300 ease-in-out border-b border-gray-100 dark:border-gray-800/60">
                           <td className="p-4 pl-6 font-bold text-gray-900 dark:text-gray-100">
                             <div className="flex items-center gap-2.5">
@@ -261,15 +244,15 @@ export default function AssessorHistoriPage() {
                           </td>
                         </tr>
 
-                        {/* FEEDBACK ROW */}
+                        {/* === TABLE ROW: FEEDBACK DETAIL === */}
                         <tr>
                           <td colSpan={7} className="bg-gray-50/40 dark:bg-gray-950/20 p-5 pl-6 pr-6 md:pl-12 border-b border-gray-100 dark:border-gray-800/60">
                             <div className="relative bg-white dark:bg-gray-900 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-3 transition-all duration-300 hover:shadow-md dark:hover:border-gray-700">
                               
-                              {/* Segitiga Pointer Balon Chat */}
+                              {/* === CHAT BALLOON POINTER === */}
                               <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-900 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
                               
-                              {/* Comment Header */}
+                              {/* === COMMENT HEADER === */}
                               <div className="flex items-center justify-between text-[11px] border-b border-gray-200 dark:border-gray-800 pb-2 relative z-10">
                                 <div className="flex items-center gap-2">
                                   <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
@@ -289,12 +272,12 @@ export default function AssessorHistoriPage() {
                                 </div>
                               </div>
 
-                              {/* Comment Body */}
+                              {/* === COMMENT BODY === */}
                               <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed italic pl-1 relative z-10">
                                 "{currentComment?.message}"
                               </p>
 
-                              {/* Sub-pagination button */}
+                              {/* === CHAT NAVIGATION === */}
                               {assessorComments.length > 1 && (
                                 <div className="flex justify-end pt-1 relative z-10">
                                   <button
@@ -316,7 +299,7 @@ export default function AssessorHistoriPage() {
             </table>
           </div>
 
-          {/* MAIN PAGINATION CONTROLS (Maksimal 10 Baris) */}
+          {/* === PAGINATION === */}
           {totalPages > 1 && (
             <div className="p-5 bg-gray-50/80 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">

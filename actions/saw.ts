@@ -3,23 +3,16 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-/**
- * Server Action untuk menghitung skor SPK SAW (Simple Additive Weighting)
- * berdasarkan kriteria C1 (Kelengkapan Dokumen), C2 (Durasi Mobilisasi), dan C3 (Harga Sewa).
- * Dan menyimpan hasilnya kembali ke database.
- * * @param ulokId - ID dari usulan lokasi yang akan dihitung
- */
+// === ACTIONS: HITUNG SKOR SAW ===
 export async function calculateULOKSAW(ulokId: string) {
   try {
     const supabase = await createClient()
 
-    // 1. Validasi Sesi Pengguna
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       throw new Error('Unauthorized: Silakan login kembali')
     }
 
-    // 2. Ambil data submission
     const { data: submission, error: subError } = await supabase
       .from('ulok_submissions')
       .select('*')
@@ -30,7 +23,6 @@ export async function calculateULOKSAW(ulokId: string) {
       throw new Error('Gagal mengambil data usulan lokasi: ' + (subError?.message || 'Data tidak ditemukan'))
     }
 
-    // 3. Ambil seluruh dokumen terkait
     const { data: documents, error: docError } = await supabase
       .from('documents')
       .select('*')
@@ -40,29 +32,24 @@ export async function calculateULOKSAW(ulokId: string) {
       throw new Error('Gagal mengambil dokumen pendukung: ' + docError.message)
     }
 
-    // --- KRITERIA C1: Kelengkapan Dokumen Berdasarkan Checklist Assessor ---
+    // === KRITERIA C1: KELENGKAPAN DOKUMEN ===
     let checklistMasterIds: number[] = []
     const jbh = submission.jenis_badan_hukum
 
     if (jbh === 'PT' || jbh === 'Yayasan' || jbh === 'Koperasi') {
-      // 1. JALUR BADAN HUKUM (PT, Yayasan, Koperasi)
       const isDikuasakan = !!submission.is_dikuasakan || (documents ? documents.some(doc => doc.document_type === 'akta_kuasa') : false)
       
       if (jbh === 'PT') {
-        // PT Pokok: ID 1-9, ID 14, 15
         checklistMasterIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15]
         
-        // Cek kondisi Kuasa: ID 10
         if (isDikuasakan) {
           checklistMasterIds.push(10)
         }
         
-        // Cek kondisi RUPS: ID 11
         if (documents && documents.some(doc => doc.checklist_id === 11 || doc.document_type === 'rups_persetujuan')) {
           checklistMasterIds.push(11)
         }
         
-        // Aturan Substitusi Lahan: Sertifikat (ID 12) vs AJB (ID 13)
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 12 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 13 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -70,23 +57,19 @@ export async function calculateULOKSAW(ulokId: string) {
         } else if (hasAjb) {
           checklistMasterIds.push(13)
         } else {
-          checklistMasterIds.push(12) // default jika kosong dua-duanya
+          checklistMasterIds.push(12)
         }
         
-        // Cek kondisi SLF: ID 16
         if (documents && documents.some(doc => doc.checklist_id === 16 || doc.document_type === 'slf')) {
           checklistMasterIds.push(16)
         }
       } else if (jbh === 'Yayasan') {
-        // Yayasan Pokok: ID 17-24, ID 28, 29
         checklistMasterIds = [17, 18, 19, 20, 21, 22, 23, 24, 28, 29]
         
-        // Cek kondisi Kuasa: ID 25
         if (isDikuasakan) {
           checklistMasterIds.push(25)
         }
         
-        // Aturan Substitusi Lahan: Sertifikat (ID 26) vs AJB (ID 27)
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 26 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 27 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -94,23 +77,19 @@ export async function calculateULOKSAW(ulokId: string) {
         } else if (hasAjb) {
           checklistMasterIds.push(27)
         } else {
-          checklistMasterIds.push(26) // default jika kosong dua-duanya
+          checklistMasterIds.push(26)
         }
         
-        // Cek kondisi SLF: ID 30
         if (documents && documents.some(doc => doc.checklist_id === 30 || doc.document_type === 'slf')) {
           checklistMasterIds.push(30)
         }
       } else if (jbh === 'Koperasi') {
-        // Koperasi Pokok: ID 31-38, ID 42, 43
         checklistMasterIds = [31, 32, 33, 34, 35, 36, 37, 38, 42, 43]
         
-        // Cek kondisi Kuasa: ID 39
         if (isDikuasakan) {
           checklistMasterIds.push(39)
         }
         
-        // Aturan Substitusi Lahan: Sertifikat (ID 40) vs AJB (ID 41)
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 40 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 41 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -118,20 +97,16 @@ export async function calculateULOKSAW(ulokId: string) {
         } else if (hasAjb) {
           checklistMasterIds.push(41)
         } else {
-          checklistMasterIds.push(40) // default jika kosong dua-duanya
+          checklistMasterIds.push(40)
         }
         
-        // Cek kondisi SLF: ID 44
         if (documents && documents.some(doc => doc.checklist_id === 44 || doc.document_type === 'slf')) {
           checklistMasterIds.push(44)
         }
       }
     } else if (['Perorangan', 'Kuasa', 'Waris', 'Hibah'].includes(jbh)) {
-      // 2. JALUR ORANG PERORANGAN (Dinamis Kasus)
-      // Masukkan 5 Berkas Pokok yang selalu wajib: ID 47, 48, 49, 56, dan 57
       checklistMasterIds = [47, 48, 49, 56, 57]
       
-      // Kasus Kewarganegaraan: KITAS/KITAP atau WNA (ID 46) vs WNI biasa (ID 45)
       const hasKitasDoc = documents && documents.some(doc => doc.document_type === 'kitas_kitap' || doc.checklist_id === 46)
       const isWNA = !!submission.nama_kitas || hasKitasDoc || submission.jenis_identitas === 'KITAS' || submission.jenis_identitas === 'KITAP' || submission.jenis_identitas === 'WNA'
       if (isWNA) {
@@ -140,7 +115,6 @@ export async function calculateULOKSAW(ulokId: string) {
         checklistMasterIds.push(45)
       }
       
-      // Kasus Status Pernikahan: Menikah (ID 50, 51) vs Cerai (ID 53) vs Lajang
       const hasBukuNikah = !!submission.no_buku_nikah || (documents && documents.some(doc => doc.document_type === 'buku_nikah' || doc.checklist_id === 50))
       const hasCerai = documents && documents.some(doc => doc.document_type === 'akta_cerai' || doc.checklist_id === 53)
       if (hasBukuNikah) {
@@ -149,23 +123,19 @@ export async function calculateULOKSAW(ulokId: string) {
         checklistMasterIds.push(53)
       }
       
-      // Kasus Perubahan Nama: ID 52 jika nama_sebelum_ganti atau nama_sesudah_ganti tidak kosong
       if (submission.nama_sebelum_ganti || submission.nama_sesudah_ganti) {
         checklistMasterIds.push(52)
       }
       
-      // Kasus Perolehan Lahan Khusus: Kuasa (ID 59, 60) vs Waris (ID 61, 62, 63, 64) vs Hibah (ID 65)
       if (jbh === 'Kuasa') {
         checklistMasterIds.push(59, 60)
       } else if (jbh === 'Waris') {
         checklistMasterIds.push(61, 62, 63, 64)
-        // Keluarkan E-KTP Pemilik Utama (ID 45) dari pembagi wajib
         checklistMasterIds = checklistMasterIds.filter(id => id !== 45)
       } else if (jbh === 'Hibah') {
         checklistMasterIds.push(65)
       }
       
-      // Aturan Substitusi Lahan Perorangan: Sertifikat (ID 54) vs AJB (ID 55)
       const hasSertifikatPerorangan = documents && documents.some(doc => doc.checklist_id === 54 || doc.document_type === 'sertifikat_tanah')
       const hasAjbPerorangan = documents && documents.some(doc => doc.checklist_id === 55 || doc.document_type === 'ajb_girik')
       if (hasSertifikatPerorangan) {
@@ -173,19 +143,16 @@ export async function calculateULOKSAW(ulokId: string) {
       } else if (hasAjbPerorangan) {
         checklistMasterIds.push(55)
       } else {
-        checklistMasterIds.push(54) // default jika kosong dua-duanya
+        checklistMasterIds.push(54)
       }
       
-      // Cek kondisi SLF Perorangan: ID 58
       if (documents && documents.some(doc => doc.checklist_id === 58 || doc.document_type === 'slf')) {
         checklistMasterIds.push(58)
       }
     }
 
-    // Denominator = Jumlah dokumen master wajib
     const denominator = checklistMasterIds.length
 
-    // Helper function to translate document_type to effectiveId
     const getEffectiveChecklistId = (doc: any, currentJbh: string): number | null => {
       if (doc.checklist_id !== null && doc.checklist_id !== undefined) {
         return doc.checklist_id
@@ -291,7 +258,6 @@ export async function calculateULOKSAW(ulokId: string) {
       return null
     }
 
-    // Numerator = Berkas Lolos Verifikasi Assessor
     const numerator = documents
       ? documents.filter((doc) => {
           if (doc.is_verified !== true) return false
@@ -300,10 +266,8 @@ export async function calculateULOKSAW(ulokId: string) {
         }).length
       : 0
 
-    // Hitung persentase kelengkapan
     const pct = denominator > 0 ? (numerator / denominator) * 100 : 0
 
-    // Konversi persentase ke c1_score (skala 1-5)
     let c1_score = 1
     if (numerator === 0 || pct === 0) {
       c1_score = 1
@@ -319,11 +283,10 @@ export async function calculateULOKSAW(ulokId: string) {
       c1_score = 1
     }
 
-    // --- KRITERIA C2: Durasi Review Legal Berdasarkan Perubahan Status ---
+    // === KRITERIA C2: DURASI MOBILISASI ===
     let c2_score = 1
     let durasi = 0
 
-    // PERBAIKAN: Perhitungan durasi C2 SEKARANG HANYA dikunci & dihitung jika status beneran 'Approved'
     if (submission.status === 'Approved') {
       if (submission.first_in_review_at && submission.approved_at) {
         const tanggalAkhir = new Date(submission.approved_at)
@@ -338,13 +301,10 @@ export async function calculateULOKSAW(ulokId: string) {
         durasi = 0
       }
     } else {
-      // Jika statusnya 'In Review', 'Revision', 'Rejected', atau 'Draft'
-      // Nilai otomatis balik ke default (1) / reset karena perhitungan belum selesai atau diulang
       c2_score = 1
       durasi = 0
     }
 
-    // Penentuan bobot nilai C2 berdasarkan durasi (Hanya berlaku jika status Approved)
     if (durasi > 0 && submission.status === 'Approved') {
       if (durasi < 5) {
         c2_score = 5
@@ -361,7 +321,7 @@ export async function calculateULOKSAW(ulokId: string) {
       c2_score = 1
     }
 
-    // --- KRITERIA C3: Harga Sewa Total per 5 Tahun ---
+    // === KRITERIA C3: HARGA SEWA ===
     const harga = submission.harga_sewa
     let c3_score = 1
 
@@ -382,8 +342,7 @@ export async function calculateULOKSAW(ulokId: string) {
       }
     }
 
-    // --- PERHITUNGAN SPK SAW ---
-    // Normalisasi matriks R
+    // === PERHITUNGAN SPK SAW ===
     const R_c1 = c1_score / 5
     const R_c2 = c2_score / 5
     const R_c3 = c3_score / 5
@@ -391,7 +350,7 @@ export async function calculateULOKSAW(ulokId: string) {
     // Bobot kriteria: C1=45%, C2=35%, C3=20%
     const final_score = (0.45 * R_c1) + (0.35 * R_c2) + (0.20 * R_c3)
 
-    // --- GENERATE ANALISIS OTOMATIS (saw_analysis_notes) ---
+    // === ANALISIS OTOMATIS ===
     let base_notes = ''
     if (submission.status === 'Draft') {
       base_notes = '⚠️ Berkas belum diajukan oleh Cabang.'
@@ -419,7 +378,6 @@ export async function calculateULOKSAW(ulokId: string) {
 
     let saw_analysis_notes = base_notes
 
-    // Cek apakah ada salah satu kriteria yang mendapat nilai default minimum (skor 1) karena belum lengkap
     const isC1Default = (numerator === 0 || pct === 0)
     const isC2Default = !submission.first_in_review_at
     const isC3Default = (harga === null || harga === undefined || harga === 0)
@@ -428,7 +386,7 @@ export async function calculateULOKSAW(ulokId: string) {
       saw_analysis_notes += '\n\n*Catatan: Skor saat ini masih bersifat sementara (berjalan) karena pengisian data finansial atau review dokumen belum sepenuhnya rampung.*'
     }
 
-    // --- UPDATE DATABASE ---
+    // === UPDATE DATABASE ===
     const { error: updateError } = await supabase
       .from('ulok_submissions')
       .update({
@@ -444,7 +402,6 @@ export async function calculateULOKSAW(ulokId: string) {
       throw new Error('Gagal memperbarui nilai analisis SAW di database: ' + updateError.message)
     }
 
-    // Revalidasi jalur agar data langsung terupdate di UI
     revalidatePath('/admin/assessor/penilaian')
     revalidatePath(`/admin/assessor/penilaian/ulok-perorangan`)
     revalidatePath(`/admin/assessor/penilaian/ulok-badanhukum`)
@@ -473,10 +430,7 @@ export async function calculateULOKSAW(ulokId: string) {
   }
 }
 
-/**
- * Server Action untuk mengambil leaderboard SAW (seluruh usulan lokasi)
- * diurutkan berdasarkan final_score secara descending.
- */
+// === ACTIONS: AMBIL LEADERBOARD SAW ===
 export async function getSAWLeaderboard() {
   try {
     const supabase = await createClient()
@@ -486,7 +440,6 @@ export async function getSAWLeaderboard() {
       throw new Error('Unauthorized: Silakan login kembali')
     }
 
-    // Ambil semua ID dari ulok_submissions untuk menghitung ulang skor secara real-time
     const { data: allSubmissions, error: allSubError } = await supabase
       .from('ulok_submissions')
       .select('id')
@@ -533,9 +486,7 @@ export async function getSAWLeaderboard() {
   }
 }
 
-/**
- * Server Action untuk mengambil branch_id dari user yang sedang login saat ini.
- */
+// === ACTIONS: AMBIL USER BRANCH ID ===
 export async function getCurrentUserBranchId() {
   try {
     const supabase = await createClient()

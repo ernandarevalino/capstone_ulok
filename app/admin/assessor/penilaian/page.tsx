@@ -8,15 +8,12 @@ export default function PenilaianPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Data + UI state
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Viewed history (must be preserved)
   const [viewedIds, setViewedIds] = useState<string[]>([]);
 
-  // Accordion, pagination and sorting (adopted from branch page)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -24,7 +21,6 @@ export default function PenilaianPage() {
 
   const itemsPerPage = 12;
 
-  // Init data + viewedIds
   useEffect(() => {
     fetchData();
     if (typeof window !== "undefined") {
@@ -96,7 +92,6 @@ export default function PenilaianPage() {
     );
   };
 
-  // Routing logic preserved
   const getFormRoute = (jenisBadanHukum: string) => {
     const kelompokPerorangan = ["Perorangan", "Waris", "Hibah", "Kuasa"];
     if (kelompokPerorangan.includes(jenisBadanHukum)) {
@@ -105,7 +100,6 @@ export default function PenilaianPage() {
     return "/admin/assessor/penilaian/ulok-badanhukum";
   };
 
-  // View action preserved (tracks viewedIds and routes)
   const handleViewPenilaian = (id: string, jenisBadanHukum: string) => {
     startTransition(() => {
       if (!viewedIds.includes(id)) {
@@ -119,7 +113,6 @@ export default function PenilaianPage() {
     });
   };
 
-  // Global search filter (keeps branch lookup)
   const filteredData = submissions.filter((item) => {
     const namaCabang = item.profiles?.branches?.nama_cabang || "";
     const q = searchQuery.toLowerCase();
@@ -131,7 +124,6 @@ export default function PenilaianPage() {
     );
   });
 
-  // Render table group adapted from reference but keeping assessor specifics and viewCheck
   const renderTableGroup = (
     title: string,
     allowedStatuses: string[],
@@ -145,7 +137,6 @@ export default function PenilaianPage() {
       return true;
     });
 
-    // Sorting engine
     if (sortColumn && sortDirection) {
       dataSorted.sort((a, b) => {
         if (sortColumn === "nama_lokasi") {
@@ -175,7 +166,6 @@ export default function PenilaianPage() {
 
     const isExpanded = expandedGroup === title;
 
-    // Slicing & pagination
     const totalItems = dataSorted.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     const activePage = Math.min(currentPage, totalPages);
@@ -306,7 +296,7 @@ export default function PenilaianPage() {
             </tbody>
           </table>
 
-          {/* Pagination Controls (only when expanded and necessary) */}
+          {/* === PAGINATION === */}
           {isExpanded && totalItems > itemsPerPage && (
             <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800">
               <button

@@ -4,22 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile } from '@/actions/auth'; 
-import { getNotificationsAction } from '@/actions/superadmin'; // Import action notifikasi
+import { getNotificationsAction } from '@/actions/superadmin';
 
-/**
- * Komponen Navigasi Utama (Header) untuk Perangkat Desktop.
- * Menggunakan direktif 'use client' karena bergantung pada hooks navigasi (usePathname)
- * dan manajemen state lokal untuk menampilkan informasi profil pengguna secara dinamis.
- */
 export default function HeaderDesktop() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
-  const [unreadCount, setUnreadCount] = useState<number>(0); // State untuk jumlah badge notifikasi
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  /**
-   * Mengambil data profil pengguna yang sedang aktif dan menghitung total notifikasi unread
-   * setiap kali terjadi perubahan pola URL (pathname).
-   */
   useEffect(() => {
     async function loadProfile() {
       const res = await getCurrentProfile();
@@ -31,7 +22,6 @@ export default function HeaderDesktop() {
     async function loadUnreadNotifications() {
       const res = await getNotificationsAction();
       if (res && res.success) {
-        // Filter untuk menghitung hanya notifikasi yang bernilai is_read = false
         const unreadItems = res.data.filter((item: any) => !item.is_read);
         setUnreadCount(unreadItems.length);
       }
@@ -39,31 +29,23 @@ export default function HeaderDesktop() {
 
     loadProfile();
     loadUnreadNotifications();
+
+    const intervalId = setInterval(() => {
+      loadUnreadNotifications();
+    }, 10000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [pathname]);
 
-  /**
-   * Fungsi helper untuk memvalidasi status keaktifan menu berdasarkan URL saat ini.
-   * @param path - String rute URL tujuan.
-   * @returns Nilai boolean yang menandakan kecocokan URL.
-   */
   const isActive = (path: string) => pathname === path;
-  
-  /**
-   * Fungsi helper khusus untuk mendeteksi segmentasi sub-halaman pada modul manajemen pengguna.
-   * @param subPath - String segmentasi URL setelah folder '/daftaruser/'.
-   * @returns Nilai boolean.
-   */
   const isDaftarUserActive = (subPath: string) => pathname.includes(`/daftaruser/${subPath}`);
-
-  /**
-   * Menentukan karakter inisial berdasarkan nama pengguna untuk keperluan fallback avatar visual.
-   * Menggunakan karakter default 'S' (Super Admin) apabila data nama belum termuat dari database.
-   */
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
   return (
     <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-4 shadow-md text-white">
-      {/* IDENTITAS APLIKASI (BRAND LOGO) */}
+      {/* === UTAMA: LOGO === */}
       <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
         <img 
           src="/images/logo-priolo-white.png" 
@@ -72,9 +54,8 @@ export default function HeaderDesktop() {
         />
       </Link>
 
-      {/* STRUKTUR NAVIGASI UTAMA SUPER ADMIN */}
+      {/* === NAVIGASI: MENU SUPER ADMIN === */}
       <nav className="flex items-center space-x-8 text-sm font-semibold">
-        {/* Menu Dashboard */}
         <Link 
           href="/admin/super-admin" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -86,7 +67,6 @@ export default function HeaderDesktop() {
           Dashboard
         </Link>
 
-        {/* Menu Manajemen Data Admin Cabang */}
         <Link 
           href="/admin/super-admin/daftaruser/admincabang" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -98,7 +78,6 @@ export default function HeaderDesktop() {
           Admin Cabang
         </Link>
 
-        {/* Menu Manajemen Data Assessor */}
         <Link 
           href="/admin/super-admin/daftaruser/assessor" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -111,9 +90,8 @@ export default function HeaderDesktop() {
         </Link>
       </nav>
 
-      {/* SEKTOR INFORMASI PENGGUNA DAN NOTIFIKASI */}
+      {/* === PANEL: INFORMASI PENGGUNA === */}
       <div className="flex items-center space-x-5">
-        {/* Navigasi Pusat Notifikasi Sistem */}
         <Link 
           href="/admin/super-admin/notification" 
           className={`p-2 rounded-full transition-colors flex items-center justify-center relative group ${
@@ -125,7 +103,7 @@ export default function HeaderDesktop() {
             alt="Notification Icon" 
             className="w-6 h-6 object-contain brightness-0 invert" 
           />
-          {/* Indikator Angka Adaptif Dinamis (Maksimal 15+) */}
+          {/* === NOTIFIKASI: BADGE === */}
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 border border-slate-900 shadow-sm animate-pulse">
               {unreadCount > 15 ? '15+' : unreadCount}
@@ -133,7 +111,7 @@ export default function HeaderDesktop() {
           )}
         </Link>
 
-        {/* Navigasi Pengaturan Profil Komponen Avatar */}
+        {/* === SEKTOR: AVATAR PROFIL === */}
         <Link 
           href="/admin/super-admin/profile"
           className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${

@@ -4,46 +4,52 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile } from '@/actions/auth';
+import { getNotificationsAction } from '@/actions/assessor';
 
-/**
- * Komponen Navigasi Utama (Header) Modul Assessor untuk Perangkat Desktop.
- * Mengelola kecocokan URL aktif menggunakan Next.js `usePathname` dan memuat
- * data profil assessor secara realtime melalui Server Action.
- */
 export default function HeaderDesktop() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  /**
-   * Mengambil data profil assessor yang sedang aktif saat komponen desktop dimuat.
-   * Parameter 'pathname' memicu pembaruan berkala ketika terjadi navigasi halaman.
-   */
   useEffect(() => {
-    async function loadProfile() {
+    let intervalId: any;
+
+    async function loadData() {
       const res = await getCurrentProfile();
-      if (res && res.success) {
+      if (res && res.success && res.profile) {
         setProfile(res.profile);
+        const uId = res.profile.id;
+
+        const fetchUnread = async () => {
+          const resNotif = await getNotificationsAction(uId);
+          if (resNotif && resNotif.success) {
+            const unreadItems = resNotif.data.filter((item: any) => !item.is_read);
+            setUnreadCount(unreadItems.length);
+          }
+        };
+
+        await fetchUnread();
+
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(fetchUnread, 10000);
       }
     }
-    loadProfile();
+
+    loadData();
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [pathname]);
 
-  /**
-   * Memeriksa status keaktifan menu navigasi berdasarkan perbandingan URL saat ini.
-   * @param path - String rute URL tujuan.
-   * @returns Nilai boolean penanda rute aktif.
-   */
   const isActive = (path: string) => pathname === path;
-
-  /**
-   * Menentukan karakter inisial berdasarkan nama pengguna untuk keperluan fallback avatar visual.
-   * Menggunakan karakter default 'A' (Assessor) apabila data nama belum termuat dari database.
-   */
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';
 
   return (
     <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-4 shadow-md text-white">
-      {/* IDENTITAS BRAND LOGO MODUL ASSESSOR */}
+      {/* === UTAMA: LOGO === */}
       <Link href="/admin/assessor" className="flex items-center hover:opacity-90 transition-opacity">
         <img 
           src="/images/logo-priolo-white.png" 
@@ -52,9 +58,8 @@ export default function HeaderDesktop() {
         />
       </Link>
 
-      {/* STRUKTUR NAVIGASI UTAMA AKUN ASSESSOR */}
+      {/* === NAVIGASI: MENU AKUN ASSESSOR === */}
       <nav className="flex items-center space-x-8 text-sm font-semibold">
-        {/* Menu Dashboard */}
         <Link 
           href="/admin/assessor" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -66,7 +71,6 @@ export default function HeaderDesktop() {
           Dashboard
         </Link>
 
-        {/* Menu Penilaian Berkas Usulan */}
         <Link 
           href="/admin/assessor/penilaian" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -78,7 +82,6 @@ export default function HeaderDesktop() {
           Penilaian
         </Link>
 
-        {/* Menu Histori Rekam Jejak Penilaian */}
         <Link 
           href="/admin/assessor/histori" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -90,7 +93,6 @@ export default function HeaderDesktop() {
           Histori
         </Link>
 
-        {/* Menu Peringkat Hasil SPK / Evaluasi Akhir */}
         <Link 
           href="/admin/assessor/peringkat" 
           className={`pb-1 transition-colors border-b-2 ${
@@ -103,9 +105,8 @@ export default function HeaderDesktop() {
         </Link>
       </nav>
 
-      {/* SEKTOR INTEGRASI INFORMASI AKUN DAN NOTIFIKASI */}
+      {/* === PANEL: INFORMASI PENGGUNA === */}
       <div className="flex items-center space-x-5">
-        {/* Navigasi Menu Pusat Notifikasi Assessor */}
         <Link 
           href="/admin/assessor/notification" 
           className={`p-2 rounded-full transition-colors flex items-center justify-center relative group ${
@@ -117,10 +118,15 @@ export default function HeaderDesktop() {
             alt="Notification Icon" 
             className="w-6 h-6 object-contain brightness-0 invert" 
           />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+          {/* === NOTIFIKASI: BADGE === */}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 border border-slate-900 shadow-sm animate-pulse">
+              {unreadCount > 15 ? '15+' : unreadCount}
+            </span>
+          )}
         </Link>
 
-        {/* Navigasi Halaman Pengaturan Profil Komponen Avatar */}
+        {/* === SEKTOR: AVATAR PROFIL === */}
         <Link 
           href="/admin/assessor/profile"
           className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${

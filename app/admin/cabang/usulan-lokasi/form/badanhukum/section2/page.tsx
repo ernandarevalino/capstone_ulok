@@ -11,21 +11,18 @@ export default function Section2BadanHukumPage() {
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(true)
 
-  // State Utama Komponen Section 2 (Alas Hak Lahan)
   const [jenisAlasHak, setJenisAlasHak] = useState('')
   const [noSertifikat, setNoSertifikat] = useState('')
   const [namaSertifikat, setNamaSertifikat] = useState('')
   const [luasSertifikat, setLuasSertifikat] = useState('')
   const [masaBerlakuSertifikat, setMasaBerlakuSertifikat] = useState('')
   
-  // State Dokumen Lainnya / Kelurahan
   const [isLainnya, setIsLainnya] = useState(false)
   const [namaAjbLainnya, setNamaAjbLainnya] = useState('')
   const [noAjbLainnya, setNoAjbLainnya] = useState('')
   const [luasAjbLainnya, setLuasAjbLainnya] = useState('')
   const [isProsesSertifikat, setIsProsesSertifikat] = useState(false)
 
-  // State Kondisi Objek & Finansial
   const [bentukObjek, setBentukObjek] = useState('')
   const [hargaSewa, setHargaSewa] = useState('')
   const [isJaminan, setIsJaminan] = useState('Tidak')
@@ -34,10 +31,8 @@ export default function Section2BadanHukumPage() {
   const [tanggalSuratJaminan, setTanggalSuratJaminan] = useState('')
   const [catatanLainnya, setCatatanLainnya] = useState('')
 
-  // State Berkas Terupload
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
-  // State Custom Toast / Modal UI (Sinkron dengan Section 1 & Perorangan)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
@@ -46,7 +41,6 @@ export default function Section2BadanHukumPage() {
     if (!ulokId) return
     setIsLoading(true)
 
-    // 1. Ambil data detail teks objek
     const resDetail = await getUlokDetail(ulokId)
     if (resDetail.success && resDetail.data) {
       const d = resDetail.data
@@ -72,7 +66,6 @@ export default function Section2BadanHukumPage() {
       if (d.tanggal_proses_sertifikat) setIsProsesSertifikat(true)
     }
 
-    // 2. Ambil list dokumen terupload
     const resDocs = await getUploadedDocuments(ulokId)
     if (resDocs.success && resDocs.data) {
       setUploadedDocs(resDocs.data)
@@ -93,7 +86,6 @@ export default function Section2BadanHukumPage() {
     loadDataDanDokumen()
   }, [ulokId])
 
-  // File Upload Handler dengan Toast Modern
   const handleFileUpload = async (docType: string, file: File) => {
     if (!file || !ulokId) return
     const formData = new FormData()
@@ -116,7 +108,6 @@ export default function Section2BadanHukumPage() {
     })
   }
 
-  // File Delete Handler Melalui Modal Konfirmasi
   const executeDelete = async () => {
     if (!deleteTarget) return
 
@@ -139,7 +130,6 @@ export default function Section2BadanHukumPage() {
     })
   }
 
-  // Submit Final / Simpan Data
   const handleFinalSave = async (targetPath: string, isSubmit = false) => {
     if (!ulokId) return
     startTransition(async () => {
@@ -182,7 +172,6 @@ export default function Section2BadanHukumPage() {
     })
   }
 
-  // Reusable Slot Upload Berkas inline (Sinkron penuh dengan UI global)
   const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
     const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
     return (
@@ -242,7 +231,7 @@ export default function Section2BadanHukumPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB NAVIGATION === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
@@ -268,7 +257,7 @@ export default function Section2BadanHukumPage() {
           <span className="text-gray-800 dark:text-gray-100 font-bold">Section 2: Kelayakan</span>
         </nav>
 
-        {/* HEADER */}
+        {/* === HEADER PANEL === */}
         <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
@@ -277,7 +266,7 @@ export default function Section2BadanHukumPage() {
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">2 / 2</span>
         </div>
 
-        {/* BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN */}
+        {/* === BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Alas Hak" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -296,7 +285,6 @@ export default function Section2BadanHukumPage() {
             </div>
           </div>
 
-          {/* DETAIL SERTIFIKAT */}
           {jenisAlasHak !== '' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/60 dark:bg-gray-800/15 border border-gray-200 dark:border-gray-800 animate-fadeIn">
               <p className="text-xs font-bold text-blue-950 dark:text-blue-400 md:col-span-2">Detail Pengisian Berkas Sertifikat ({jenisAlasHak}):</p>
@@ -326,7 +314,6 @@ export default function Section2BadanHukumPage() {
             </div>
           )}
 
-          {/* DOKUMEN LAINNYA */}
           <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3">
             <label className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 cursor-pointer text-xs">
               <input type="checkbox" checked={isLainnya} onChange={(e) => setIsLainnya(e.target.checked)} className="rounded accent-blue-950 dark:accent-blue-500 w-4 h-4" />
@@ -354,7 +341,6 @@ export default function Section2BadanHukumPage() {
                   {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
                 </div>
 
-                {/* SUB-CHECKBOX PROSES SERTIFIKAT */}
                 <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-[#111827] space-y-3 shadow-sm">
                   <label className="flex items-center gap-2 font-bold text-red-900 dark:text-red-400 cursor-pointer text-xs">
                     <input type="checkbox" checked={isProsesSertifikat} onChange={(e) => setIsProsesSertifikat(e.target.checked)} className="rounded accent-red-700 w-4 h-4" />
@@ -374,7 +360,7 @@ export default function Section2BadanHukumPage() {
           </div>
         </div>
 
-        {/* BUNDEL 2: BENTUK OBJEK & IZIN PELENGKAP */}
+        {/* === BUNDEL 2: BENTUK OBJEK & IZIN PELENGKAP === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Fisik Objek" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -413,7 +399,7 @@ export default function Section2BadanHukumPage() {
           </div>
         </div>
 
-        {/* BUNDEL 3: STATUS JAMINAN BANK */}
+        {/* === BUNDEL 3: STATUS JAMINAN BANK === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Jaminan Bank" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -450,7 +436,7 @@ export default function Section2BadanHukumPage() {
           )}
         </div>
 
-        {/* BUNDEL 4: DATA TAMBAHAN KETERANGAN */}
+        {/* === BUNDEL 4: DATA TAMBAHAN KETERANGAN === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Catatan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
@@ -465,7 +451,7 @@ export default function Section2BadanHukumPage() {
           </div>
         </div>
 
-        {/* PANEL TOMBOL NAVIGASI */}
+        {/* === PANEL TOMBOL NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
@@ -488,7 +474,7 @@ export default function Section2BadanHukumPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -500,7 +486,7 @@ export default function Section2BadanHukumPage() {
         </div>
       )}
 
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

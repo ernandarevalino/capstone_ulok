@@ -15,24 +15,20 @@ export default function DetailPenilaianBadanHukumPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   
-  // State data usulan (Read-Only untuk Assessor)
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   
-  // State toast modal sukses & text dinamis
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  // State chat/komentar
   const [comments, setComments] = useState<any[]>([])
   const [newComment, setNewComment] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<any>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  // Fungsi penentu warna badge status dokumen usulan
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'In Review':
@@ -48,7 +44,6 @@ export default function DetailPenilaianBadanHukumPage() {
     }
   }
 
-  // Handle otomatis jika ada parameter text feedback dari halaman section penilaian
   useEffect(() => {
     const prefill = searchParams.get('prefill')
     if (prefill) {
@@ -62,7 +57,6 @@ export default function DetailPenilaianBadanHukumPage() {
       return
     }
 
-    // Ambil user ID client session sebagai garda utama pencocokan id chat
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         setCurrentUserId(data.user.id)
@@ -79,13 +73,11 @@ export default function DetailPenilaianBadanHukumPage() {
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setStatusSubmission(res.data.status || 'Draft')
         
-        // Fetch data komentar
         const commentsRes = await getComments(ulokId)
         if (commentsRes.success && commentsRes.data) {
           setComments(commentsRes.data)
         }
 
-        // Fetch user profile penilai saat ini
         const profileRes = await getCurrentProfile()
         if (profileRes.success && profileRes.profile) {
           setCurrentProfile(profileRes.profile)
@@ -99,7 +91,6 @@ export default function DetailPenilaianBadanHukumPage() {
 
     fetchDetail()
 
-    // Realtime channel listener khusus dokumen usulan terkait
     const channel = supabase
       .channel(`comments-ulok-bh-assessor-${ulokId}`)
       .on(
@@ -124,7 +115,6 @@ export default function DetailPenilaianBadanHukumPage() {
     }
   }, [ulokId, router])
 
-  // Fungsi pengiriman catatan revisi / komentar baru oleh Assessor
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault()
     const activeId = currentUserId || currentProfile?.id
@@ -146,7 +136,6 @@ export default function DetailPenilaianBadanHukumPage() {
     setIsSending(false)
   }
 
-  // Fungsi perubahan status berkas usulan langsung dari dropdown Assessor
   const handleStatusChange = async (newStatus: string) => {
     if (!ulokId) return
     setStatusSubmission(newStatus)
@@ -178,7 +167,7 @@ export default function DetailPenilaianBadanHukumPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/assessor/penilaian')} 
@@ -190,7 +179,7 @@ export default function DetailPenilaianBadanHukumPage() {
           <span className="text-gray-800 dark:text-gray-200 font-extrabold">Detail Usulan Badan Hukum</span>
         </nav>
 
-        {/* HEADER & NAVIGASI BALIK */}
+        {/* === HEADER & NAVIGASI BALIK === */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5">
           <div className="flex items-center gap-3">
             <button 
@@ -210,7 +199,7 @@ export default function DetailPenilaianBadanHukumPage() {
             </div>
           </div>
           
-          {/* ACTION NAVIGATION BUTTON KE HALAMAN PENILAIAN DOKUMEN */}
+          {/* === ACTION: GO TO PENILAIAN === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1?id=${ulokId}`)}
@@ -226,7 +215,7 @@ export default function DetailPenilaianBadanHukumPage() {
           </div>
         </div>
 
-        {/* 1. PANEL FORM DATA UTAMA (READ-ONLY FOR ASSESSOR) */}
+        {/* === FORM: DATA UTAMA === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 p-6 space-y-5 transition-colors duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-3.5">
             <h2 className="font-bold text-gray-800 dark:text-gray-100 text-base flex items-center gap-2.5 tracking-tight">
@@ -238,7 +227,7 @@ export default function DetailPenilaianBadanHukumPage() {
               Informasi Usulan Kelompok Badan Hukum
             </h2>
             
-            {/* MANAJEMEN STATUS DROP DOWN BAGI ASSESSOR (HANYA REVISION, APPROVED, REJECTED) */}
+            {/* === FORM: DROPDOWN STATUS === */}
             <div className="flex items-center gap-2 self-start sm:self-auto">
               <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status:</span>
               <select
@@ -247,7 +236,6 @@ export default function DetailPenilaianBadanHukumPage() {
                 disabled={isPending}
                 className={`px-5 py-3 rounded-lg text-xs font-bold border transition shadow-xs outline-none cursor-pointer ${getStatusStyle(statusSubmission)} disabled:opacity-60`}
               >
-                {/* Jika status saat ini dari db adalah Draft atau In Review, tampilkan sebagai teks pembuka yang ter-disabled agar pilihan tidak melesat */}
                 {(statusSubmission === 'Draft' || statusSubmission === 'In Review') && (
                   <option value={statusSubmission} disabled>{statusSubmission === 'Draft' ? 'Draft (Belum Direview)' : 'In Review'}</option>
                 )}
@@ -294,7 +282,7 @@ export default function DetailPenilaianBadanHukumPage() {
           </div>
         </div>
 
-        {/* 2. PANEL KOLOM KOMENTAR / CHAT ASSESSOR */}
+        {/* === PANEL: KOMENTAR & FEEDBACK === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
           <div className="bg-gray-50 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-2.5">
             <img 
@@ -306,7 +294,7 @@ export default function DetailPenilaianBadanHukumPage() {
           </div>
           
           <div className="p-4 md:p-6 bg-gray-50/30 dark:bg-gray-950/20 min-h-[300px] flex flex-col justify-between">
-            {/* List Pesan */}
+            {/* === LIST PESAN === */}
             {comments.length === 0 ? (
               <div className="text-center my-auto py-12 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                 <span className="text-3xl mb-2 opacity-50">✉️</span>
@@ -316,17 +304,15 @@ export default function DetailPenilaianBadanHukumPage() {
             ) : (
               <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto pr-2 flex flex-col">
                 {comments.map((item) => {
-                  // Cek validitas berlapis agar posisi "Pesan Kita" (Assessor) tidak meleset lagi ke sisi kiri
                   const isSelf = 
                     (currentUserId && (item.profile_id === currentUserId || item.profiles?.id === currentUserId)) || 
                     (currentProfile?.id && (item.profile_id === currentProfile.id || item.profiles?.id === currentProfile.id)) ||
                     (currentProfile?.full_name && item.profiles?.full_name === currentProfile.full_name) ||
-                    (item.profiles?.role?.toUpperCase() === 'ASSESSOR') // Sisi Kanan otomatis untuk Assessor
+                    (item.profiles?.role?.toUpperCase() === 'ASSESSOR')
 
                   const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
 
                   return (
-                    // FIX RATA KANAN KIRI CHAT BUBBLE
                     <div 
                       key={item.id} 
                       className={`flex w-full ${isSelf ? 'justify-end' : 'justify-start'}`}
@@ -340,7 +326,6 @@ export default function DetailPenilaianBadanHukumPage() {
                               : 'bg-gray-100 border-gray-200 dark:bg-gray-800/60 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none'
                         }`}
                       >
-                        {/* Header info identitas pengirim */}
                         <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${
                           isSelf 
                             ? 'border-white/10 text-blue-200' 
@@ -362,7 +347,6 @@ export default function DetailPenilaianBadanHukumPage() {
                           </span>
                         </div>
 
-                        {/* Teks Isi Komentar / Catatan */}
                         <div className="flex items-start gap-1.5">
                           {!isSelf && isComplaint && <span className="text-sm shrink-0 mt-0.5 select-none">⚠️</span>}
                           <p className="text-xs md:text-sm font-semibold whitespace-pre-line break-words">
@@ -376,7 +360,6 @@ export default function DetailPenilaianBadanHukumPage() {
               </div>
             )}
 
-            {/* Kotak Input Chat Catatan Revisi */}
             <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2.5 items-center">
               <input 
                 type="text" 
@@ -408,7 +391,7 @@ export default function DetailPenilaianBadanHukumPage() {
 
       </div>
 
-      {/* TOAST CUSTOM MODAL (NOTIFIKASI SUKSES UPDATE STATUS BERKAS) */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

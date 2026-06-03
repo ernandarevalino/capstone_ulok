@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-// Mengimpor fungsi Server Actions asli bawaan sistem untuk manajemen data assessor
 import { 
   getUsersByRoleAction, 
   createUserAction, 
@@ -14,9 +13,6 @@ export default function DaftarAssessorPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // ==========================================
-  // [1] STATE MANAGEMENT (DATA & INTERFACE)
-  // ==========================================
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -24,13 +20,9 @@ export default function DaftarAssessorPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // ==========================================
-  // [2] STATE REFRENSI UI/UX
-  // ==========================================
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   
-  // Custom Modal Alerts State (Meniru admincabang)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; namaAssessor: string } | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
@@ -49,9 +41,6 @@ export default function DaftarAssessorPage() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
 
-  // ==========================================
-  // [3] SIDE EFFECTS & DATA FETCHING
-  // ==========================================
   useEffect(() => {
     fetchUsers();
   }, [page, search]);
@@ -73,9 +62,6 @@ export default function DaftarAssessorPage() {
     setLoading(false);
   }
 
-  // ==========================================
-  // [4] HANDLERS & MUTATIONS WITH TRANSITION
-  // ==========================================
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nik || !formData.password || !formData.fullName) return;
@@ -142,9 +128,6 @@ export default function DaftarAssessorPage() {
     });
   };
 
-  // ==========================================
-  // [5] UI HELPERS (SORTING STYLE)
-  // ==========================================
   const handleSortCycle = (column: string) => {
     if (sortColumn !== column) {
       setSortColumn(column);
@@ -182,7 +165,6 @@ export default function DaftarAssessorPage() {
     );
   };
 
-  // Penerapan sorting client-side pada data halaman aktif sebelum dirender
   const displayUsers = [...users];
   if (sortColumn && sortDirection) {
     displayUsers.sort((a, b) => {
@@ -201,7 +183,7 @@ export default function DaftarAssessorPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       
-      {/* HEADER SECTION */}
+      {/* === HEADER SECTION === */}
       <div className="max-w-255 mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-12">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Tim Assessor</h1>
@@ -211,7 +193,7 @@ export default function DaftarAssessorPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:shrink-0">
-          {/* Search Bar Input Style Refrensi */}
+          {/* === INPUT PENCARIAN === */}
           <div className="relative flex items-center w-full sm:w-60">
             <img 
               src="/icons/icon_sharp-search.svg" 
@@ -227,7 +209,7 @@ export default function DaftarAssessorPage() {
             />
           </div>
 
-          {/* Action Button Style Refrensi */}
+          {/* === TOMBOL TAMBAH ASSESSOR === */}
           <button 
             onClick={() => setIsCreateOpen(true)}
             className="bg-blue-950 dark:bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-900 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -238,7 +220,7 @@ export default function DaftarAssessorPage() {
         </div>
       </div>
 
-      {/* TABLE DATA UTAMA (Style & Border Rounded-2xl Berdasarkan Refrensi) */}
+      {/* === TABEL DATA UTAMA === */}
       <div className="max-w-5xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -312,7 +294,7 @@ export default function DaftarAssessorPage() {
           </table>
         </div>
 
-        {/* PAGINATION PANEL CONTROLS STYLE REFRENSI */}
+        {/* === KONTROL PAGINASI === */}
         <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800">
           <button
             disabled={page === 1 || loading}
@@ -334,11 +316,7 @@ export default function DaftarAssessorPage() {
         </div>
       </div>
 
-      {/* =========================================================
-          [CUSTOM ALERT MODAL COPIED DIRECTLY FROM REFRENSI]
-         ========================================================= */}
-
-      {/* 1. CUSTOM MODAL KONFIRMASI HAPUS (icon-hand.svg) */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -375,7 +353,7 @@ export default function DaftarAssessorPage() {
         </div>
       )}
 
-      {/* 2. CUSTOM MODAL SUKSES (icon-check.svg) */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -387,7 +365,7 @@ export default function DaftarAssessorPage() {
         </div>
       )}
 
-      {/* 3. POP UP FORM MODAL - TAMBAH ASSESSOR BARU */}
+      {/* === MODAL: TAMBAH ASSESSOR === */}
       {isCreateOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
@@ -443,11 +421,11 @@ export default function DaftarAssessorPage() {
         </div>
       )}
 
-      {/* 4. POP UP FORM MODAL - EDIT ASSESSOR */}
+      {/* === MODAL: EDIT ASSESSOR === */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
-            <div className="bg-linear-to-r from-amber-600 to-amber-700 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
+            <div className="bg-linear-to-r from-blue-950 to-slate-900 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
                 <img src="/icons/icon-location.svg" alt="" className="w-5 h-4 brightness-0 invert" /> Edit Profil Assessor
               </div>
@@ -483,15 +461,15 @@ export default function DaftarAssessorPage() {
                 </div>
 
                 {users.find(u => u.id === editData.id)?.avatar_url && (
-                  <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-lg">
                     <input 
                       type="checkbox" 
                       id="delAvatar" 
                       checked={editData.deleteAvatar} 
                       onChange={e => setEditData({...editData, deleteAvatar: e.target.checked})} 
-                      className="h-4 w-4 rounded text-amber-600 focus:ring-0 cursor-pointer" 
+                      className="h-4 w-4 rounded text-blue-950 focus:ring-0 cursor-pointer" 
                     />
-                    <label htmlFor="delAvatar" className="text-xs font-bold text-amber-800 dark:text-amber-400 cursor-pointer select-none">
+                    <label htmlFor="delAvatar" className="text-xs font-bold text-blue-800 dark:text-blue-400 cursor-pointer select-none">
                       Hapus / Reset Foto Profil
                     </label>
                   </div>
@@ -502,7 +480,7 @@ export default function DaftarAssessorPage() {
             <div className="flex justify-end">
               <button 
                 type="submit" form="form-edit-assessor" disabled={isPending}
-                className="bg-linear-to-r from-amber-600 to-amber-700 text-white px-32 py-3 rounded-lg font-bold text-sm hover:brightness-110 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+                className="bg-linear-to-r from-blue-950 to-slate-900 text-white px-32 py-3 rounded-lg font-bold text-sm hover:brightness-110 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
               >
                 <img src="/icons/icon-add.svg" alt="" className="w-4 h-4 brightness-0 invert" />
                 Update

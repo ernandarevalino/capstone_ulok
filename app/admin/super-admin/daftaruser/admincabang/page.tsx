@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-// Mengimpor fungsi Server Actions asli bawaan sistem
 import { 
   getUsersByRoleAction, 
   createUserAction, 
@@ -15,9 +14,6 @@ export default function DaftarAdminCabangPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // ==========================================
-  // [1] STATE MANAGEMENT (DATA & INTERFACE)
-  // ==========================================
   const [users, setUsers] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -27,9 +23,6 @@ export default function DaftarAdminCabangPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // ==========================================
-  // [2] STATE REFRENSI UI/UX
-  // ==========================================
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   
@@ -41,7 +34,6 @@ export default function DaftarAdminCabangPage() {
   // Form States
   const [formData, setFormData] = useState({ password: '', fullName: '', nik: '', branchId: '' });
   
-  // Perbaikan struktur tipe editData agar memiliki penampung id user tersendiri
   const [editData, setEditData] = useState<{
     id: string;
     fullName: string;
@@ -49,15 +41,12 @@ export default function DaftarAdminCabangPage() {
     branchId: string;
     deleteAvatar: boolean;
     password?: string;
-  }>({ id: '', fullName: '', nik: '', branchId: '', deleteAvatar: false, password: '' });
+    avatarUrl?: string | null; 
+  }>({ id: '', fullName: '', nik: '', branchId: '', deleteAvatar: false, password: '', avatarUrl: null });
 
-  // Client-side UI Sorting Cycle State
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
 
-  // ==========================================
-  // [3] SIDE EFFECTS & DATA FETCHING
-  // ==========================================
   useEffect(() => {
     fetchBranches();
   }, []);
@@ -91,9 +80,6 @@ export default function DaftarAdminCabangPage() {
     setLoading(false);
   }
 
-  // ==========================================
-  // [4] HANDLERS & MUTATIONS WITH TRANSITION
-  // ==========================================
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nik || !formData.password || !formData.fullName || !formData.branchId) return;
@@ -124,11 +110,11 @@ export default function DaftarAdminCabangPage() {
     
     startTransition(async () => {
       const res = await updateUserAction({ 
-        id: editData.id, // Menggunakan ID target user yang benar
+        id: editData.id, 
         fullName: editData.fullName,
         nik: editData.nik, 
-        deleteAvatar: editData.deleteAvatar, // Dikirim ke Server Action sesuai pilihan checklist
-        branchId: editData.branchId ? parseInt(editData.branchId) : null, // parsing ID cabang tujuan yang dipilih
+        deleteAvatar: editData.deleteAvatar, 
+        branchId: editData.branchId ? parseInt(editData.branchId) : null, 
         password: editData.password || undefined 
       });
       
@@ -162,9 +148,6 @@ export default function DaftarAdminCabangPage() {
     });
   };
 
-  // ==========================================
-  // [5] UI HELPERS (SORTING STYLE)
-  // ==========================================
   const handleSortCycle = (column: string) => {
     if (sortColumn !== column) {
       setSortColumn(column);
@@ -202,7 +185,6 @@ export default function DaftarAdminCabangPage() {
     );
   };
 
-  // Penerapan sorting client-side pada data halaman aktif sebelum dirender
   const displayUsers = [...users];
   if (sortColumn && sortDirection) {
     displayUsers.sort((a, b) => {
@@ -215,7 +197,7 @@ export default function DaftarAdminCabangPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       
-      {/* HEADER SECTION */}
+      {/* === HEADER SECTION === */}
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-12">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Admin Cabang</h1>
@@ -225,7 +207,7 @@ export default function DaftarAdminCabangPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:shrink-0">
-          {/* Search Bar Input */}
+          {/* === INPUT PENCARIAN === */}
           <div className="relative flex items-center w-full sm:w-60">
             <img 
               src="/icons/icon_sharp-search.svg" 
@@ -241,7 +223,7 @@ export default function DaftarAdminCabangPage() {
             />
           </div>
 
-          {/* Filtering Wilayah Dropdown */}
+          {/* === DROPDOWN FILTER WILAYAH === */}
           <div className="relative flex items-center w-full sm:w-60">
             <img 
               src="/icons/icon-filter.svg" 
@@ -260,7 +242,7 @@ export default function DaftarAdminCabangPage() {
             </select>
           </div>
 
-          {/* Action Button */}
+          {/* === TOMBOL TAMBAH ADMIN === */}
           <button 
             onClick={() => setIsCreateOpen(true)}
             className="bg-blue-950 dark:bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-900 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -271,7 +253,7 @@ export default function DaftarAdminCabangPage() {
         </div>
       </div>
 
-      {/* TABLE DATA UTAMA */}
+      {/* === TABEL DATA UTAMA === */}
       <div className="max-w-5xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -327,16 +309,16 @@ export default function DaftarAdminCabangPage() {
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center items-center gap-2">
-                        {/* Perbaikan mapping field saat tombol edit diklik */}
                         <button
                           onClick={() => {
                             setEditData({ 
-                              id: user.id, // Menyimpan ID user secara mandiri
+                              id: user.id, 
                               fullName: user.full_name, 
                               nik: user.nik, 
-                              branchId: user.branch_id ? user.branch_id.toString() : (user.branches?.id ? user.branches.id.toString() : ''), // Ambil FK id cabang lama
-                              deleteAvatar: false, // Reset state checkbox setiap dibuka
-                              password: '' 
+                              branchId: user.branch_id ? user.branch_id.toString() : (user.branches?.id ? user.branches.id.toString() : ''), 
+                              deleteAvatar: false, 
+                              password: '',
+                              avatarUrl: user.avatar_url 
                             });
                             setIsEditOpen(true);
                           }}
@@ -362,7 +344,7 @@ export default function DaftarAdminCabangPage() {
           </table>
         </div>
 
-        {/* PAGINATION PANEL CONTROLS */}
+        {/* === KONTROL PAGINASI === */}
         <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800">
           <button
             disabled={page === 1 || loading}
@@ -384,7 +366,7 @@ export default function DaftarAdminCabangPage() {
         </div>
       </div>
 
-      {/* 1. CUSTOM MODAL KONFIRMASI HAPUS */}
+      {/* === MODAL: KONFIRMASI HAPUS === */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -421,7 +403,7 @@ export default function DaftarAdminCabangPage() {
         </div>
       )}
 
-      {/* 2. CUSTOM MODAL SUKSES */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -433,7 +415,7 @@ export default function DaftarAdminCabangPage() {
         </div>
       )}
 
-      {/* 3. POP UP FORM MODAL - TAMBAH ADMIN BARU */}
+      {/* === MODAL: TAMBAH ADMIN === */}
       {isCreateOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
@@ -501,11 +483,11 @@ export default function DaftarAdminCabangPage() {
         </div>
       )}
 
-      {/* 4. POP UP FORM MODAL - EDIT ADMIN (DENGAN TAMBAHAN CHECKBOX HAPUS FOTO & SELECTION WILAYAH) */}
+      {/* === MODAL: EDIT ADMIN === */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
-            <div className="bg-linear-to-r from-amber-600 to-amber-700 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
+            <div className="bg-linear-to-r from-blue-950 to-slate-900 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
                 <img src="/icons/icon-location.svg" alt="" className="w-5 h-4 brightness-0 invert" /> Edit Profil Admin
               </div>
@@ -550,26 +532,27 @@ export default function DaftarAdminCabangPage() {
                   />
                 </div>
 
-                {/* IMPLEMENTASI CHECKBOX SYSTEM DELETE FOTO PROFIL (Sama seperti Assessor) */}
-                <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                  <input 
-                    type="checkbox" 
-                    id="deleteAvatarCheckbox"
-                    checked={editData.deleteAvatar} 
-                    onChange={e => setEditData({...editData, deleteAvatar: e.target.checked})}
-                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-gray-300 dark:border-gray-700 dark:bg-gray-800 cursor-pointer"
-                  />
-                  <label htmlFor="deleteAvatarCheckbox" className="text-xs font-bold text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                    Hapus Foto Profil / Avatar
-                  </label>
-                </div>
+                {editData.avatarUrl && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <input 
+                      type="checkbox" 
+                      id="deleteAvatarCheckbox"
+                      checked={editData.deleteAvatar} 
+                      onChange={e => setEditData({...editData, deleteAvatar: e.target.checked})}
+                      className="w-4 h-4 rounded text-blue-950 focus:ring-slate-900 border-gray-300 dark:border-gray-700 dark:bg-gray-800 cursor-pointer"
+                    />
+                    <label htmlFor="deleteAvatarCheckbox" className="text-xs font-bold text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                      Hapus Foto Profil / Avatar
+                    </label>
+                  </div>
+                )}
               </form>
             </div>
 
             <div className="flex justify-end">
               <button 
                 type="submit" form="form-edit-admin" disabled={isPending}
-                className="bg-linear-to-r from-amber-600 to-amber-700 text-white px-32 py-3 rounded-lg font-bold text-sm hover:brightness-110 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+                className="bg-linear-to-r from-blue-950 to-slate-900 text-white px-32 py-3 rounded-lg font-bold text-sm hover:brightness-110 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
               >
                 <img src="/icons/icon-add.svg" alt="" className="w-4 h-4 brightness-0 invert" />
                 Update

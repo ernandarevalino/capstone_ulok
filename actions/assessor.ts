@@ -5,10 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
 
-/**
- * Mengambil seluruh daftar usulan lokasi (ULOK) untuk kebutuhan Tim Assessor.
- * Mengabaikan status 'Draft' karena status tersebut hanya hak akses milik Admin Cabang.
- */
+// === ACTIONS: AMBIL SUBMISSIONS TIM ASSESSOR ===
 export async function getAssessorSubmissions() {
   try {
     const supabase = await createClient()
@@ -16,7 +13,6 @@ export async function getAssessorSubmissions() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    // UBAH .select('*') MENJADI QUERY RELASI BERTINGKAT INI:
     const { data, error } = await supabase
       .from('ulok_submissions')
       .select(`
@@ -38,10 +34,7 @@ export async function getAssessorSubmissions() {
   }
 }
 
-/**
- * Memperbarui status usulan lokasi (ULOK) berdasarkan ID.
- * Pilihan status sesuai ENUM: 'In Review', 'Revision', 'Approved', 'Rejected'.
- */
+// === ACTIONS: UPDATE STATUS ULOK ===
 export async function updateUlokStatus(id: string, newStatus: string) {
   try {
     const supabase = await createClient()
@@ -55,7 +48,6 @@ export async function updateUlokStatus(id: string, newStatus: string) {
       .eq('id', id)
       .single()
 
-    // Siapkan payload update dinamis
     const updatePayload: any = { status: newStatus }
     if (newStatus === 'Approved') {
       updatePayload.approved_at = new Date().toISOString()
@@ -78,7 +70,6 @@ export async function updateUlokStatus(id: string, newStatus: string) {
 
     if (error) throw error
 
-    // Pemicu otomatis kalkulasi skor SAW setelah status berhasil diperbarui
     await calculateULOKSAW(id)
 
     if (ulok) {
@@ -106,9 +97,7 @@ export async function updateUlokStatus(id: string, newStatus: string) {
   }
 }
 
-/**
- * Mengambil list data dari public.ulok_submissions yang PERNAH diberi komentar/catatan revisi oleh Assessor terkait.
- */
+// === ACTIONS: AMBIL HISTORI SUBMISSIONS ASSESSOR ===
 export async function getAssessorHistoriSubmissions() {
   try {
     const supabase = await createClient()
@@ -139,7 +128,6 @@ export async function getAssessorHistoriSubmissions() {
 
     if (error) throw error
 
-    // Filter data di mana Assessor ini (user.id) pernah memberikan komentar
     const filteredData = data?.filter((submission: any) => {
       const assessorHasCommented = (submission.comments || []).some(
         (comment: any) => comment.user_id === user.id
@@ -153,9 +141,7 @@ export async function getAssessorHistoriSubmissions() {
   }
 }
 
-/**
- * Melakukan toggle nilai is_verified di tabel public.documents berdasarkan ID dokumen.
- */
+// === ACTIONS: TOGGLE VERIFIKASI DOKUMEN ===
 export async function toggleDocumentVerification(documentId: string, currentStatus: boolean) {
   try {
     const supabase = await createClient()
@@ -172,7 +158,6 @@ export async function toggleDocumentVerification(documentId: string, currentStat
 
     if (error) throw error
 
-    // Pemicu otomatis kalkulasi ulang skor SAW real-time agar dashboard sinkron
     if (data && data.ulok_id) {
       await calculateULOKSAW(data.ulok_id)
     }
@@ -180,5 +165,29 @@ export async function toggleDocumentVerification(documentId: string, currentStat
     return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
+  }
+}
+
+// === ACTIONS: AMBIL NOTIFIKASI ASSESSOR ===
+export async function getNotificationsAction(userId: string | null = null) {
+  try {
+    const supabase = await createClient()
+    let query = supabase
+      .from('notifications')
+      .select('id, title, message, is_read, created_at, category, user_id')
+      .order('created_at', { ascending: false })
+
+    if (userId) {
+      query = query.eq('user_id', userId)
+    } else {
+      query = query.is('user_id', null)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (error: any) {
+    return { success: false, error: error.message, data: [] }
   }
 }

@@ -12,21 +12,18 @@ export default function Section1BadanHukumAssessorPage() {
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
   
-  // State Utama
   const [isLoading, setIsLoading] = useState(true)
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
   const [statusPajak, setStatusPajak] = useState('Non-PKP')
   const [isDikuasakan, setIsDikuasakan] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
 
-  // State Baru untuk Custom Toast Modal Success
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
 
   const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
     setVerifyingDocId(docId)
     
-    // Optimistic Update (UI berubah instan demi kenyamanan user)
     setUploadedDocs(prev => prev.map(doc => {
       if (doc.id === docId) {
         return { ...doc, is_verified: !currentStatus }
@@ -37,7 +34,6 @@ export default function Section1BadanHukumAssessorPage() {
     const res = await toggleDocumentVerification(docId, currentStatus)
     
     if (!res.success) {
-      // Rollback jika gagal
       setUploadedDocs(prev => prev.map(doc => {
         if (doc.id === docId) {
           return { ...doc, is_verified: currentStatus }
@@ -45,19 +41,17 @@ export default function Section1BadanHukumAssessorPage() {
         return doc
       }))
       
-      // Tampilkan error di modal dengan durasi sedikit lebih lama agar terbaca
       setSuccessModalText(`Gagal memperbarui: ${res.error}`)
       setShowSuccessModal(true)
       setTimeout(() => {
         setShowSuccessModal(false)
       }, 1500)
     } else {
-      // Jika berhasil, munculkan modal kustom super cepat (800ms)
       setSuccessModalText(!currentStatus ? 'Verifikasi berhasil!' : 'Verifikasi dibatalkan!')
       setShowSuccessModal(true)
       setTimeout(() => {
         setShowSuccessModal(false)
-      }, 800) // Durasi singkat (800ms) agar transisi hilangnya lebih cepat
+      }, 800)
 
       if (ulokId) {
         await calculateULOKSAW(ulokId)
@@ -105,7 +99,6 @@ export default function Section1BadanHukumAssessorPage() {
     router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}&prefill=${encodeURIComponent(`⚠️ [Catatan Assessor - Grup: ${groupName}]: `)}`)
   }
 
-  // Komponen Reusable Slot Render Berkas
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
     const existingDoc = uploadedDocs.find(d => d.document_type === docType)
 
@@ -120,7 +113,6 @@ export default function Section1BadanHukumAssessorPage() {
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
             <div className="flex gap-1.5 items-center">
               
-              {/* Button View */}
               <a 
                 href={existingDoc.file_url} 
                 target="_blank" 
@@ -131,7 +123,6 @@ export default function Section1BadanHukumAssessorPage() {
                 <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
               </a>
 
-              {/* Button Verify Action */}
               <button
                 type="button"
                 disabled={verifyingDocId === existingDoc.id}
@@ -174,7 +165,7 @@ export default function Section1BadanHukumAssessorPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/assessor/penilaian')} 
@@ -193,7 +184,7 @@ export default function Section1BadanHukumAssessorPage() {
           <span className="text-gray-800 dark:text-gray-100 font-bold">Section 1: Legalitas</span>
         </nav>
 
-        {/* HEADER SECTION */}
+        {/* === HEADER === */}
         <div className="bg-blue-950 dark:bg-[#1E293B] text-white p-6 rounded-xl flex justify-between items-center shadow-sm border border-transparent dark:border-gray-800">
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 1: Legalitas Instansi & Berkas Manajemen Badan Hukum</h1>
@@ -202,7 +193,7 @@ export default function Section1BadanHukumAssessorPage() {
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>
 
-        {/* BUNDEL 1: BERKAS UTAMA WAJIB */}
+        {/* === FORM: DOKUMEN UTAMA & LEGALITAS === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -229,7 +220,7 @@ export default function Section1BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* BUNDEL 2: KONDISIONAL PERPAJAKAN & KUASA */}
+        {/* === FORM: STATUS PAJAK & KUASA === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -276,7 +267,7 @@ export default function Section1BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* BUNDEL 3: DOKUMEN SPESIFIK STRUKTUR ORGANISASI */}
+        {/* === FORM: SUSUNAN PENGURUS & DIREKSI === */}
         <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 pb-2">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -303,7 +294,7 @@ export default function Section1BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* PANEL TOMBOL NAVIGASI */}
+        {/* === NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
@@ -323,7 +314,7 @@ export default function Section1BadanHukumAssessorPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.15s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.15s_ease-out]">

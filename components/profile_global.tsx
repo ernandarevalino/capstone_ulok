@@ -6,14 +6,12 @@ import { useRouter } from 'next/navigation';
 import { User, Shield, MapPin, Building, Info, LogOut, Camera } from 'lucide-react';
 
 export default function ProfileGlobal() {
-  // Deklarasi State Komponen
   const [profile, setProfile] = useState<any>(null);          
   const [loading, setLoading] = useState(true);               
   const [uploading, setUploading] = useState(false);           
   const fileInputRef = useRef<HTMLInputElement>(null);        
   const router = useRouter();                                
 
-  // State Baru untuk Custom Modal & Loading Animasi
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -60,12 +58,10 @@ export default function ProfileGlobal() {
     setUploading(false);
   };
 
-  // Pemicu awal ketika button Keluar diklik
   const handleLogoutTrigger = () => {
     setShowLogoutConfirm(true);
   };
 
-  // Eksekusi Log Out dari Sistem dengan Custom Modal Animasi
   const executeLogout = async () => {
     setIsLoggingOut(true);
     
@@ -86,7 +82,6 @@ export default function ProfileGlobal() {
     }
   };
 
-  // State loading premium (Sinkron dengan Notification Page)
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-900 p-12 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 text-center text-sm text-gray-400 dark:text-gray-500 italic">
@@ -98,7 +93,6 @@ export default function ProfileGlobal() {
 
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
 
-  // Format Role Dinamis untuk Semua Level Hak Akses
   const formatRole = (role: string) => {
     if (role === 'admin_cabang') return 'Admin Cabang';
     if (role === 'assessor') return 'Assessor';
@@ -109,7 +103,7 @@ export default function ProfileGlobal() {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden space-y-0 transition-colors">
       
-      {/* HEADER CARD NAVY BLUE */}
+      {/* === HEADER: INFORMASI PROFIL === */}
       <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
         <h3 className="text-white font-bold text-base flex items-center gap-2.5">
           <User className="w-5 h-5 text-blue-400 dark:text-blue-300" /> 
@@ -120,10 +114,10 @@ export default function ProfileGlobal() {
         </span>
       </div>
 
-      {/* BODY KONTEN */}
+      {/* === KONTEN: BODY === */}
       <div className="p-6 space-y-8">
         
-        {/* SEKTOR ATAS: DETAIL FOTO PROFIL & RINGKASAN DATA AKUN */}
+        {/* === SEKTOR: FOTO PROFIL === */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 dark:border-gray-800/60">
           <div 
             className="relative group cursor-pointer overflow-hidden rounded-full ring-4 ring-gray-100 dark:ring-gray-800/50 hover:ring-blue-500/30 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0" 
@@ -141,7 +135,6 @@ export default function ProfileGlobal() {
               </div>
             )}
             
-            {/* Overlay Efek Hover Modern dengan Ikon Kamera */}
             <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-[10px] text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <Camera className="w-4 h-4 mb-1 animate-bounce" />
               <span>{uploading ? 'Uploading...' : 'Ganti Foto'}</span>
@@ -170,10 +163,9 @@ export default function ProfileGlobal() {
           </div>
         </div>
 
-        {/* SEKTOR TENGAH: GRID FIELDS FORMULIR (PREMIUM DISABLED LOOK) */}
+        {/* === KONTEN: FORM DETAIL === */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           
-          {/* Field Nama Lengkap */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
               Nama Lengkap Karyawan
@@ -191,7 +183,6 @@ export default function ProfileGlobal() {
             </div>
           </div>
 
-          {/* Field Nomor Induk Karyawan (NIK) */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
               Nomor Induk Karyawan (NIK)
@@ -209,10 +200,8 @@ export default function ProfileGlobal() {
             </div>
           </div>
 
-          {/* FIELD KONDISIONAL: HANYA MUNCUL JIKA USER ADALAH ADMIN CABANG */}
           {profile?.role === 'admin_cabang' && (
             <>
-              {/* Field Nama Unit Cabang */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
                   Penugasan Kantor Cabang
@@ -230,7 +219,6 @@ export default function ProfileGlobal() {
                 </div>
               </div>
 
-              {/* Field Cakupan Provinsi */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">
                   Cakupan Wilayah Provinsi
@@ -251,7 +239,7 @@ export default function ProfileGlobal() {
           )}
         </div>
         
-        {/* KOTAK INFORMASI KEBIJAKAN (Teks Menyesuaikan Role Secara Dinamis) */}
+        {/* === INFORMASI: KEBIJAKAN === */}
         <div className="p-4 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 rounded-2xl text-xs flex items-start gap-3 leading-relaxed font-medium shadow-xs">
           <Info className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400 mt-0.5" />
           <span>
@@ -259,7 +247,7 @@ export default function ProfileGlobal() {
           </span>
         </div>
 
-        {/* SEKTOR BAWAH: AKSI SESSION KELUAR */}
+        {/* === SEKTOR: LOGOUT === */}
         <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex justify-end">
           <button
             onClick={handleLogoutTrigger}
@@ -272,9 +260,7 @@ export default function ProfileGlobal() {
         
       </div>
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL KONFIRMASI KELUAR (LOGOUT) */}
-      {/* ========================================================================= */}
+      {/* === MODAL: KONFIRMASI LOGOUT === */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -312,9 +298,7 @@ export default function ProfileGlobal() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL SUKSES (UNIVERSAL UNTUK LOGOUT / AVATAR UPDATE) */}
-      {/* ========================================================================= */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

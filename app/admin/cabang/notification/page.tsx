@@ -10,7 +10,6 @@ export default function NotificationPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // State Baru untuk Custom Modal & Animasi (Sesuai Standar UI Premium PRIOLO)
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
@@ -56,13 +55,11 @@ export default function NotificationPage() {
     }
   };
 
-  // Pemicu awal ketika button Clear All diklik
   const handleDeleteAllTrigger = () => {
     if (notifications.length === 0) return;
     setShowDeleteAllConfirm(true);
   };
 
-  // Eksekusi Penghapusan Massal dengan Custom Modal Animasi
   const executeDeleteAll = async () => {
     setIsDeletingAll(true);
     try {
@@ -70,7 +67,6 @@ export default function NotificationPage() {
       setNotifications([]);
       setShowDeleteAllConfirm(false);
       
-      // Setup Informasi Berhasil
       setSuccessMessage('Semua notifikasi berhasil dibersihkan! 🎉');
       setShowSuccessModal(true);
       
@@ -91,7 +87,7 @@ export default function NotificationPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* HEADER PAGE */}
+        {/* === HEADER: NOTIFIKASI === */}
         <div className="max-w-255 mx-auto mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Notifikasi Sistem
@@ -101,10 +97,10 @@ export default function NotificationPage() {
           </p>
         </div>
 
-        {/* MAIN CARD CONTAINER */}
+        {/* === KONTEN: DAFTAR NOTIFIKASI === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
           
-          {/* HEADER NAVY BLUE */}
+          {/* === TABEL: HEADER === */}
           <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2.5">
               <img 
@@ -133,7 +129,7 @@ export default function NotificationPage() {
             </div>
           </div>
 
-          {/* NOTIFICATION LIST WRAPPER */}
+          {/* === LIST: NOTIFIKASI === */}
           <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
             {loading ? (
               <div className="p-12 text-center text-gray-400 dark:text-gray-500 italic text-sm">
@@ -174,7 +170,6 @@ export default function NotificationPage() {
                     </p>
                   </div>
                   
-                  {/* BUTTON ACTION X */}
                   <button 
                     onClick={() => handleDelete(notif.id)}
                     className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
@@ -191,9 +186,7 @@ export default function NotificationPage() {
 
       </div>
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL KONFIRMASI HAPUS ALL (SINKRON DENGAN GLOBAL PROFILE) */}
-      {/* ========================================================================= */}
+      {/* === MODAL: KONFIRMASI HAPUS ALL === */}
       {showDeleteAllConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
@@ -231,9 +224,7 @@ export default function NotificationPage() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MODAL SUKSES (UNIVERSAL UNTUK NOTIFICATION ACTION) */}
-      {/* ========================================================================= */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">

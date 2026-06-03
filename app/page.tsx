@@ -2,454 +2,409 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
-  ShieldCheck, 
-  GitBranch, 
-  UserCheck, 
-  BarChart3, 
-  Binary, 
-  Eye, 
-  CheckCircle,
   Sparkles,
-  Database,
-  FileText,
-  Layers,
-  MessageSquare,
-  Bell
+  ChevronDown,
+  Menu,
+  X
 } from 'lucide-react';
+
+const NAV_LINKS = [
+  { href: '#tentang', label: 'Tentang Priolo' },
+  { href: '#metodologi', label: 'Algoritma SAW' },
+  { href: '#alur-kerja', label: 'Alur Kerja Priolo' },
+];
+
+const VALUE_PROPS = [
+  "Berkas Berdasarkan Checklist Oleh Assessor Dengan Standar Perusahaan.",
+  "Pemisahan Dokumen Kategori Negotiable & Non-Negotiable.",
+  "Kalkulasi Perhitungan Rangking Otomatis Menggunakan Matriks SAW."
+];
+
+const FEATURE_CARDS = [
+  {
+    icon: '/icons/icon-stats.svg',
+    title: 'Algoritma SAW',
+    subtitle: 'Perhitungan Bobot',
+    borderColor: 'hover:border-[#142B4D]',
+    shadowColor: 'hover:shadow-[#142B4D]/10',
+    iconBg: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/20 text-[#142B4D] group-hover:bg-[#142B4D]'
+  },
+  {
+    icon: '/icons/icon-perorangan2.svg',
+    title: 'Validasi Hak Akses',
+    subtitle: 'Kunci Audit Log',
+    borderColor: 'hover:border-[#142B4D]',
+    shadowColor: 'hover:shadow-[#142B4D]/10',
+    iconBg: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/20 text-[#142B4D] group-hover:bg-[#142B4D]'
+  },
+  {
+    icon: '/icons/icon-view.svg',
+    title: 'Transparansi',
+    subtitle: 'Status Berkas',
+    borderColor: 'hover:border-[#142B4D]',
+    shadowColor: 'hover:shadow-[#142B4D]/10',
+    iconBg: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/20 text-[#142B4D] group-hover:bg-[#142B4D]'
+  },
+  {
+    icon: '/icons/icon-nama.svg',
+    title: '3 Level Role',
+    subtitle: 'Otoritas Tegas',
+    borderColor: 'hover:border-[#142B4D]',
+    shadowColor: 'hover:shadow-[#142B4D]/10',
+    iconBg: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/20 text-[#142B4D] group-hover:bg-[#142B4D]'
+  }
+];
+
+const CRITERIA_CARDS = [
+  {
+    id: 'C1',
+    icon: '/icons/icon-file.svg',
+    title: 'Kelengkapan Dokumen',
+    type: 'Benefit Kriteria',
+    typeColor: 'text-[#FE9A00]',
+    hoverBorder: 'hover:border-[#142B4D] hover:shadow-[#142B4D]/10',
+    badgeBg: 'bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D] group-hover:text-white',
+    iconContainer: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D]',
+    desc: 'Persentase kesesuaian berkas berdasarkan status pemilik hak berupa badan hukum atau perorangan.',
+    weight: '45% (0.45)',
+    weightColor: 'text-[#142B4D] dark:text-[#FE9A00]'
+  },
+  {
+    id: 'C2',
+    icon: '/icons/icon-law.svg',
+    title: 'Durasi Review Legal',
+    type: 'Cost Kriteria',
+    typeColor: 'text-[#D11A22]',
+    hoverBorder: 'hover:border-[#142B4D] hover:shadow-[#142B4D]/10',
+    badgeBg: 'bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D] group-hover:text-white',
+    iconContainer: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D]',
+    desc: 'Total rentang waktu timeline peninjauan berkas, dihitung dari usulan lokasi dibuat hingga hasil validasi final tim asesor hukum.',
+    weight: '35% (0.35)',
+    weightColor: 'text-[#142B4D] dark:text-[#FE9A00]'
+  },
+  {
+    id: 'C3',
+    icon: '/icons/icon-cost.svg',
+    title: 'Harga Sewa',
+    type: 'Cost Kriteria',
+    typeColor: 'text-[#D11A22]',
+    hoverBorder: 'hover:border-[#142B4D] hover:shadow-[#142B4D]/10',
+    badgeBg: 'bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D] group-hover:text-white',
+    iconContainer: 'bg-[#142B4D]/5 dark:bg-[#142B4D]/10 text-[#142B4D] group-hover:bg-[#142B4D]',
+    desc: 'Nominal akumulasi nilai pengajuan sewa per 5 tahun. Menjaga efisiensi anggaran ekspansi agar investasi gerai optimal.',
+    weight: '20% (0.20)',
+    weightColor: 'text-[#142B4D] dark:text-[#FE9A00]'
+  }
+];
+
+const WORKFLOW_STEPS = [
+  { id: '01', title: 'Inisiasi & Lokasi', desc: 'Admin Cabang menginput titik koordinat, data pemilik, status jaminan bank, serta nilai sewa lahan toko.' },
+  { id: '02', title: 'Kategorisasi Folder', desc: 'Sistem otomatis membagi folder wajib berdasarkan badan hukum / perorangan sesuai checklist_master.' },
+  { id: '03', title: 'Verifikasi Assessor', desc: 'Tim Legal menguji keaslian berkas digital, memberikan feedback resmi atau melakukan approval langsung.' },
+  { id: '04', title: 'Komputasi Rangking', desc: 'Algoritma SAW menghitung akumulasi matriks terpusat untuk menampilkan rekomendasi usulan terbaik.' }
+];
 
 export default function WelcomePage() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentYear, setCurrentYear] = useState('2026');
 
   useEffect(() => {
+    setCurrentYear(new Date().getFullYear().toString());
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B1329] text-gray-800 dark:text-gray-100 transition-colors duration-300 flex flex-col justify-between overflow-x-hidden selection:bg-blue-500/30 scroll-smooth">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B1329] text-gray-800 dark:text-gray-100 transition-colors duration-500 flex flex-col justify-between overflow-x-hidden selection:bg-[#142B4D]/30 scroll-smooth">
       
-      {/* ==================== 1. PREMIUM STICKY NAVBAR ==================== */}
+      {/* === SECTION: NAVIGASI GLOBAL === */}
       <nav className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
         scrolled 
           ? 'bg-white/80 dark:bg-[#0B1329]/80 backdrop-blur-xl border-gray-200 dark:border-gray-800/80 shadow-xs' 
-          : 'bg-transparent border-transparent'
+          : 'bg-transparent border-transparent py-2'
       }`}>
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
           
-          {/* Logo Brand Sektor Kiri */}
+          {/* === SEKTOR KIRI: LOGO BRAND === */}
           <Link href="/" className="flex items-center gap-3 group cursor-pointer">
-            <div className="h-12 w-44 relative flex items-center justify-center transition-transform duration-300 group-hover:scale-102">
-              <img 
-                src="/images/logo-priolo.png" 
-                alt="Logo Priolo" 
-                className="block dark:hidden h-11 w-auto object-contain" 
-              />
-              <img 
-                src="/images/logo-priolo-white.png" 
-                alt="Logo Priolo White" 
-                className="hidden dark:block h-10 w-auto object-contain" 
-              />
+            <div className="h-12 w-44 relative flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <div className="block dark:hidden relative w-full h-12">
+                <Image 
+                  src="/images/logo-priolo.png" 
+                  alt="Logo Priolo" 
+                  fill
+                  sizes="(max-w-176px) 100vw, 176px"
+                  className="object-contain" 
+                  priority
+                />
+              </div>
+              <div className="hidden dark:block relative w-full h-11">
+                <Image 
+                  src="/images/logo-priolo-white.png" 
+                  alt="Logo Priolo White" 
+                  fill
+                  sizes="(max-w-176px) 100vw, 176px"
+                  className="object-contain" 
+                  priority
+                />
+              </div>
             </div>
           </Link>
           
-          {/* Navigasi Menu Sektor Kanan - Berjarak Proporsional */}
-          <div className="flex items-center gap-5 lg:gap-6">
-            <a href="#tentang" className="hidden lg:block text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors">
-              Tentang
-            </a>
-            <a href="#metodologi" className="hidden md:block text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors">
-              Kriteria SAW
-            </a>
-            <a href="#alur-kerja" className="hidden md:block text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors">
-              Alur
-            </a>
-            <a href="#arsitektur" className="hidden lg:block text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors">
-              Hak Akses
-            </a>
-            <a href="#skema" className="hidden sm:block text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors">
-              Infrastruktur
-            </a>
+          {/* === SEKTOR TENGAH: TAUTAN NAVIGASI === */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+            {NAV_LINKS.map((link) => (
+              <a 
+                key={link.href}
+                href={link.href} 
+                className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-white transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#142B4D] dark:after:bg-[#FE9A00] hover:after:w-full after:transition-all after:duration-300"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
 
+          {/* === SEKTOR KANAN: TRIGGER MENU MOBILE === */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="block md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors focus:outline-none"
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* === INTERFACE DRAWER: MENU MOBILE === */}
+        <div className={`md:hidden absolute top-20 left-0 w-full bg-white dark:bg-[#0B1329] border-b border-gray-200 dark:border-gray-800/80 transition-all duration-300 ease-in-out ${
+          mobileMenuOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible pointer-events-none'
+        }`}>
+          <div className="px-6 py-4 flex flex-col gap-4">
+            {NAV_LINKS.map((link) => (
+              <a 
+                key={link.href}
+                href={link.href} 
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-base font-semibold text-gray-600 dark:text-gray-300 hover:text-[#142B4D] dark:hover:text-white transition-colors py-1"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
       </nav>
 
-      {/* ==================== 2. MODERN HERO SECTION (Isolasi Layar Full) ==================== */}
-      <header className="relative min-h-[calc(100vh-5rem)] flex flex-col justify-center pt-8 pb-16 overflow-hidden">
+      {/* === SECTION: HERO HEADER === */}
+      <header className="relative min-h-[calc(100vh-5.5rem)] flex flex-col justify-center items-center pt-8 pb-24 overflow-hidden">
         
-        {/* Ornamen Cahaya Radial Glow Efek */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-120 h-120 bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full -z-10 animate-pulse" />
+        {/* === EFEK RADIASI BACKGROUND === */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#142B4D]/10 dark:bg-[#142B4D]/5 blur-[120px] rounded-full -z-10 animate-pulse duration-4000" />
         
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-8 relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-8 relative z-10 my-auto">
           
-          {/* Badge Atas */}
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/40 text-[#142B4D] dark:text-blue-300 border border-blue-100/80 dark:border-blue-900/40 tracking-wide uppercase mx-auto shadow-2xs">
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            Sistem Penunjang Keputusan • PT. Midi Utama Indonesia, Tbk
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-[#142B4D]/5 dark:bg-[#142B4D]/20 text-[#142B4D] dark:text-[#FE9A00] border border-[#142B4D]/10 dark:border-[#142B4D]/30 tracking-wide uppercase mx-auto shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#FE9A00] animate-spin" style={{ animationDuration: '8s' }} />
+            Sistem Penunjang Keputusan
           </span>
           
-          {/* Judul Utama */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-950 dark:text-white tracking-tight leading-[1.15] max-w-3xl mx-auto">
             Pemrosesan Dokumen<br />
-            <span className="bg-linear-to-r from-[#0F3050] via-[#9A162A] to-[#E3B124] dark:from-[#E3B124] dark:via-[#0F3050] dark:to-[#9A162A] bg-clip-text text-transparent">
-              Usulan Lokasi (ULOK)
+            <span className="bg-gradient-to-r from-[#142B4D] via-[#D11A22] to-[#FE9A00] bg-clip-text text-transparent bg-[size:200%_auto] hover:bg-right transition-all duration-1000">
+              Usulan Lokasi
             </span>
           </h1>
           
-          {/* Sub-Deskripsi */}
-          <p className="text-xs sm:text-sm lg:text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            <strong>PRIOLO</strong> *(Prioritizing Location)* menjembatani digitalisasi berkas legalitas sewa lahan dan standardisasi perhitungan kelayakan wilayah operasional toko Alfamidi secara objektif.
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
+            <strong className="text-gray-900 dark:text-white">PRIOLO</strong> (Prioritizing Location) menjembatani digitalisasi berkas legalitas dan perhitungan kelayakan usulan lokasi toko Alfamidi berdasarkan sistem penunjang keputusan.
           </p>
           
-          {/* Tombol Aksi */}
+          {/* === AKSI CALL TO ACTION === */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xs mx-auto sm:max-w-none">
             <Link 
               href="/login" 
-              className="w-full sm:w-auto px-7 py-3.5 bg-linear-to-r from-[#142B4D] to-[#1C3D6C] dark:from-blue-600 dark:to-indigo-600 text-white font-bold text-xs rounded-xl transition-all duration-300 hover:scale-[1.06] active:scale-[0.98] shadow-xl shadow-blue-900/20 text-center"
+              className="w-full sm:w-auto px-8 py-4 bg-[#142B4D] hover:bg-[#1c3d6c] text-white font-bold text-sm rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#142B4D]/20 active:scale-98 text-center"
             >
               Masuk ke Sistem Sekarang
             </Link>
             <a 
               href="#metodologi" 
-              className="w-full sm:w-auto px-7 py-3.5 bg-white dark:bg-[#131C35] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800/80 font-bold text-xs rounded-xl transition-all duration-300 hover:bg-gray-50 dark:hover:bg-[#1A2647] text-center"
+              className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-[#131C35] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800/80 font-bold text-sm rounded-xl transition-all duration-300 hover:bg-gray-50 dark:hover:bg-[#1A2647] hover:border-gray-300 dark:hover:border-gray-700 text-center"
             >
               Pelajari Kriteria Kelayakan
             </a>
           </div>
+        </div>
 
+        {/* === INDIKATOR SCROLL DOWN === */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60 animate-bounce">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Scroll Down</span>
+          <ChevronDown className="w-4 h-4 text-gray-400" />
         </div>
       </header>
 
-      {/* ==================== 3. SECTION VALUE PROPOSITION (ID dipindah ke dalam untuk Akurasi Scroll) ==================== */}
-      <section className="min-h-screen flex flex-col justify-center py-32 lg:py-40 bg-white dark:bg-[#0E172F] border-y border-gray-200/60 dark:border-gray-800/60 transition-colors duration-300">
-        <div id="tentang" className="max-w-5xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center scroll-mt-28">
+      {/* === SECTION: ABOUT & VALUE === */}
+      <section id="tentang" className="py-24 md:py-32 bg-white dark:bg-[#0E172F] border-y border-gray-200/60 dark:border-gray-800/60 transition-colors duration-300 scroll-mt-20">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
+          {/* === SEKTOR KIRI: ABOUT VALUE === */}
           <div className="space-y-6 text-left max-w-md">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
               Mengapa Platform <br />PRIOLO Dibutuhkan?
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-              Prosedur konvensional ekspansi gerai retail seringkali terhambat oleh besarnya volume berkas fisik dari pemilik lahan serta koordinasi yang lambat antara perwakilan wilayah dan departemen legal pusat. PRIOLO memusatkan kendali secara digital.
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+              Prosedur ekspansi gerai retail seringkali terhambat oleh besarnya volume berkas fisik dari pemilik lahan serta koordinasi yang lambat antara perwakilan wilayah (Admin Cabang) dan departemen legal pusat (Assessor). <span className="text-[#142B4D] dark:text-[#FE9A00] font-semibold">PRIOLO hadir untuk menjembatani secara digital.</span>
             </p>
             
             <div className="space-y-4 pt-2">
-              <div className="flex items-start gap-3 text-xs font-semibold">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Sentralisasi Berkas Berdasarkan Checklist Standar Perusahaan.</span>
-              </div>
-              <div className="flex items-start gap-3 text-xs font-semibold">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Pemisahan Dokumen Kategori *Negotiable* & *Non-Negotiable*.</span>
-              </div>
-              <div className="flex items-start gap-3 text-xs font-semibold">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Kalkulasi Komputasi Rangking Otomatis Menggunakan Matriks SAW.</span>
-              </div>
+              {VALUE_PROPS.map((prop, idx) => (
+                <div key={idx} className="flex items-start gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <img 
+                    src="/icons/icon-check.svg" 
+                    alt="Check Icon" 
+                    className="w-5 h-5 shrink-0 mt-0.5 object-contain" 
+                  />
+                  <span>{prop}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Grid Box Fitur Kunci */}
-          <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-[#0B1329] p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800/60 max-w-sm mx-auto lg:w-full">
-            
-            <div className="group bg-white dark:bg-[#131C35] p-4 rounded-xl border border-gray-100 dark:border-gray-800/40 text-center space-y-2 shadow-xs hover:-translate-y-1.5 hover:border-blue-500/40 dark:hover:border-blue-500/30 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 ease-out">
-              <div className="h-10 w-10 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center mx-auto transition-transform duration-300 group-hover:scale-105">
-                <BarChart3 className="w-4 h-4" />
-              </div>
-              <span className="block text-xs font-bold text-gray-900 dark:text-white">Matriks SAW</span>
-              <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider block">Kalkulasi Akurat</span>
-            </div>
-
-            <div className="group bg-white dark:bg-[#131C35] p-4 rounded-xl border border-gray-100 dark:border-gray-800/40 text-center space-y-2 shadow-xs hover:-translate-y-1.5 hover:border-purple-500/40 dark:hover:border-purple-500/30 hover:shadow-md hover:shadow-purple-500/5 transition-all duration-300 ease-out">
-              <div className="h-10 w-10 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-lg flex items-center justify-center mx-auto transition-transform duration-300 group-hover:scale-105">
-                <Binary className="w-4 h-4" />
-              </div>
-              <span className="block text-xs font-bold text-gray-900 dark:text-white">Validasi NIK</span>
-              <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider block">Kunci Audit Log</span>
-            </div>
-
-            <div className="group bg-white dark:bg-[#131C35] p-4 rounded-xl border border-gray-100 dark:border-gray-800/40 text-center space-y-2 shadow-xs hover:-translate-y-1.5 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-md hover:shadow-amber-500/5 transition-all duration-300 ease-out">
-              <div className="h-10 w-10 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center mx-auto transition-transform duration-300 group-hover:scale-105">
-                <Eye className="w-4 h-4" />
-              </div>
-              <span className="block text-xs font-bold text-gray-900 dark:text-white">Transparansi</span>
-              <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider block">Status Berkas</span>
-            </div>
-
-            <div className="group bg-white dark:bg-[#131C35] p-4 rounded-xl border border-gray-100 dark:border-gray-800/40 text-center space-y-2 shadow-xs hover:-translate-y-1.5 hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:shadow-md hover:shadow-emerald-500/5 transition-all duration-300 ease-out">
-              <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center mx-auto transition-transform duration-300 group-hover:scale-105">
-                <UserCheck className="w-4 h-4" />
-              </div>
-              <span className="block text-xs font-bold text-gray-900 dark:text-white">3 Level Role</span>
-              <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider block">Otoritas Tegas</span>
-            </div>
-
+          {/* === SEKTOR KANAN: KEY FEATURES === */}
+          <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-[#0B1329] p-6 rounded-2xl border border-gray-200/80 dark:border-gray-800/60 max-w-md mx-auto lg:w-full shadow-inner">
+            {FEATURE_CARDS.map((card, idx) => {
+              return (
+                <div 
+                  key={idx} 
+                  className={`group bg-white dark:bg-[#131C35] p-5 rounded-xl border border-gray-100 dark:border-gray-800/40 text-center space-y-3 shadow-xs hover:-translate-y-2 hover:shadow-lg transition-all duration-300 ease-out ${card.borderColor} ${card.shadowColor}`}
+                >
+                  <div className={`h-11 w-11 rounded-lg flex items-center justify-center mx-auto transition-all duration-300 group-hover:scale-110 ${card.iconBg}`}>
+                    <img 
+                      src={card.icon} 
+                      alt={card.title} 
+                      className="w-5 h-5 object-contain transition-all duration-300 group-hover:brightness-0 group-hover:invert" 
+                    />
+                  </div>
+                  <span className="block text-sm font-bold text-gray-900 dark:text-white">{card.title}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider block">{card.subtitle}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ==================== 4. SECTION METODOLOGI & KRITERIA SAW (ID dipindah ke dalam untuk Akurasi Scroll) ==================== */}
-      <section className="min-h-screen flex flex-col justify-center py-32 lg:py-40 transition-colors duration-300">
-        <div id="metodologi" className="max-w-5xl mx-auto px-6 space-y-12 scroll-mt-28 w-full">
-          
+      {/* === SECTION: METHODOLOGY & SAW === */}
+      <section id="metodologi" className="py-24 md:py-32 transition-colors duration-300 scroll-mt-20">
+        <div className="max-w-5xl mx-auto px-6 space-y-16 w-full">
+        
+          {/* === METODOLOGI HEADER === */}
           <div className="text-center space-y-3 max-w-xl mx-auto">
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">Pendekatan Algoritma Ilmiah</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Pembobotan Kriteria Kelayakan Lahan
+            <span className="text-xs font-bold text-[#142B4D] dark:text-[#FE9A00] uppercase tracking-widest block">Pendekatan Algoritma Ilmiah</span>
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              Kriteria Kelayakan Usulan Lokasi
             </h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
-              Sistem menggunakan metode *Simple Additive Weighting* (SAW) untuk memberikan rekomendasi urutan prioritas pemrosesan usulan lokasi secara objektif.
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+              Sistem menggunakan metode Simple Additive Weighting (SAW) untuk memberikan rekomendasi urutan prioritas pemrosesan usulan lokasi secara objektif berdasarkan beberapa kriteria yang telah ditentukan.
             </p>
           </div>
 
-          {/* Card Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto w-full">
-            {/* C1 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-5 rounded-xl border border-gray-200 dark:border-gray-800/60 shadow-xs relative overflow-hidden hover:-translate-y-2 hover:border-blue-500/40 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 ease-out">
-              <div className="absolute top-0 right-0 p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black text-xl rounded-bl-xl group-hover:bg-blue-500/20 transition-colors">C1</div>
-              <div className="space-y-4">
-                <div className="h-9 w-9 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <Layers className="w-4 h-4" />
+          {/* === GRID MATRIKS KRITERIA === */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto w-full">
+            {CRITERIA_CARDS.map((item) => {
+              return (
+                <div 
+                  key={item.id} 
+                  className={`group bg-white dark:bg-[#0E172F] p-6 rounded-xl border border-gray-200 dark:border-gray-800/60 shadow-xs relative overflow-hidden hover:-translate-y-2 hover:shadow-xl transition-all duration-300 ease-out ${item.hoverBorder}`}
+                >
+                  {/* === BADGE MATRIKS === */}
+                  <div className={`absolute top-0 right-0 p-3 font-black text-xl rounded-bl-xl group-hover:text-white dark:group-hover:text-white transition-all duration-300 ${item.badgeBg}`}>
+                    {item.id}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* === CONTAINER ICON === */}
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${item.iconContainer}`}>
+                      <img 
+                        src={item.icon} 
+                        alt={item.title} 
+                        className="w-5 h-5 object-contain transition-all duration-300 group-hover:brightness-0 group-hover:invert" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white transition-colors group-hover:text-[#142B4D] dark:group-hover:text-white">
+                        {item.title}
+                      </h3>
+                      <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${item.typeColor}`}>
+                        {item.type}
+                      </p>
+                    </div>
+                    
+                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed min-h-[72px]">
+                      {item.desc}
+                    </p>
+                    
+                    {/* === PERHITUNGAN BOBOT === */}
+                    <div className="pt-4 border-t border-t-gray-100 dark:border-t-gray-800/80 flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Bobot Pengaruh:</span>
+                      <span className={`font-extrabold ${item.weightColor} group-hover:text-[#142B4D] dark:group-hover:text-[#FE9A00]`}>
+                        {item.weight}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">Kelengkapan Dokumen</h3>
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-0.5">Benefit Kriteria</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Persentase kesesuaian berkas identitas pemilik, akta jaminan bank, sertifikat alas hak, atau surat keterangan kelurahan.
-                </p>
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-800/80 flex justify-between items-center text-xs">
-                  <span className="text-gray-400 scale-95 origin-left">Bobot Pengaruh:</span>
-                  <span className="font-extrabold text-blue-600 dark:text-blue-400">45% (0.45)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* C2 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-5 rounded-xl border border-gray-200 dark:border-gray-800/60 shadow-xs relative overflow-hidden hover:-translate-y-2 hover:border-red-500/40 dark:hover:border-red-500/30 hover:shadow-lg hover:shadow-red-500/5 transition-all duration-300 ease-out">
-              <div className="absolute top-0 right-0 p-2.5 bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xl rounded-bl-xl group-hover:bg-red-500/20 transition-colors">C2</div>
-              <div className="space-y-4">
-                <div className="h-9 w-9 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white transition-colors group-hover:text-red-600 dark:group-hover:text-red-400">Durasi Review Legal</h3>
-                  <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider mt-0.5">Cost Kriteria</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Total rentang waktu timeline peninjauan berkas sengketa, masa berlaku sertifikat, hingga hasil validasi final tim asesor hukum.
-                </p>
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-800/80 flex justify-between items-center text-xs">
-                  <span className="text-gray-400 scale-95 origin-left">Bobot Pengaruh:</span>
-                  <span className="font-extrabold text-red-600 dark:text-red-400">35% (0.35)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* C3 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-5 rounded-xl border border-gray-200 dark:border-gray-800/60 shadow-xs relative overflow-hidden hover:-translate-y-2 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300 ease-out">
-              <div className="absolute top-0 right-0 p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-black text-xl rounded-bl-xl group-hover:bg-amber-500/20 transition-colors">C3</div>
-              <div className="space-y-4">
-                <div className="h-9 w-9 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <BarChart3 className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-amber-400">Harga Sewa Lahan</h3>
-                  <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider mt-0.5">Cost Kriteria</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Nominal akumulasi nilai pengajuan sewa per 5 tahun. Menjaga efisiensi anggaran ekspansi agar investasi gerai optimal.
-                </p>
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-800/80 flex justify-between items-center text-xs">
-                  <span className="text-gray-400 scale-95 origin-left">Bobot Pengaruh:</span>
-                  <span className="font-extrabold text-amber-600 dark:text-amber-400">20% (0.20)</span>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
         </div>
       </section>
 
-      {/* ==================== 5. SECTION SIKLUS / ALUR KERJA PENGAJUAN (ID dipindah ke dalam untuk Akurasi Scroll) ==================== */}
-      <section className="min-h-screen flex flex-col justify-center py-32 lg:py-40 bg-gray-100/50 dark:bg-[#090F21] border-y border-gray-200/60 dark:border-gray-800/60">
-        <div id="alur-kerja" className="max-w-5xl mx-auto px-6 space-y-12 w-full scroll-mt-28">
-          
-          <div className="text-left max-w-md space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+      {/* === SECTION: WORKFLOW PROCESS === */}
+      <section id="alur-kerja" className="py-24 md:py-32 bg-gray-100/50 dark:bg-[#090F21] border-y border-gray-200/60 dark:border-gray-800/60 scroll-mt-20">
+        <div className="max-w-5xl mx-auto px-6 space-y-16 w-full">
+        
+          {/* === ALUR KERJA HEADER === */}
+          <div className="text-right max-w-md space-y-2 justify-end ml-auto">
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
               Siklus Transparan Dokumen
             </h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
               Bagaimana usulan lokasi baru diproses dari hulu ke hilir oleh sistem secara otomatis terstruktur.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl">
-            {/* Langkah 1 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-4 rounded-xl border border-gray-200/50 dark:border-gray-800/40 shadow-xs hover:-translate-y-1.5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 ease-out">
-              <span className="text-2xl font-black text-gray-200 dark:text-gray-800 block group-hover:text-blue-500/20 transition-colors">01</span>
-              <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1">Inisiasi & Lokasi</h4>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-1.5">
-                Admin Cabang menginput titik koordinat, data pemilik, status jaminan bank, serta nilai sewa lahan toko.
-              </p>
-            </div>
-
-            {/* Langkah 2 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-4 rounded-xl border border-gray-200/50 dark:border-gray-800/40 shadow-xs hover:-translate-y-1.5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 ease-out">
-              <span className="text-2xl font-black text-gray-200 dark:text-gray-800 block group-hover:text-blue-500/20 transition-colors">02</span>
-              <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1">Kategorisasi Folder</h4>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-1.5">
-                Sistem otomatis membagi folder wajib berdasarkan badan hukum / perorangan sesuai *checklist_master*.
-              </p>
-            </div>
-
-            {/* Langkah 3 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-4 rounded-xl border border-gray-200/50 dark:border-gray-800/40 shadow-xs hover:-translate-y-1.5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 ease-out">
-              <span className="text-2xl font-black text-gray-200 dark:text-gray-800 block group-hover:text-blue-500/20 transition-colors">03</span>
-              <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1">Verifikasi Assessor</h4>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-1.5">
-                Tim Legal menguji keaslian berkas digital, memberikan feedback revisi atau melakukan approval langsung.
-              </p>
-            </div>
-
-            {/* Langkah 4 */}
-            <div className="group bg-white dark:bg-[#0E172F] p-4 rounded-xl border border-gray-200/50 dark:border-gray-800/40 shadow-xs hover:-translate-y-1.5 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 ease-out">
-              <span className="text-2xl font-black text-gray-200 dark:text-gray-800 block group-hover:text-blue-500/20 transition-colors">04</span>
-              <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1">Komputasi Rangking</h4>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-1.5">
-                Algoritma SAW menghitung akumulasi matriks terpusat untuk menampilkan rekomendasi usulan terbaik.
-              </p>
-            </div>
+          {/* === GRID SEQUENTIAL PIPELINE === */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl justify-end ml-auto">
+            {WORKFLOW_STEPS.map((step) => (
+              <div 
+                key={step.id} 
+                className="group bg-white dark:bg-[#0E172F] p-6 rounded-xl border border-gray-200/50 dark:border-gray-800/40 shadow-xs hover:-translate-y-2 hover:border-[#142B4D] dark:hover:border-[#142B4D] hover:shadow-md transition-all duration-300 ease-out"
+              >
+                <span className="text-3xl font-black text-gray-200 dark:text-gray-800 block group-hover:text-[#142B4D]/30 transition-colors duration-300">
+                  {step.id}
+                </span>
+                <h4 className="font-bold text-sm text-gray-900 dark:text-white mt-2 group-hover:text-[#142B4D] dark:group-hover:text-white">{step.title}</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mt-2">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
           </div>
 
         </div>
       </section>
 
-      {/* ==================== 6. SECTION ARSITEKTUR ROLE (ID dipindah ke dalam untuk Akurasi Scroll) ==================== */}
-      <section className="min-h-screen flex flex-col justify-center py-32 lg:py-40 transition-colors duration-300">
-        <div id="arsitektur" className="max-w-5xl mx-auto px-6 space-y-16 scroll-mt-28 w-full">
-          
-          <div className="text-center space-y-3 max-w-xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Manajemen Otoritas Tiga Tingkat
-            </h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
-              Hak operasional dibagi secara terstruktur demi menjaga kerahasiaan data hukum korporat dan pembagian tugas yang efisien.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto w-full">
-            
-            {/* Card: Super Admin */}
-            <div className="group bg-white dark:bg-[#0E172F] p-6 rounded-xl border border-gray-200 dark:border-gray-800/80 shadow-xs flex flex-col justify-between hover:-translate-y-2 hover:border-red-500/40 dark:hover:border-red-500/30 hover:shadow-lg hover:shadow-red-500/5 transition-all duration-300 ease-out">
-              <div className="space-y-4">
-                <div className="h-10 w-10 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-red-500 transition-colors">Super Admin</h3>
-                  <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold tracking-wide uppercase">Tingkat Manajemen Tertinggi</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                  Mengontrol penuh tata kelola akun pengguna sistem global. Berwenang mendaftarkan serta menonaktifkan akun Admin Cabang dan Assessor secara langsung melalui profil terintegrasi.
-                </p>
-              </div>
-            </div>
-
-            {/* Card: Admin Cabang */}
-            <div className="group bg-white dark:bg-[#0E172F] p-6 rounded-xl border border-gray-200 dark:border-gray-800/80 shadow-xs flex flex-col justify-between hover:-translate-y-2 hover:border-blue-500/40 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 ease-out">
-              <div className="space-y-4">
-                <div className="h-10 w-10 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <GitBranch className="w-5 h-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">Admin Cabang</h3>
-                  <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold tracking-wide uppercase">Inisiator Usulan Wilayah</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                  Bertindak sebagai pengaju berkas permohonan lokasi baru toko Alfamidi, mengelola form kelengkapan dokumen badan hukum maupun perseorangan sesuai cakupan wilayah provinsinya.
-                </p>
-              </div>
-            </div>
-
-            {/* Card: Assessor */}
-            <div className="group bg-white dark:bg-[#0E172F] p-6 rounded-xl border border-gray-200 dark:border-gray-800/80 shadow-xs flex flex-col justify-between hover:-translate-y-2 hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 ease-out">
-              <div className="space-y-4">
-                <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <UserCheck className="w-5 h-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors">Assessor</h3>
-                  <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold tracking-wide uppercase">Tim Penilai Independen</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                  Eksekutor dari departemen Legal pusat. Memasukkan nilai bobot kriteria numerik, meneliti berkas sertifikat jaminan, memberikan komentar koreksi, dan memutuskan validitas usulan lokasi.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== 7. SECTION INFRASTRUKTUR & SKEMA DATA (ID dipindah ke dalam untuk Akurasi Scroll) ==================== */}
-      <section className="min-h-screen flex flex-col justify-center py-32 lg:py-40 bg-white dark:bg-[#0E172F] border-t border-gray-200/60 dark:border-gray-800/60">
-        <div id="skema" className="max-w-5xl mx-auto px-6 space-y-12 w-full scroll-mt-28">
-          
-          <div className="text-center space-y-3 max-w-xl mx-auto">
-            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest block">Keamanan & Keandalan Relasional</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Arsitektur Data Engine Terpusat
-            </h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
-              Didukung fondasi skema basis data yang tangguh untuk memastikan data legalitas terekam dengan integritas tinggi.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 max-w-4xl mx-auto w-full">
-            {/* Engine 1 */}
-            <div className="group p-5 bg-gray-50 dark:bg-[#131C35] rounded-xl border border-gray-100 dark:border-gray-800/40 space-y-3 hover:-translate-y-1.5 hover:border-purple-500/30 transition-all duration-300 ease-out">
-              <div className="flex items-center gap-3">
-                <Database className="w-4 h-4 text-purple-500 transition-transform duration-300 group-hover:rotate-12" />
-                <h5 className="font-bold text-xs text-gray-900 dark:text-white">Profiles & Branches Sync</h5>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Setiap data NIK pengguna terikat kuat secara relasional dengan data master regional cabang kabupaten dan provinsi operasional Alfamidi.
-              </p>
-            </div>
-
-            {/* Engine 2 */}
-            <div className="group p-5 bg-gray-50 dark:bg-[#131C35] rounded-xl border border-gray-100 dark:border-gray-800/40 space-y-3 hover:-translate-y-1.5 hover:border-blue-500/30 transition-all duration-300 ease-out">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
-                <h5 className="font-bold text-xs text-gray-900 dark:text-white">Inter-Department Comments</h5>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Fitur diskusi logis langsung di dalam berkas pengajuan. Mempermudah koordinasi revisi klausul sertifikat tanpa berpindah aplikasi.
-              </p>
-            </div>
-
-            {/* Engine 3 */}
-            <div className="group p-5 bg-gray-50 dark:bg-[#131C35] rounded-xl border border-gray-100 dark:border-gray-800/40 space-y-3 hover:-translate-y-1.5 hover:border-amber-500/30 transition-all duration-300 ease-out">
-              <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-amber-500 transition-transform duration-300 group-hover:animate-bounce" />
-                <h5 className="font-bold text-xs text-gray-900 dark:text-white">Real-time Alert Notifications</h5>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Pemberitahuan otomatis ketika status berkas beralih dari *Draft*, *In-Review*, hingga keputusan final *Approved* diterbitkan.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ==================== 8. FOOTER SEKTOR BAWAH ==================== */}
-      <footer className="py-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B1329] text-center text-[11px] text-gray-400 dark:text-gray-500 font-semibold tracking-wide">
-        &copy; {new Date().getFullYear()} PRIOLO Alfamidi Platform. All Rights Reserved.
+      {/* === SECTION: FOOTER CONTENT === */}
+      <footer className="py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B1329] text-center text-xs text-gray-400 dark:text-gray-500 font-semibold tracking-wide">
+        &copy; {currentYear} PRIOLO ALFAMIDI - Sistem Penunjang Keputusan Pemrosesan Dokumen ULOK
       </footer>
       
     </div>

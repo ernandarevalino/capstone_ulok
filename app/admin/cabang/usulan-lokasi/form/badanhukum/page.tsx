@@ -14,17 +14,14 @@ export default function DetailUlokBadanHukumPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   
-  // State untuk data inputan form (Bisa diedit)
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   
-  // State untuk kustom modal penanda sukses & teksnya secara dinamis
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  // State untuk chat/komentar dari assessor
   const [comments, setComments] = useState<any[]>([])
   const [newComment, setNewComment] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -37,7 +34,6 @@ export default function DetailUlokBadanHukumPage() {
       return
     }
 
-    // Ambil User ID langsung dari client-side Supabase Auth sebagai garda utama
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         setCurrentUserId(data.user.id)
@@ -49,19 +45,16 @@ export default function DetailUlokBadanHukumPage() {
       const res = await getUlokDetail(ulokId)
       
       if (res.success && res.data) {
-        // Set state data form penyesuaian inputan dari modal awal
         setNamaLokasi(res.data.nama_lokasi || '')
         setStatusBadan(res.data.jenis_badan_hukum || '')
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setStatusSubmission(res.data.status || 'Draft')
         
-        // Fetch comments
         const commentsRes = await getComments(ulokId)
         if (commentsRes.success && commentsRes.data) {
           setComments(commentsRes.data)
         }
 
-        // Fetch user profile
         const profileRes = await getCurrentProfile()
         if (profileRes.success && profileRes.profile) {
           setCurrentProfile(profileRes.profile)
@@ -75,7 +68,6 @@ export default function DetailUlokBadanHukumPage() {
 
     fetchDetail()
 
-    // Realtime subscription untuk chat comments
     const channel = supabase
       .channel(`comments-ulok-bh-${ulokId}`)
       .on(
@@ -110,7 +102,6 @@ export default function DetailUlokBadanHukumPage() {
     const res = await createComment(ulokId, activeId, commentText)
     if (res.success) {
       setNewComment('')
-      // Langsung update state local agar instant
       const commentsRes = await getComments(ulokId)
       if (commentsRes.success && commentsRes.data) {
         setComments(commentsRes.data)
@@ -122,7 +113,6 @@ export default function DetailUlokBadanHukumPage() {
     setIsSending(false)
   }
 
-  // Handle update perubahan seluruh data via tombol submit utama
   const handleUpdateDetail = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
@@ -146,13 +136,11 @@ export default function DetailUlokBadanHukumPage() {
     })
   }
 
-  // Handle Khusus saat Dropdown Status Kepemilikan Berubah (Auto-Save + Custom Alert Text)
   const handleStatusBadanChange = async (newStatus: string) => {
-    setStatusBadan(newStatus) // Update state UI dulu
+    setStatusBadan(newStatus)
     if (!ulokId) return
 
     startTransition(async () => {
-      // Kirim data terupdate langsung ke server action
       const res = await updateUlokSubmission(ulokId, {
         nama_lokasi: namaLokasi,
         jenis_badan_hukum: newStatus,
@@ -184,7 +172,7 @@ export default function DetailUlokBadanHukumPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* BREADCRUMB NAVIGATION */}
+        {/* === BREADCRUMB NAVIGATION === */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
           <span 
             onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
@@ -196,7 +184,7 @@ export default function DetailUlokBadanHukumPage() {
           <span className="text-gray-800 dark:text-gray-200 font-extrabold">Form Badan Hukum</span>
         </nav>
 
-        {/* HEADER & NAVIGASI BALIK */}
+        {/* === HEADER PANEL === */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-gray-200 dark:border-gray-800 pb-5">
           <div className="flex items-center gap-3">
             <button 
@@ -216,9 +204,8 @@ export default function DetailUlokBadanHukumPage() {
             </div>
           </div>
           
-          {/* GRUP ACTION BUTTONS (FORM & SIMPAN) */}
+          {/* === GRUP ACTION BUTTONS === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            {/* BUTTON ISI FORMULIR */}
             <button
               onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum/section1?id=${ulokId}`)}
               className="w-full sm:w-auto bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
@@ -231,7 +218,6 @@ export default function DetailUlokBadanHukumPage() {
               Form
             </button>
 
-            {/* TOMBOL SIMPAN ICON-ONLY BERHUBUNGAN DENGAN FORM DI BAWAH */}
             <button
               form="form-badan-hukum"
               type="submit"
@@ -252,7 +238,7 @@ export default function DetailUlokBadanHukumPage() {
           </div>
         </div>
 
-        {/* 1. PANEL FORM DATA UTAMA */}
+        {/* === PANEL FORM DATA UTAMA === */}
         <form 
           id="form-badan-hukum"
           onSubmit={handleUpdateDetail} 
@@ -295,7 +281,6 @@ export default function DetailUlokBadanHukumPage() {
               />
             </div>
 
-            {/* DROPDOWN DENGAN REALTIME AUTO-SAVE DAN TEXT ALERT DINAMIS */}
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
               <select 
@@ -313,7 +298,7 @@ export default function DetailUlokBadanHukumPage() {
           </div>
         </form>
 
-        {/* 2. PANEL KOLOM KOMENTAR / CHAT ASSESSOR */}
+        {/* === PANEL KOMENTAR === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
           <div className="bg-gray-50 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-2.5">
             <img 
@@ -325,7 +310,6 @@ export default function DetailUlokBadanHukumPage() {
           </div>
           
           <div className="p-4 md:p-6 bg-gray-50/30 dark:bg-gray-950/20 min-h-[300px] flex flex-col justify-between">
-            {/* List Pesan */}
             {comments.length === 0 ? (
               <div className="text-center my-auto py-12 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                 <span className="text-3xl mb-2 opacity-50">✉️</span>
@@ -356,7 +340,6 @@ export default function DetailUlokBadanHukumPage() {
                               : 'bg-gray-100 border-gray-200 dark:bg-gray-800/60 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none'
                         }`}
                       >
-                        {/* Header info */}
                         <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${
                           isSelf 
                             ? 'border-white/10 text-blue-200' 
@@ -378,7 +361,6 @@ export default function DetailUlokBadanHukumPage() {
                           </span>
                         </div>
 
-                        {/* Teks Komentar */}
                         <div className="flex items-start gap-1.5">
                           {!isSelf && isComplaint && <span className="text-sm shrink-0 mt-0.5 select-none">⚠️</span>}
                           <p className="text-xs md:text-sm font-semibold whitespace-pre-line break-words">
@@ -392,7 +374,6 @@ export default function DetailUlokBadanHukumPage() {
               </div>
             )}
 
-            {/* Kotak Input Chat */}
             <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2.5 items-center">
               <input 
                 type="text" 
@@ -424,7 +405,7 @@ export default function DetailUlokBadanHukumPage() {
 
       </div>
 
-      {/* REUSABLE CUSTOM TOAST MODAL (TEXT DINAMIS) */}
+      {/* === MODAL: SUKSES === */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
