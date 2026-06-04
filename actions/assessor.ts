@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
 
-// === ACTIONS: AMBIL SUBMISSIONS TIM ASSESSOR ===
 export async function getAssessorSubmissions() {
   try {
     const supabase = await createClient()
@@ -22,6 +21,10 @@ export async function getAssessorSubmissions() {
           branches:branch_id (
             nama_cabang
           )
+        ),
+        documents (
+          id,
+          is_verified
         )
       `)
       .not('status', 'eq', 'Draft')
@@ -34,7 +37,6 @@ export async function getAssessorSubmissions() {
   }
 }
 
-// === ACTIONS: UPDATE STATUS ULOK ===
 export async function updateUlokStatus(id: string, newStatus: string) {
   try {
     const supabase = await createClient()
@@ -97,7 +99,6 @@ export async function updateUlokStatus(id: string, newStatus: string) {
   }
 }
 
-// === ACTIONS: AMBIL HISTORI SUBMISSIONS ASSESSOR ===
 export async function getAssessorHistoriSubmissions() {
   try {
     const supabase = await createClient()
@@ -141,7 +142,6 @@ export async function getAssessorHistoriSubmissions() {
   }
 }
 
-// === ACTIONS: TOGGLE VERIFIKASI DOKUMEN ===
 export async function toggleDocumentVerification(documentId: string, currentStatus: boolean) {
   try {
     const supabase = await createClient()
@@ -168,7 +168,6 @@ export async function toggleDocumentVerification(documentId: string, currentStat
   }
 }
 
-// === ACTIONS: AMBIL NOTIFIKASI ASSESSOR ===
 export async function getNotificationsAction(userId: string | null = null) {
   try {
     const supabase = await createClient()

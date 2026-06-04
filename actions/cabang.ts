@@ -605,21 +605,20 @@ export async function createComment(ulokId: string, userId: string, message: str
 }
 
 // === ACTIONS: AMBIL NOTIFIKASI CABANG ===
-export async function getNotificationsAction(userId: string | null = null) {
+export async function getNotificationsAction() {
   try {
     const supabase = await createClient()
-    let query = supabase
+    
+    // 1. Ambil data user yang sedang login secara aman di sisi server
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // 2. Query notifikasi yang HANYA ditujukan untuk user_id milik admin cabang ini
+    const { data, error } = await supabase
       .from('notifications')
       .select('id, title, message, is_read, created_at, category, user_id')
+      .eq('user_id', user.id) // Memastikan hanya mengambil notifikasi miliknya sendiri
       .order('created_at', { ascending: false })
-
-    if (userId) {
-      query = query.eq('user_id', userId)
-    } else {
-      query = query.is('user_id', null)
-    }
-
-    const { data, error } = await query
 
     if (error) throw error
     return { success: true, data: data || [] }

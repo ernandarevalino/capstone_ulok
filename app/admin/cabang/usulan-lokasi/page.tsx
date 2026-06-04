@@ -249,81 +249,147 @@ export default function UsulanLokasiPage() {
           </h3>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
-                <th className="p-4 w-1/4">
-                  <div className="flex items-center">
-                    Nama ULOK
-                    {renderSortButton('nama_lokasi')}
-                  </div>
-                </th>
-                <th className="p-4">
-                  <div className="flex items-center">
-                    Tanggal Dibuat
-                    {renderSortButton('tanggal')}
-                  </div>
-                </th>
-                <th className="p-4">
-                  <div className="flex items-center">
-                    Kepemilikan
-                    {renderSortButton('kepemilikan')}
-                  </div>
-                </th>
-                <th className="p-4 text-center">Status Assessor</th>
-                <th className="p-4 text-center w-56">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedData.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada data usulan lokasi</td>
+          {/* === DESKTOP TABLE VIEW === */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
+                  <th className="p-4 w-1/4">
+                    <div className="flex items-center">
+                      Nama ULOK
+                      {renderSortButton('nama_lokasi')}
+                    </div>
+                  </th>
+                  <th className="p-4">
+                    <div className="flex items-center">
+                      Tanggal Dibuat
+                      {renderSortButton('tanggal')}
+                    </div>
+                  </th>
+                  <th className="p-4">
+                    <div className="flex items-center">
+                      Kepemilikan
+                      {renderSortButton('kepemilikan')}
+                    </div>
+                  </th>
+                  <th className="p-4 text-center">Status Assessor</th>
+                  <th className="p-4 text-center w-56">Aksi</th>
                 </tr>
-              ) : (
-                displayedData.map((item) => (
-                  <tr 
-                    key={item.id} 
-                    className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
-                  >
-                    <td className="p-4 flex items-center gap-3">
-                      <span className="text-xl text-amber-500">📁</span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
-                    </td>
-                    <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                      {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </td>
-                    <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{item.jenis_badan_hukum}</span> ({item.nama_pemegang_hak})
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
+              </thead>
+              <tbody>
+                {displayedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada data usulan lokasi</td>
+                  </tr>
+                ) : (
+                  displayedData.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
+                    >
+                      <td className="p-4 flex items-center gap-3">
+                        <span className="text-xl text-amber-500">📁</span>
+                        <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
+                      </td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
+                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </td>
+                      <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">{item.jenis_badan_hukum}</span> ({item.nama_pemegang_hak})
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
+                          {item.status === 'Draft' ? 'Belum Direview' : item.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center gap-2">
+                          <button
+                            onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
+                            className="p-2 rounded-lg bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-950 dark:hover:text-blue-400 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+                            title="Lihat Detail"
+                          >
+                            <img src="/icons/icon-location-edit.svg" alt="Lihat" className="w-4 h-4 dark:brightness-0 dark:invert" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
+                            disabled={isPending}
+                            className="p-2 rounded-lg bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:scale-100 flex items-center justify-center"
+                            title="Hapus Usulan"
+                          >
+                            <img src="/icons/icon-remove.svg" alt="Delete" className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* === MOBILE CARD VIEW === */}
+          <div className="block md:hidden">
+            {displayedData.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+                Tidak ada data usulan lokasi
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {displayedData.map((item) => (
+                  <div key={item.id} className="p-4 space-y-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                    {/* Nama ULOK & Status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl text-amber-500 select-none">📁</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-all leading-snug">
+                          {item.nama_lokasi}
+                        </span>
+                      </div>
+                      <span className={`px-2.5 py-1 shrink-0 rounded-full text-[10px] font-bold inline-block text-center ${colorStyles}`}>
                         {item.status === 'Draft' ? 'Belum Direview' : item.status}
                       </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center items-center gap-2">
-                        <button
-                          onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
-                          className="p-2 rounded-lg bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-950 dark:hover:text-blue-400 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-                          title="Lihat Detail"
-                        >
-                          <img src="/icons/icon-location-edit.svg" alt="Lihat" className="w-4 h-4 dark:brightness-0 dark:invert" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
-                          disabled={isPending}
-                          className="p-2 rounded-lg bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:scale-100 flex items-center justify-center"
-                          title="Hapus Usulan"
-                        >
-                          <img src="/icons/icon-remove.svg" alt="Delete" className="w-4 h-4" />
-                        </button>
+                    </div>
+
+                    {/* Detail Info Grid */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-600 dark:text-gray-400 pt-1.5 border-t border-gray-50 dark:border-gray-800">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Tanggal Dibuat</p>
+                        <p className="font-medium text-gray-700 dark:text-gray-300">
+                          {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Kepemilikan</p>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{item.jenis_badan_hukum}</p>
+                        <p className="text-[10px] text-gray-400 truncate">({item.nama_pemegang_hak})</p>
+                      </div>
+                    </div>
+
+                    {/* Tombol Aksi */}
+                    <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800/60 pt-2.5">
+                      <button
+                        onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition-all active:scale-[0.98] shadow-sm"
+                        title="Lihat Detail"
+                      >
+                        <img src="/icons/icon-location-edit.svg" alt="Lihat" className="w-4 h-4 brightness-0 invert" />
+                        <span>Lihat Detail</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
+                        disabled={isPending}
+                        className="px-3 py-2 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center"
+                        title="Hapus Usulan"
+                      >
+                        <img src="/icons/icon-remove.svg" alt="Delete" className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* === KONTROL PAGINASI === */}
           {isExpanded && totalItems > itemsPerPage && (

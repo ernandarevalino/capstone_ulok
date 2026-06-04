@@ -198,103 +198,197 @@ export default function PenilaianPage() {
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
-                <th className="p-4 w-1/4">
-                  <div className="flex items-center">
-                    Nama ULOK
-                    {renderSortButton("nama_lokasi")}
-                  </div>
-                </th>
-                <th className="p-4">Asal Cabang</th>
-                <th className="p-4">
-                  <div className="flex items-center">
-                    Tanggal Diajukan
-                    {renderSortButton("tanggal")}
-                  </div>
-                </th>
-                <th className="p-4">Kepemilikan</th>
-                <th className="p-4 text-center">Skor SAW</th>
-                <th className="p-4 text-center">Status Berkas</th>
-                <th className="p-4 text-center w-20">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-400 italic">
-                    Memuat berkas masuk...
-                  </td>
+          {/* === DESKTOP TABLE VIEW === */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
+                  <th className="p-4 w-1/4">
+                    <div className="flex items-center">
+                      Nama ULOK
+                      {renderSortButton("nama_lokasi")}
+                    </div>
+                  </th>
+                  <th className="p-4">Asal Cabang</th>
+                  <th className="p-4">
+                    <div className="flex items-center">
+                      Tanggal Diajukan
+                      {renderSortButton("tanggal")}
+                    </div>
+                  </th>
+                  <th className="p-4">Kepemilikan</th>
+                  <th className="p-4 text-center">Skor SAW</th>
+                  <th className="p-4 text-center">Status Berkas</th>
+                  <th className="p-4 text-center w-20">Aksi</th>
                 </tr>
-              ) : displayedData.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-400">
-                    Tidak ada usulan lokasi pada kelompok ini.
-                  </td>
-                </tr>
-              ) : (
-                displayedData.map((item: any) => {
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-gray-400 italic">
+                      Memuat berkas masuk...
+                    </td>
+                  </tr>
+                ) : displayedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-gray-400">
+                      Tidak ada usulan lokasi pada kelompok ini.
+                    </td>
+                  </tr>
+                ) : (
+                  displayedData.map((item: any) => {
+                    const branchName = item.profiles?.branches?.nama_cabang || "Cabang Pusat / Lainnya";
+                    return (
+                      <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
+                        <td className="p-4 flex items-center gap-3" title={item.nama_lokasi}>
+                          <span className="text-sm select-none">📁</span>
+                          <span className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] max-w-[180px] truncate block whitespace-nowrap">
+                            {item.nama_lokasi}
+                          </span>
+                        </td>
+
+                        <td className="p-4">
+                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2.5 py-1 rounded-md text-[11px] border">
+                            {branchName}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
+                          {new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                        </td>
+
+                        <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
+                          <span className="font-semibold text-gray-900 dark:text-gray-200">{item.jenis_badan_hukum}</span>
+                          <div className="text-[11px] text-gray-400 mt-0.5">a.n {item.nama_pemegang_hak}</div>
+                        </td>
+
+                        <td className="p-4 text-center font-mono font-bold text-sm text-purple-700">
+                          {item.final_score !== null && item.final_score !== undefined ? item.final_score.toFixed(2) : "0.00"}
+                        </td>
+
+                        <td className="p-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase inline-block ${colorStyles}`}>
+                            {item.status === "In Review" && !viewedIds.includes(item.id) ? "BARU MASUK" : item.status}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-center w-20">
+                          <button
+                            onClick={() => handleViewPenilaian(item.id, item.jenis_badan_hukum)}
+                            disabled={isPending}
+                            title={isPending ? "Memproses..." : viewedIds.includes(item.id) ? "Lanjut Review 📝" : "Mulai Nilai 🔍"}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all active:scale-95 inline-flex items-center justify-center text-gray-700 dark:text-gray-300 disabled:opacity-40"
+                          >
+                            {isPending ? (
+                              <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : viewedIds.includes(item.id) ? (
+                              <img src="/icons/icon-form.svg" alt="Lanjut Review" className="w-5 h-5 dark:brightness-0 dark:invert" />
+                            ) : (
+                              <img src="/icons/icon-view.svg" alt="Mulai Nilai" className="w-5 h-5 dark:brightness-0 dark:invert" />
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* === MOBILE CARD VIEW === */}
+          <div className="block md:hidden">
+            {loading ? (
+              <div className="p-6 text-center text-gray-400 italic text-sm">
+                Memuat berkas masuk...
+              </div>
+            ) : displayedData.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 text-sm">
+                Tidak ada usulan lokasi pada kelompok ini.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {displayedData.map((item: any) => {
                   const branchName = item.profiles?.branches?.nama_cabang || "Cabang Pusat / Lainnya";
                   return (
-                    <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
-                      <td className="p-4 flex items-center gap-3" title={item.nama_lokasi}>
-                        <span className="text-sm select-none">📁</span>
-                        <span className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] max-w-[180px] truncate block whitespace-nowrap">
-                          {item.nama_lokasi}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2.5 py-1 rounded-md text-[11px] border">
-                          {branchName}
-                        </span>
-                      </td>
-
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                      </td>
-
-                      <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                        <span className="font-semibold text-gray-900 dark:text-gray-200">{item.jenis_badan_hukum}</span>
-                        <div className="text-[11px] text-gray-400 mt-0.5">a.n {item.nama_pemegang_hak}</div>
-                      </td>
-
-                      <td className="p-4 text-center font-mono font-bold text-sm text-purple-700">
-                        {item.final_score !== null && item.final_score !== undefined ? item.final_score.toFixed(2) : "0.00"}
-                      </td>
-
-                      <td className="p-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase inline-block ${colorStyles}`}>
+                    <div key={item.id} className="p-4 space-y-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                      {/* Nama ULOK & Status */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base select-none">📁</span>
+                          <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-all leading-snug">
+                            {item.nama_lokasi}
+                          </span>
+                        </div>
+                        <span className={`px-2.5 py-1 shrink-0 rounded-full text-[9px] font-black tracking-wide uppercase inline-block text-center ${colorStyles}`}>
                           {item.status === "In Review" && !viewedIds.includes(item.id) ? "BARU MASUK" : item.status}
                         </span>
-                      </td>
+                      </div>
 
-                      <td className="p-4 text-center w-20">
+                      {/* Detail Info Grid */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-600 dark:text-gray-400 pt-1.5 border-t border-gray-50 dark:border-gray-800">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Asal Cabang</p>
+                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-700">
+                            {branchName}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Tanggal Diajukan</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300">
+                            {new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Kepemilikan</p>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{item.jenis_badan_hukum}</p>
+                          <p className="text-[10px] text-gray-400 truncate">a.n {item.nama_pemegang_hak}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Skor SAW</p>
+                          <p className="font-mono font-black text-sm text-purple-700 dark:text-purple-400">
+                            {item.final_score !== null && item.final_score !== undefined ? item.final_score.toFixed(2) : "0.00"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Tombol Aksi */}
+                      <div className="flex items-center justify-end border-t border-gray-100 dark:border-gray-800/60 pt-2.5">
                         <button
                           onClick={() => handleViewPenilaian(item.id, item.jenis_badan_hukum)}
                           disabled={isPending}
-                          title={isPending ? "Memproses..." : viewedIds.includes(item.id) ? "Lanjut Review 📝" : "Mulai Nilai 🔍"}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all active:scale-95 inline-flex items-center justify-center text-gray-700 dark:text-gray-300 disabled:opacity-40"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-40 shadow-sm"
                         >
                           {isPending ? (
-                            <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <>
+                              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>Memproses...</span>
+                            </>
                           ) : viewedIds.includes(item.id) ? (
-                            <img src="/icons/icon-form.svg" alt="Lanjut Review" className="w-5 h-5 dark:brightness-0 dark:invert" />
+                            <>
+                              <img src="/icons/icon-form.svg" alt="Lanjut Review" className="w-4 h-4 brightness-0 invert" />
+                              <span>Lanjut Review</span>
+                            </>
                           ) : (
-                            <img src="/icons/icon-view.svg" alt="Mulai Nilai" className="w-5 h-5 dark:brightness-0 dark:invert" />
+                            <>
+                              <img src="/icons/icon-view.svg" alt="Mulai Nilai" className="w-4 h-4 brightness-0 invert" />
+                              <span>Mulai Nilai</span>
+                            </>
                           )}
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </div>
+            )}
+          </div>
 
           {/* === PAGINATION === */}
           {isExpanded && totalItems > itemsPerPage && (
