@@ -605,19 +605,23 @@ export async function createComment(ulokId: string, userId: string, message: str
 }
 
 // === ACTIONS: AMBIL NOTIFIKASI CABANG ===
-export async function getNotificationsAction() {
+export async function getNotificationsAction(userId?: string | null) {
   try {
     const supabase = await createClient()
     
-    // 1. Ambil data user yang sedang login secara aman di sisi server
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+    let targetUserId = userId
 
-    // 2. Query notifikasi yang HANYA ditujukan untuk user_id milik admin cabang ini
+    if (!targetUserId) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+      targetUserId = user.id
+    }
+
+    // Query data berdasarkan targetUserId yang sudah tervalidasi
     const { data, error } = await supabase
       .from('notifications')
       .select('id, title, message, is_read, created_at, category, user_id')
-      .eq('user_id', user.id) // Memastikan hanya mengambil notifikasi miliknya sendiri
+      .eq('user_id', targetUserId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
