@@ -267,7 +267,7 @@ export default function Section2BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 1: ALAS HAK / BUKTI KEPEMILIKAN LAHAN === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Alas Hak" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Alas Hak & Bukti Kepemilikan Lahan
@@ -361,7 +361,7 @@ export default function Section2BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 2: BENTUK OBJEK & IZIN PELENGKAP === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Fisik Objek" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Kondisi Fisik Objek & Izin Pelengkap
@@ -400,7 +400,7 @@ export default function Section2BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 3: STATUS JAMINAN BANK === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Jaminan Bank" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Status Penjaminan Keuangan / Finansial
@@ -437,7 +437,7 @@ export default function Section2BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 4: DATA TAMBAHAN KETERANGAN === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-3 shadow-sm">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Catatan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Data Catatan & Pendukung Tambahan
@@ -452,7 +452,7 @@ export default function Section2BadanHukumPage() {
         </div>
 
         {/* === PANEL TOMBOL NAVIGASI === */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-300 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
             disabled={isPending}

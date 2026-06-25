@@ -173,7 +173,7 @@ export default function Section2BadanHukumAssessorPage() {
                 className={`p-1 rounded border shadow-sm transition-all flex items-center justify-center ${
                   existingDoc.is_verified
                     ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800'
-                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-600'
+                    : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
                 } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
               >
                 {verifyingDocId === existingDoc.id ? (

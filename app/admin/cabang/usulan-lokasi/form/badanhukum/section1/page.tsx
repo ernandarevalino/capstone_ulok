@@ -208,7 +208,7 @@ export default function Section1BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 1: BERKAS UTAMA WAJIB === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-law.svg" alt="Legalitas" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Dokumen Utama & Legalitas Dasar
@@ -223,7 +223,7 @@ export default function Section1BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 2: KONDISIONAL PERPAJAKAN & KUASA === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Pajak" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Status Pajak & Pelimpahan Kuasa
@@ -261,7 +261,7 @@ export default function Section1BadanHukumPage() {
         </div>
 
         {/* === BUNDEL 3: DOKUMEN SPESIFIK STRUKTUR ORGANISASI === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-family.svg" alt="Pengurus" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Dokumen Susunan Pengurus & Direksi
@@ -276,7 +276,7 @@ export default function Section1BadanHukumPage() {
         </div>
 
         {/* === PANEL TOMBOL NAVIGASI === */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-300 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
             disabled={isPending} 

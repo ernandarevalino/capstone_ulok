@@ -90,7 +90,7 @@ export default function HeaderDesktop() {
               : 'text-gray-400 border-transparent hover:text-white'
           }`}
         >
-          Pengelompokan Dokumen
+          Progres ULOK
         </Link>
 
         <Link 

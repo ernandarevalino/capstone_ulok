@@ -118,7 +118,7 @@ export default function HeaderMobile() {
               isActive('/admin/assessor/pengelompokan') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
             }`}
           >
-            Pengelompokan Dokumen
+            Progres ULOK
           </Link>
 
           <Link 

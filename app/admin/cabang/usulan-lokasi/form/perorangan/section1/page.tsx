@@ -222,7 +222,7 @@ export default function Section1PeroranganPage() {
         </div>
 
         {/* === FORM: IDENTITAS & PAJAK === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-perorangan.svg" alt="Perorangan" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Dokumen Identitas & Pajak Dasar
@@ -273,7 +273,7 @@ export default function Section1PeroranganPage() {
           </div>
 
         {/* === FORM: KK & PERNIKAHAN === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-family.svg" alt="Family" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Kartu Keluarga & Status Pernikahan
@@ -299,7 +299,7 @@ export default function Section1PeroranganPage() {
           </div>
 
         {/* === FORM: GANTI NAMA === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-nama.svg" alt="Ganti Nama" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Surat Penetapan Ganti Nama (Jika Ada)
@@ -318,7 +318,7 @@ export default function Section1PeroranganPage() {
           </div>
 
         {/* === FORM: STATUS KEPEMILIKAN === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
+        <div className="bg-white dark:bg-[#111827] border border-gray-300 dark:border-gray-800 rounded-xl p-5 space-y-5 shadow-sm">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
             <img src="/icons/icon-file.svg" alt="Status Khusus" className="w-4 h-4 object-contain dark:brightness-0 dark:invert" />
             Status Khusus Kepemilikan Lahan
@@ -368,7 +368,7 @@ export default function Section1PeroranganPage() {
           </div>
 
         {/* === NAVIGASI === */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-300 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
             disabled={isPending}

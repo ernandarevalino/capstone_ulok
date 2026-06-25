@@ -44,25 +44,32 @@ export interface UlokGroupItem {
   first_in_review_at: string | null;
   approved_at: string | null;
   harga_sewa: number | null;
-  
+
   // Relations/Flattened
   profiles: ProfileInfo | null;
   documents: DocumentInfo[];
-  
+
   // Progress/Calculated fields
   persentase: number; // progress percentage (uploaded matching docs / required docs * 100)
   denominator: number; // total required docs count
   numerator: number; // uploaded unique matching docs count
-  
-  // SAW fields (only populated/relevant for Kelompok 4)
+
+  // SAW fields (only populated/relevant for selesai / Kelompok 4)
   saw?: SAWInfo;
+
+  // Smart Filter fields
+  is_smart_recommended?: boolean;
+  recommendation_reason?: string;
+
+  // Checklist Status for Accordion dropdown
+  checklistStatus?: Array<{ nama_dokumen: string; is_uploaded: boolean; file_url?: string; is_negotiable: boolean }>;
 }
 
 export interface PengelompokanResult {
-  kelompok1: UlokGroupItem[]; // Baru masuk / persentase sangat rendah (< 20% atau dokumen <= 1)
-  kelompok2: UlokGroupItem[]; // Antrean Aktif (sedang proses upload / in review, >= 20% & < 100%)
-  kelompok3: UlokGroupItem[]; // Perbaikan / Revisi (status === 'Revisi')
-  kelompok4: UlokGroupItem[]; // Approved atau 100%
+  antreanAktif: UlokGroupItem[]; // Status: 'In Review' (Semua)
+  patutDilihat: UlokGroupItem[]; // Status: 'In Review' DAN lolos kriteria Smart Filter
+  perluRevisi: UlokGroupItem[];  // Status: 'Revisi'
+  selesai: UlokGroupItem[];      // Status: 'Approved' atau 'Rejected'
 }
 
 // === HELPERS MATCHING SAW.TS ===
@@ -71,7 +78,7 @@ function getEffectiveChecklistId(doc: any, currentJbh: string): number | null {
   if (doc.checklist_id !== null && doc.checklist_id !== undefined) {
     return doc.checklist_id
   }
-  
+
   const type = doc.document_type
   if (!type) return null
 
@@ -178,18 +185,18 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
 
   if (jbh === 'PT' || jbh === 'Yayasan' || jbh === 'Koperasi') {
     const isDikuasakan = !!submission.is_dikuasakan || (documents ? documents.some(doc => doc.document_type === 'akta_kuasa') : false)
-    
+
     if (jbh === 'PT') {
       checklistMasterIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15]
-      
+
       if (isDikuasakan) {
         checklistMasterIds.push(10)
       }
-      
+
       if (documents && documents.some(doc => doc.checklist_id === 11 || doc.document_type === 'rups_persetujuan')) {
         checklistMasterIds.push(11)
       }
-      
+
       const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 12 || doc.document_type === 'sertifikat_tanah')
       const hasAjb = documents && documents.some(doc => doc.checklist_id === 13 || doc.document_type === 'ajb_girik')
       if (hasSertifikat) {
@@ -199,17 +206,17 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
       } else {
         checklistMasterIds.push(12)
       }
-      
+
       if (documents && documents.some(doc => doc.checklist_id === 16 || doc.document_type === 'slf')) {
         checklistMasterIds.push(16)
       }
     } else if (jbh === 'Yayasan') {
       checklistMasterIds = [17, 18, 19, 20, 21, 22, 23, 24, 28, 29]
-      
+
       if (isDikuasakan) {
         checklistMasterIds.push(25)
       }
-      
+
       const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 26 || doc.document_type === 'sertifikat_tanah')
       const hasAjb = documents && documents.some(doc => doc.checklist_id === 27 || doc.document_type === 'ajb_girik')
       if (hasSertifikat) {
@@ -219,17 +226,17 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
       } else {
         checklistMasterIds.push(26)
       }
-      
+
       if (documents && documents.some(doc => doc.checklist_id === 30 || doc.document_type === 'slf')) {
         checklistMasterIds.push(30)
       }
     } else if (jbh === 'Koperasi') {
       checklistMasterIds = [31, 32, 33, 34, 35, 36, 37, 38, 42, 43]
-      
+
       if (isDikuasakan) {
         checklistMasterIds.push(39)
       }
-      
+
       const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 40 || doc.document_type === 'sertifikat_tanah')
       const hasAjb = documents && documents.some(doc => doc.checklist_id === 41 || doc.document_type === 'ajb_girik')
       if (hasSertifikat) {
@@ -239,14 +246,14 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
       } else {
         checklistMasterIds.push(40)
       }
-      
+
       if (documents && documents.some(doc => doc.checklist_id === 44 || doc.document_type === 'slf')) {
         checklistMasterIds.push(44)
       }
     }
   } else if (['Perorangan', 'Kuasa', 'Waris', 'Hibah'].includes(jbh)) {
     checklistMasterIds = [47, 48, 49, 56, 57]
-    
+
     const hasKitasDoc = documents && documents.some(doc => doc.document_type === 'kitas_kitap' || doc.checklist_id === 46)
     const isWNA = !!submission.nama_kitas || hasKitasDoc || submission.jenis_identitas === 'KITAS' || submission.jenis_identitas === 'KITAP' || submission.jenis_identitas === 'WNA'
     if (isWNA) {
@@ -254,7 +261,7 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
     } else {
       checklistMasterIds.push(45)
     }
-    
+
     const hasBukuNikah = !!submission.no_buku_nikah || (documents && documents.some(doc => doc.document_type === 'buku_nikah' || doc.checklist_id === 50))
     const hasCerai = documents && documents.some(doc => doc.document_type === 'akta_cerai' || doc.checklist_id === 53)
     if (hasBukuNikah) {
@@ -262,11 +269,11 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
     } else if (hasCerai) {
       checklistMasterIds.push(53)
     }
-    
+
     if (submission.nama_sebelum_ganti || submission.nama_sesudah_ganti) {
       checklistMasterIds.push(52)
     }
-    
+
     if (jbh === 'Kuasa') {
       checklistMasterIds.push(59, 60)
     } else if (jbh === 'Waris') {
@@ -275,7 +282,7 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
     } else if (jbh === 'Hibah') {
       checklistMasterIds.push(65)
     }
-    
+
     const hasSertifikatPerorangan = documents && documents.some(doc => doc.checklist_id === 54 || doc.document_type === 'sertifikat_tanah')
     const hasAjbPerorangan = documents && documents.some(doc => doc.checklist_id === 55 || doc.document_type === 'ajb_girik')
     if (hasSertifikatPerorangan) {
@@ -285,7 +292,7 @@ function getChecklistMasterIds(submission: any, documents: any[]): number[] {
     } else {
       checklistMasterIds.push(54)
     }
-    
+
     if (documents && documents.some(doc => doc.checklist_id === 58 || doc.document_type === 'slf')) {
       checklistMasterIds.push(58)
     }
@@ -326,12 +333,19 @@ export async function getPengelompokanData() {
 
     if (queryError) throw queryError
 
+    // Fetch all checklist master records to do the LEFT JOIN in JS
+    const { data: checklistMaster, error: checklistError } = await supabase
+      .from('checklist_master')
+      .select('*')
+
+    if (checklistError) throw checklistError
+
     const submissions = rawSubmissions || []
 
-    const kelompok1: UlokGroupItem[] = []
-    const kelompok2: UlokGroupItem[] = []
-    const kelompok3: UlokGroupItem[] = []
-    const kelompok4: UlokGroupItem[] = []
+    const antreanAktif: UlokGroupItem[] = []
+    const patutDilihat: UlokGroupItem[] = []
+    const perluRevisi: UlokGroupItem[] = []
+    const selesai: UlokGroupItem[] = []
 
     for (const rawItem of submissions) {
       // Flatten relations like in saw.ts to access pemilik/legal properties
@@ -362,6 +376,25 @@ export async function getPengelompokanData() {
       const numerator = uniqueUploadedIds.size
       const persentase = denominator > 0 ? parseFloat(((numerator / denominator) * 100).toFixed(2)) : 0
 
+      // Get checklist status list for accordion dropdown using LEFT JOIN logic
+      const filteredChecklist = (checklistMaster || [])
+        .filter((cm) => cm.jenis_badan_hukum === rawItem.jenis_badan_hukum && checklistMasterIds.includes(cm.id))
+        .sort((a, b) => a.id - b.id)
+
+      const checklistStatus = filteredChecklist.map((cm) => {
+        const doc = docs.find((d: any) => {
+          if (d.checklist_id === cm.id) return true
+          const effectiveId = getEffectiveChecklistId(d, flattenedSubmission.jenis_badan_hukum)
+          return effectiveId === cm.id
+        })
+        return {
+          nama_dokumen: cm.nama_dokumen,
+          is_uploaded: !!(doc && doc.file_url),
+          file_url: doc?.file_url || undefined,
+          is_negotiable: !!cm.is_negotiable
+        }
+      })
+
       // Form item payload matching UlokGroupItem interface
       const item: UlokGroupItem = {
         id: rawItem.id,
@@ -380,14 +413,11 @@ export async function getPengelompokanData() {
         persentase,
         denominator,
         numerator,
+        checklistStatus,
       }
 
       // Check groupings
-      if (item.status === 'Revisi') {
-        // Kelompok 3: Status Revisi / Perbaikan
-        kelompok3.push(item)
-      } else if (item.status === 'Approved' || item.status === 'Rejected' || persentase >= 100) {
-        // Kelompok 4: Status Approved/Rejected atau Dokumen 100%
+      if (item.status === 'Approved' || item.status === 'Rejected') {
         // Call calculateULOKSAW to ensure fresh SAW score calculations
         try {
           const sawRes = await calculateULOKSAW(item.id)
@@ -420,13 +450,25 @@ export async function getPengelompokanData() {
             }
           }
         }
-        kelompok4.push(item)
-      } else if (docs.length <= 1 || persentase < 20) {
-        // Kelompok 1: Dokumen baru 1 buah atau persentase sangat rendah (< 20%)
-        kelompok1.push(item)
-      } else {
-        // Kelompok 2 (Antrean Aktif): Sedang proses upload/in-review, persentase dinamis berjalan
-        kelompok2.push(item)
+        selesai.push(item)
+      } else if (item.status === 'Revisi') {
+        perluRevisi.push(item)
+      } else if (item.status === 'In Review') {
+        antreanAktif.push(item)
+
+        // Check Smart Filter (patutDilihat)
+        // Kriteria:
+        // * Progress dokumen (persentase) >= 50%
+        // * Harga sewa (harga_sewa) <= 350,000,000 IDR
+        // * Sudah mengunggah dokumen alas hak utama (cek sertifikat_tanah atau ajb_girik)
+        const hasAlasHak = docs.some((doc: DocumentInfo) => doc.document_type === 'sertifikat_tanah' || doc.document_type === 'ajb_girik')
+        const isRentLimitOk = item.harga_sewa !== null && item.harga_sewa !== undefined && item.harga_sewa <= 350000000
+
+        if (persentase >= 50 && isRentLimitOk && hasAlasHak) {
+          item.is_smart_recommended = true
+          item.recommendation_reason = "Alas hak aman & harga sewa ramah anggaran"
+          patutDilihat.push(item)
+        }
       }
     }
 
@@ -439,28 +481,28 @@ export async function getPengelompokanData() {
       })
     }
 
-    // Sort Kelompok 2 by percentage desc, then by last updated
-    kelompok2.sort((a, b) => {
+    // Sort patutDilihat by percentage desc, then by rental price asc
+    patutDilihat.sort((a, b) => {
       if (b.persentase !== a.persentase) {
         return b.persentase - a.persentase
       }
-      const timeA = new Date(a.updated_at || a.created_at).getTime()
-      const timeB = new Date(b.updated_at || b.created_at).getTime()
-      return timeB - timeA
+      const priceA = a.harga_sewa ?? Infinity
+      const priceB = b.harga_sewa ?? Infinity
+      return priceA - priceB
     })
 
-    // Sort other groups
-    const sortedKelompok1 = sortByLastUpdated(kelompok1)
-    const sortedKelompok3 = sortByLastUpdated(kelompok3)
-    const sortedKelompok4 = sortByLastUpdated(kelompok4)
+    // Sort other groups by last updated
+    const sortedAntreanAktif = sortByLastUpdated(antreanAktif)
+    const sortedPerluRevisi = sortByLastUpdated(perluRevisi)
+    const sortedSelesai = sortByLastUpdated(selesai)
 
     return {
       success: true,
       data: {
-        kelompok1: sortedKelompok1,
-        kelompok2,
-        kelompok3: sortedKelompok3,
-        kelompok4: sortedKelompok4
+        antreanAktif: sortedAntreanAktif,
+        patutDilihat,
+        perluRevisi: sortedPerluRevisi,
+        selesai: sortedSelesai
       }
     }
 

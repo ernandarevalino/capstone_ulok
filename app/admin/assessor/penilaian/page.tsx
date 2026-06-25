@@ -12,6 +12,10 @@ export default function PenilaianPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [showFilterPopover, setShowFilterPopover] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [selectedBadanHukum, setSelectedBadanHukum] = useState("all");
+
   const [viewedIds, setViewedIds] = useState<string[]>([]);
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -113,15 +117,38 @@ export default function PenilaianPage() {
     });
   };
 
+  // Extract unique branch names from the dataset dynamically
+  const allBranches = Array.from(
+    new Set(
+      submissions
+        .map((item) => item.profiles?.branches?.nama_cabang)
+        .filter(Boolean) as string[]
+    )
+  ).sort();
+
+  const badanHukumOptions = ["PT", "Koperasi", "Yayasan", "Perorangan", "Kuasa", "Waris", "Hibah"];
+
   const filteredData = submissions.filter((item) => {
     const namaCabang = item.profiles?.branches?.nama_cabang || "";
+    
+    // 1. Search query filter
     const q = searchQuery.toLowerCase();
-    if (!q) return true;
-    return (
-      (item.nama_lokasi || "").toLowerCase().includes(q) ||
-      (item.nama_pemegang_hak || "").toLowerCase().includes(q) ||
-      namaCabang.toLowerCase().includes(q)
-    );
+    let matchesSearch = true;
+    if (q) {
+      matchesSearch = (
+        (item.nama_lokasi || "").toLowerCase().includes(q) ||
+        (item.nama_pemegang_hak || "").toLowerCase().includes(q) ||
+        namaCabang.toLowerCase().includes(q)
+      );
+    }
+
+    // 2. Branch filter
+    const matchesBranch = selectedBranch === "all" || namaCabang === selectedBranch;
+
+    // 3. Badan Hukum filter
+    const matchesBadanHukum = selectedBadanHukum === "all" || item.jenis_badan_hukum === selectedBadanHukum;
+
+    return matchesSearch && matchesBranch && matchesBadanHukum;
   });
 
   const renderTableGroup = (
@@ -423,15 +450,105 @@ export default function PenilaianPage() {
           <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">Sistem Pendukung Keputusan pemilihan lokasi ekspansi gerai baru PRIOLO.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:shrink-0">
-          <div className="relative flex items-center w-full lg:w-auto">
-            <img src="/icons/icon_sharp-search.svg" alt="Search" className="absolute left-3 w-4 h-4 pointer-events-none dark:brightness-0 dark:invert" />
-            <input
-              type="text"
-              placeholder="Cari Usulan / Pemilik / Cabang..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-950 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-950/10 w-full sm:w-60 sm:focus:w-72 transition-all duration-300 shadow-sm"
-            />
+          <div className="flex items-center gap-2 relative w-full lg:w-auto">
+            {/* Filter button and popover container */}
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterPopover(!showFilterPopover)}
+                className="flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer relative shrink-0"
+              >
+                <img src="/icons/icon-filter.svg" alt="Filter" className="w-4 h-4 dark:invert" />
+                {/* Penanda Dot/Badge jika filter aktif */}
+                {(selectedBranch !== "all" || selectedBadanHukum !== "all") && (
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-blue-600" />
+                )}
+              </button>
+
+              {showFilterPopover && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setShowFilterPopover(false)}
+                  />
+                  <div className="absolute left-0 mt-2 w-72 rounded-2xl border border-gray-150 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shadow-xl z-50 space-y-4 animate-fadeIn">
+                    <h4 className="text-sm font-bold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-850">
+                      Filter Usulan Lokasi
+                    </h4>
+
+                    {/* Filter Cabang */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        Asal Cabang
+                      </label>
+                      <select
+                        value={selectedBranch}
+                        onChange={(e) => {
+                          setSelectedBranch(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        <option value="all">Semua Cabang</option>
+                        {allBranches.map((br) => (
+                          <option key={br} value={br}>
+                            {br}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filter Badan Hukum */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        Badan Hukum / Jalur
+                      </label>
+                      <select
+                        value={selectedBadanHukum}
+                        onChange={(e) => {
+                          setSelectedBadanHukum(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        <option value="all">Semua Badan Hukum / Jalur</option>
+                        {badanHukumOptions.map((bh) => (
+                          <option key={bh} value={bh}>
+                            {bh}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedBranch("all");
+                          setSelectedBadanHukum("all");
+                          setCurrentPage(1);
+                          setShowFilterPopover(false);
+                        }}
+                        disabled={selectedBranch === "all" && selectedBadanHukum === "all"}
+                        className="w-full py-1 text-xs font-semibold text-center text-red-600 dark:text-red-400 hover:underline disabled:opacity-40 cursor-pointer"
+                      >
+                        Reset Filter
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="relative flex items-center flex-1">
+              <img src="/icons/icon_sharp-search.svg" alt="Search" className="absolute left-3 w-4 h-4 pointer-events-none dark:brightness-0 dark:invert" />
+              <input
+                type="text"
+                placeholder="Cari Usulan / Pemilik / Cabang..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-950 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-950/10 w-full sm:w-60 sm:focus:w-72 transition-all duration-300 shadow-sm"
+              />
+            </div>
           </div>
         </div>
       </div>
