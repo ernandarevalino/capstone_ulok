@@ -36,13 +36,22 @@ export async function getUlokSubmissions() {
 
     const branchAdminIds = siblingProfiles.map(profile => profile.id)
 
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
-      .select('*')
+      .select(`
+        *,
+        metode_saw(*)
+      `)
       .in('admin_id', branchAdminIds)
       .order('created_at', { ascending: false })
 
     if (error) throw error
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw
+    }))
+
     return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -80,7 +89,7 @@ export async function getFeedbackSubmissions() {
 
     const branchAdminIds = siblingProfiles.map(profile => profile.id)
 
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
         *,
@@ -90,11 +99,18 @@ export async function getFeedbackSubmissions() {
             full_name,
             role
           )
-        )
+        ),
+        metode_saw(*)
       `)
       .in('admin_id', branchAdminIds)
 
     if (error) throw error
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw
+    }))
+
     return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -113,6 +129,13 @@ export async function deleteUlokSubmission(id: string) {
       .from('documents')
       .delete()
       .eq('ulok_id', id)
+
+    // Delete from normalized child tables first to avoid FK constraint errors
+    await supabase.from('ulok_pemilik').delete().eq('ulok_id', id)
+    await supabase.from('ulok_sertifikat').delete().eq('ulok_id', id)
+    await supabase.from('ulok_legal').delete().eq('ulok_id', id)
+    await supabase.from('ulok_jaminan').delete().eq('ulok_id', id)
+    await supabase.from('metode_saw').delete().eq('ulok_id', id)
 
     const { error } = await supabase
       .from('ulok_submissions')
@@ -156,6 +179,16 @@ export async function createUlokSubmission(payload: {
 
     if (error) throw error
 
+    // Initialize 1:1 sub-tables with empty rows to prevent any data errors or undefined values
+    const newUlokId = data.id;
+    await Promise.all([
+      supabase.from('ulok_pemilik').insert({ ulok_id: newUlokId }),
+      supabase.from('ulok_sertifikat').insert({ ulok_id: newUlokId }),
+      supabase.from('ulok_legal').insert({ ulok_id: newUlokId }),
+      supabase.from('ulok_jaminan').insert({ ulok_id: newUlokId }),
+      supabase.from('metode_saw').insert({ ulok_id: newUlokId })
+    ]);
+
     try {
       const { data: profileData } = await supabase
         .from('profiles')
@@ -172,10 +205,21 @@ export async function createUlokSubmission(payload: {
         const adminName = profileData.full_name;
         const branchName = (profileData.branches as any)?.nama_cabang || 'Cabang Tidak Diketahui';
 
-        await createNotification(
-          'Usulan Lokasi (ULOK) Baru',
-          `Admin ${adminName} dari ${branchName} telah menambahkan usulan lokasi baru: "${payload.nama_lokasi}".`
-        );
+        const { data: staff } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['assessor', 'super_admin']);
+
+        if (staff && staff.length > 0) {
+          for (const s of staff) {
+            await createNotification(
+              'Usulan Lokasi (ULOK) Baru',
+              `Admin ${adminName} dari ${branchName} telah menambahkan usulan lokasi baru: "${payload.nama_lokasi}" (Status: Draft).`,
+              s.id,
+              'submission'
+            );
+          }
+        }
       }
     } catch (notifErr) {
       console.error("Gagal memicu notifikasi ULOK baru:", notifErr);
@@ -192,13 +236,30 @@ export async function createUlokSubmission(payload: {
 export async function getUlokDetail(id: string) {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
-      .select('*')
+      .select(`
+        *,
+        ulok_pemilik(*),
+        ulok_sertifikat(*),
+        ulok_legal(*),
+        ulok_jaminan(*),
+        metode_saw(*)
+      `)
       .eq('id', id)
       .single()
 
     if (error) throw error
+
+    const data = rawData ? {
+      ...rawData,
+      ...(rawData as any).ulok_pemilik,
+      ...(rawData as any).ulok_sertifikat,
+      ...(rawData as any).ulok_legal,
+      ...(rawData as any).ulok_jaminan,
+      ...(rawData as any).metode_saw
+    } : null
+
     return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -248,62 +309,90 @@ export async function updateUlokSubmission(id: string, payload: any) {
       .eq('id', id)
       .single()
 
-    const updateData: any = { updated_at: new Date().toISOString() }
+    const parentData: any = { updated_at: new Date().toISOString() }
+    const pemilikData: any = {}
+    const sertifikatData: any = {}
+    const legalData: any = {}
+    const jaminanData: any = {}
 
-    if (payload.nama_lokasi !== undefined) updateData.nama_lokasi = payload.nama_lokasi
-    if (payload.nama_pemegang_hak !== undefined) updateData.nama_pemegang_hak = payload.nama_pemegang_hak
-    if (payload.jenis_badan_hukum !== undefined) updateData.jenis_badan_hukum = payload.jenis_badan_hukum
-    if (payload.alamat_koordinat !== undefined) updateData.alamat_koordinat = payload.alamat_koordinat
-    if (payload.detail_alamat !== undefined) updateData.detail_alamat = payload.detail_alamat
+    // parent
+    if (payload.nama_lokasi !== undefined) parentData.nama_lokasi = payload.nama_lokasi
+    if (payload.nama_pemegang_hak !== undefined) parentData.nama_pemegang_hak = payload.nama_pemegang_hak
+    if (payload.jenis_badan_hukum !== undefined) parentData.jenis_badan_hukum = payload.jenis_badan_hukum
+    if (payload.alamat_koordinat !== undefined) parentData.alamat_koordinat = payload.alamat_koordinat
+    if (payload.detail_alamat !== undefined) parentData.detail_alamat = payload.detail_alamat
+    if (payload.harga_sewa !== undefined) {
+      parentData.harga_sewa = (payload.harga_sewa !== null && payload.harga_sewa !== '') ? Math.round(Number(payload.harga_sewa)) : null
+    }
     if (payload.status !== undefined) {
-      updateData.status = payload.status
+      parentData.status = payload.status
       if (payload.status === 'In Review' && !currentUlok?.first_in_review_at) {
-        updateData.first_in_review_at = new Date().toISOString()
+        parentData.first_in_review_at = new Date().toISOString()
       }
     }
 
-    if (payload.jenis_identitas !== undefined) updateData.jenis_identitas = payload.jenis_identitas
-    if (payload.nik_pemilik !== undefined) updateData.nik_pemilik = payload.nik_pemilik
-    if (payload.nama_kitas !== undefined) updateData.nama_kitas = payload.nama_kitas
-    if (payload.no_kk !== undefined) updateData.no_kk = payload.no_kk
-    if (payload.no_buku_nikah !== undefined) updateData.no_buku_nikah = payload.no_buku_nikah
-    
-    if (payload.nama_sebelum_ganti !== undefined) updateData.nama_sebelum_ganti = payload.nama_sebelum_ganti
-    if (payload.nama_sesudah_ganti !== undefined) updateData.nama_sesudah_ganti = payload.nama_sesudah_ganti
-    
-    if (payload.no_surat_kematian !== undefined) updateData.no_surat_kematian = payload.no_surat_kematian
-    
-    if (payload.jenis_alas_hak !== undefined) updateData.jenis_alas_hak = payload.jenis_alas_hak
-    if (payload.no_sertifikat_alas_hak !== undefined) updateData.no_sertifikat_alas_hak = payload.no_sertifikat_alas_hak
-    if (payload.nama_sertifikat_alas_hak !== undefined) updateData.nama_sertifikat_alas_hak = payload.nama_sertifikat_alas_hak
-    if (payload.luas_sertifikat !== undefined) updateData.luas_sertifikat = payload.luas_sertifikat ? parseFloat(payload.luas_sertifikat) : null
-    if (payload.masa_berlaku_sertifikat !== undefined) updateData.masa_berlaku_sertifikat = payload.masa_berlaku_sertifikat || null
-    
-    if (payload.nama_ajb_lainnya !== undefined) updateData.nama_ajb_lainnya = payload.nama_ajb_lainnya
-    if (payload.no_ajb_lainnya !== undefined) updateData.no_ajb_lainnya = payload.no_ajb_lainnya
-    if (payload.luas_ajb_lainnya !== undefined) updateData.luas_ajb_lainnya = payload.luas_ajb_lainnya
-    
-    if (payload.no_surat_kelurahan !== undefined) updateData.no_surat_kelurahan = payload.no_surat_kelurahan
-    if (payload.tanggal_surat_kelurahan !== undefined) updateData.tanggal_surat_kelurahan = payload.tanggal_surat_kelurahan || null
-    if (payload.tanggal_proses_sertifikat !== undefined) updateData.tanggal_proses_sertifikat = payload.tanggal_proses_sertifikat || null
-    
-    if (payload.bentuk_objek !== undefined) updateData.bentuk_objek = payload.bentuk_objek
-    if (payload.harga_sewa !== undefined) updateData.harga_sewa = payload.harga_sewa
-    if (payload.dokumen_jaminan !== undefined) {
-      updateData.dokumen_jaminan = payload.dokumen_jaminan === true || payload.dokumen_jaminan === "Ya";
-    }
-    if (payload.jaminan_bank_nama !== undefined) updateData.jaminan_bank_nama = payload.jaminan_bank_nama
-    if (payload.jaminan_bank_no_surat !== undefined) updateData.jaminan_bank_no_surat = payload.jaminan_bank_no_surat
-    if (payload.jaminan_bank_tanggal !== undefined) updateData.jaminan_bank_tanggal = payload.jaminan_bank_tanggal || null
-    
-    if (payload.data_pribadi_tambahan !== undefined) updateData.data_pribadi_tambahan = payload.data_pribadi_tambahan
+    // pemilik
+    if (payload.jenis_identitas !== undefined) pemilikData.jenis_identitas = payload.jenis_identitas
+    if (payload.nik_pemilik !== undefined) pemilikData.nik_pemilik = payload.nik_pemilik
+    if (payload.nama_kitas !== undefined) pemilikData.nama_kitas = payload.nama_kitas
+    if (payload.no_kk !== undefined) pemilikData.no_kk = payload.no_kk
+    if (payload.no_buku_nikah !== undefined) pemilikData.no_buku_nikah = payload.no_buku_nikah
+    if (payload.nama_sebelum_ganti !== undefined) pemilikData.nama_sebelum_ganti = payload.nama_sebelum_ganti
+    if (payload.nama_sesudah_ganti !== undefined) pemilikData.nama_sesudah_ganti = payload.nama_sesudah_ganti
+    if (payload.bentuk_objek !== undefined) pemilikData.bentuk_objek = payload.bentuk_objek
+    if (payload.data_pribadi_lainnya !== undefined) pemilikData.data_pribadi_lainnya = payload.data_pribadi_lainnya
+    if (payload.no_surat_kematian !== undefined) pemilikData.no_surat_kematian = payload.no_surat_kematian
 
-    const { data, error } = await supabase
+    // sertifikat
+    if (payload.jenis_alas_hak !== undefined) sertifikatData.jenis_alas_hak = payload.jenis_alas_hak
+    if (payload.no_sertifikat_alas_hak !== undefined) sertifikatData.no_sertifikat_alas_hak = payload.no_sertifikat_alas_hak
+    if (payload.nama_sertifikat !== undefined) sertifikatData.nama_sertifikat = payload.nama_sertifikat
+    if (payload.luas_sertifikat !== undefined) sertifikatData.luas_sertifikat = payload.luas_sertifikat ? parseFloat(payload.luas_sertifikat) : null
+    if (payload.masa_berlaku !== undefined) sertifikatData.masa_berlaku = payload.masa_berlaku || null
+    if (payload.tanggal_proses !== undefined) sertifikatData.tanggal_proses = payload.tanggal_proses || null
+
+    // legal
+    if (payload.nama_ajb !== undefined) legalData.nama_ajb = payload.nama_ajb
+    if (payload.no_ajb_lainnya !== undefined) legalData.no_ajb_lainnya = payload.no_ajb_lainnya
+    if (payload.luas_ajb !== undefined) legalData.luas_ajb = payload.luas_ajb
+    if (payload.no_surat_kelurahan !== undefined) legalData.no_surat_kelurahan = payload.no_surat_kelurahan
+    if (payload.tanggal_surat_kelurahan !== undefined) legalData.tanggal_surat_kelurahan = payload.tanggal_surat_kelurahan || null
+
+    // jaminan
+    if (payload.dokumen_jaminan !== undefined) {
+      jaminanData.dokumen_jaminan = payload.dokumen_jaminan === true || payload.dokumen_jaminan === "Ya";
+    }
+    if (payload.nama_jaminan !== undefined) jaminanData.nama_jaminan = payload.nama_jaminan
+    if (payload.no_surat_jaminan !== undefined) jaminanData.no_surat_jaminan = payload.no_surat_jaminan
+    if (payload.tanggal_jaminan !== undefined) jaminanData.tanggal_jaminan = payload.tanggal_jaminan || null
+
+    const { error: parentError } = await supabase
       .from('ulok_submissions')
-      .update(updateData)
+      .update(parentData)
       .eq('id', id)
 
-    if (error) throw error
+    if (parentError) throw parentError
+
+    if (Object.keys(pemilikData).length > 0) {
+      const { error } = await supabase.from('ulok_pemilik').upsert({ ulok_id: id, ...pemilikData })
+      if (error) throw error
+    }
+    if (Object.keys(sertifikatData).length > 0) {
+      const { error } = await supabase.from('ulok_sertifikat').upsert({ ulok_id: id, ...sertifikatData })
+      if (error) throw error
+    }
+    if (Object.keys(legalData).length > 0) {
+      const { error } = await supabase.from('ulok_legal').upsert({ ulok_id: id, ...legalData })
+      if (error) throw error
+    }
+    if (Object.keys(jaminanData).length > 0) {
+      const { error } = await supabase.from('ulok_jaminan').upsert({ ulok_id: id, ...jaminanData })
+      if (error) throw error
+    }
+
+    const detailRes = await getUlokDetail(id)
+    if (!detailRes.success) throw new Error(detailRes.error)
+    const data = detailRes.data
 
     if (payload.jenis_badan_hukum !== undefined) {
       const newJbh = payload.jenis_badan_hukum
@@ -349,7 +438,7 @@ export async function updateUlokSubmission(id: string, payload: any) {
       }
     }
 
-    if (currentUlok && currentUlok.status === 'Draft' && payload.status === 'Submitted') {
+    if (currentUlok && currentUlok.status === 'Draft' && (payload.status === 'In Review' || payload.status === 'Submitted')) {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
@@ -365,17 +454,17 @@ export async function updateUlokSubmission(id: string, payload: any) {
         const adminName = profileData?.full_name || 'Admin';
         const branchName = (profileData?.branches as any)?.nama_cabang || 'Cabang';
 
-        const { data: assessors } = await supabase
+        const { data: staff } = await supabase
           .from('profiles')
           .select('id')
-          .eq('role', 'assessor')
+          .in('role', ['assessor', 'super_admin']);
 
-        if (assessors && assessors.length > 0) {
-          for (const ass of assessors) {
+        if (staff && staff.length > 0) {
+          for (const s of staff) {
             await createNotification(
               'Usulan Baru Masuk',
               `Admin ${adminName} dari ${branchName} telah mengajukan usulan lokasi baru: "${currentUlok.nama_lokasi}".`,
-              ass.id,
+              s.id,
               'submission'
             )
           }
@@ -405,6 +494,10 @@ export async function updateUlokSubmission(id: string, payload: any) {
 export async function uploadUlokFile(ulokId: string, docType: string, formData: FormData) {
   try {
     const supabase = await createClient()
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
     const file = formData.get('file') as File
     if (!file) throw new Error('Berkas data file fisik kosong.')
 
@@ -433,7 +526,8 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
         .from('documents')
         .update({ 
           file_url: publicUrl, 
-          uploaded_at: new Date().toISOString() 
+          uploaded_at: new Date().toISOString(),
+          uploaded_by: user.id
         })
         .eq('id', existingDoc.id)
       if (updateError) throw updateError
@@ -444,7 +538,8 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
           { 
             ulok_id: ulokId, 
             document_type: docType, 
-            file_url: publicUrl 
+            file_url: publicUrl,
+            uploaded_by: user.id
           }
         ])
       if (insertError) throw insertError
@@ -468,6 +563,47 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       if (statusError) {
         console.error("Gagal update status ULOK ke In Review:", statusError)
         throw new Error(`Gagal memperbarui status ke In Review: ${statusError.message}`)
+      }
+
+      // Trigger notification for the submission transitioning from Draft to In Review
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select(`
+            full_name,
+            branches (
+              nama_cabang
+            )
+          `)
+          .eq('id', user.id)
+          .single()
+
+        const adminName = profileData?.full_name || 'Admin';
+        const branchName = (profileData?.branches as any)?.nama_cabang || 'Cabang';
+
+        const { data: ulokDetails } = await supabase
+          .from('ulok_submissions')
+          .select('nama_lokasi')
+          .eq('id', ulokId)
+          .single()
+
+        const { data: staff } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['assessor', 'super_admin']);
+
+        if (staff && staff.length > 0) {
+          for (const s of staff) {
+            await createNotification(
+              'Usulan Baru Masuk',
+              `Admin ${adminName} dari ${branchName} telah mengajukan usulan lokasi baru: "${ulokDetails?.nama_lokasi || 'Usulan Lokasi'}".`,
+              s.id,
+              'submission'
+            )
+          }
+        }
+      } catch (notifErr) {
+        console.error("Gagal memicu notifikasi upload file ke In Review:", notifErr)
       }
     }
 
@@ -608,20 +744,13 @@ export async function createComment(ulokId: string, userId: string, message: str
 export async function getNotificationsAction(userId?: string | null) {
   try {
     const supabase = await createClient()
-    
-    let targetUserId = userId
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    if (!targetUserId) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
-      targetUserId = user.id
-    }
-
-    // Query data berdasarkan targetUserId yang sudah tervalidasi
     const { data, error } = await supabase
       .from('notifications')
       .select('id, title, message, is_read, created_at, category, user_id')
-      .eq('user_id', targetUserId)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) throw error

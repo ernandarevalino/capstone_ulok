@@ -118,7 +118,7 @@ export default function FeedbackPage() {
         </span>
       )
     }
-    if (s === 'in review' || s === 'dalam review' || s === 'revision' || s === 'perlu revisi') {
+    if (s === 'in review' || s === 'dalam review' || s === 'revisi' || s === 'revision' || s === 'perlu revisi') {
       return (
         <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
           Dalam Review

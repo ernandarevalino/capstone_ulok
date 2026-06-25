@@ -72,7 +72,7 @@ export default function AssessorDashboardPage() {
   }, []);
 
   const inReviewCount = submissions.filter(s => s.status === 'In Review').length;
-  const revisionCount = submissions.filter(s => s.status === 'Revision').length;
+  const revisionCount = submissions.filter(s => s.status === 'Revisi').length;
   const completedCount = submissions.filter(s => s.status === 'Approved' || s.status === 'Rejected').length;
 
   const uniqueBranches = new Set(
@@ -342,7 +342,7 @@ export default function AssessorDashboardPage() {
                     let statusColor = "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300";
                     if (row.status === 'Approved') statusColor = "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40";
                     else if (row.status === 'In Review') statusColor = "bg-[#FE9A00]/10 text-[#FE9A00] border border-[#FE9A00]/20 dark:bg-[#FE9A00]/20";
-                    else if (row.status === 'Revision') statusColor = "bg-[#D11A22]/10 text-[#D11A22] border border-[#D11A22]/20 dark:bg-[#D11A22]/20";
+                    else if (row.status === 'Revisi') statusColor = "bg-[#D11A22]/10 text-[#D11A22] border border-[#D11A22]/20 dark:bg-[#D11A22]/20";
 
                     return (
                       <tr key={row.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">

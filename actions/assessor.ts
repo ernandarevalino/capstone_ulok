@@ -12,7 +12,7 @@ export async function getAssessorSubmissions() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
         *,
@@ -25,12 +25,19 @@ export async function getAssessorSubmissions() {
         documents (
           id,
           is_verified
-        )
+        ),
+        metode_saw(*)
       `)
       .not('status', 'eq', 'Draft')
       .order('created_at', { ascending: false })
 
     if (error) throw error
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw
+    }))
+
     return { success: true, data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -55,7 +62,7 @@ export async function updateUlokStatus(id: string, newStatus: string) {
       updatePayload.approved_at = new Date().toISOString()
     }
 
-    if (['Approved', 'Revision', 'Rejected'].includes(newStatus)) {
+    if (['Approved', 'Revisi', 'Rejected'].includes(newStatus)) {
       if (ulok && !ulok.first_in_review_at) {
         updatePayload.first_in_review_at = ulok.created_at || new Date().toISOString()
       }
@@ -106,7 +113,7 @@ export async function getAssessorHistoriSubmissions() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
         *,
@@ -122,12 +129,18 @@ export async function getAssessorHistoriSubmissions() {
             full_name,
             role
           )
-        )
+        ),
+        metode_saw(*)
       `)
       .not('status', 'eq', 'Draft')
       .order('created_at', { ascending: false })
 
     if (error) throw error
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw
+    }))
 
     const filteredData = data?.filter((submission: any) => {
       const assessorHasCommented = (submission.comments || []).some(
@@ -171,18 +184,14 @@ export async function toggleDocumentVerification(documentId: string, currentStat
 export async function getNotificationsAction(userId: string | null = null) {
   try {
     const supabase = await createClient()
-    let query = supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data, error } = await supabase
       .from('notifications')
       .select('id, title, message, is_read, created_at, category, user_id')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-
-    if (userId) {
-      query = query.eq('user_id', userId)
-    } else {
-      query = query.is('user_id', null)
-    }
-
-    const { data, error } = await query
 
     if (error) throw error
     return { success: true, data: data || [] }

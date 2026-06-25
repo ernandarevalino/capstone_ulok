@@ -456,7 +456,7 @@ export default function UsulanLokasiPage() {
       <div className="max-w-5xl mx-auto">
         {renderTableGroup("ULOK Baru", ["Draft"], "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60")}
         {renderTableGroup("Sedang Direview", ["In Review"], "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60")}
-        {renderTableGroup("Perlu Revisi", ["Revision"], "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/60")}
+        {renderTableGroup("Perlu Revisi", ["Revisi"], "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/60")}
         {renderTableGroup("Disetujui / Ditolak", ["Approved", "Rejected"], "bg-green-50 text-green-700 border border-green-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60")}
       </div>
 

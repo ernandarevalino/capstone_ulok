@@ -47,24 +47,24 @@ export default function Section2PeroranganPage() {
       const d = resDetail.data
       setJenisAlasHak(d.jenis_alas_hak || '')
       setNoSertifikat(d.no_sertifikat_alas_hak || '')
-      setNamaSertifikat(d.nama_sertifikat_alas_hak || '')
+      setNamaSertifikat(d.nama_sertifikat || '')
       setLuasSertifikat(d.luas_sertifikat?.toString() || '')
-      setMasaBerlakuSertifikat(d.masa_berlaku_sertifikat || '')
+      setMasaBerlakuSertifikat(d.masa_berlaku || '')
       
-      setNamaAjbLainnya(d.nama_ajb_lainnya || '')
+      setNamaAjbLainnya(d.nama_ajb || '')
       setNoAjbLainnya(d.no_ajb_lainnya || '')
-      setLuasAjbLainnya(d.luas_ajb_lainnya || '')
+      setLuasAjbLainnya(d.luas_ajb || '')
 
       bentukObjek ? setBentukObjek(d.bentuk_objek || '') : setBentukObjek(d.bentuk_objek || '')
       setHargaSewa(d.harga_sewa ? d.harga_sewa.toString() : '')
       setIsJaminan(d.dokumen_jaminan ? 'Ya' : 'Tidak')
-      setNamaBank(d.jaminan_bank_nama || '')
-      setNoSuratJaminan(d.jaminan_bank_no_surat || '')
-      setTanggalSuratJaminan(d.jaminan_bank_tanggal || '')
-      setCatatanLainnya(d.data_pribadi_tambahan || '')
+      setNamaBank(d.nama_jaminan || '')
+      setNoSuratJaminan(d.no_surat_jaminan || '')
+      setTanggalSuratJaminan(d.tanggal_jaminan || '')
+      setCatatanLainnya(d.data_pribadi_lainnya || '')
 
-      if (d.nama_ajb_lainnya || d.no_ajb_lainnya) setIsLainnya(true)
-      if (d.tanggal_proses_sertifikat) setIsProsesSertifikat(true)
+      if (d.nama_ajb || d.no_ajb_lainnya) setIsLainnya(true)
+      if (d.tanggal_proses) setIsProsesSertifikat(true)
     }
 
     const resDocs = await getUploadedDocuments(ulokId)
@@ -137,22 +137,22 @@ export default function Section2PeroranganPage() {
       const payload: any = {
         jenis_alas_hak: jenisAlasHak,
         no_sertifikat_alas_hak: noSertifikat,
-        nama_sertifikat_alas_hak: namaSertifikat,
+        nama_sertifikat: namaSertifikat,
         luas_sertifikat: luasSertifikat || null,
-        masa_berlaku_sertifikat: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null),
+        masa_berlaku: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null),
         
-        nama_ajb_lainnya: isLainnya ? namaAjbLainnya : '',
+        nama_ajb: isLainnya ? namaAjbLainnya : '',
         no_ajb_lainnya: isLainnya ? noAjbLainnya : '',
-        luas_ajb_lainnya: isLainnya ? luasAjbLainnya : '',
-        tanggal_proses_sertifikat: isProsesSertifikat ? new Date().toISOString().split('T')[0] : null,
+        luas_ajb: isLainnya ? luasAjbLainnya : '',
+        tanggal_proses: isProsesSertifikat ? new Date().toISOString().split('T')[0] : null,
 
         bentuk_objek: bentukObjek,
         harga_sewa: hargaSewa ? parseFloat(hargaSewa) : null,
         dokumen_jaminan: isJaminan === 'Ya',
-        jaminan_bank_nama: isJaminan === 'Ya' ? namaBank : '',
-        jaminan_bank_no_surat: isJaminan === 'Ya' ? noSuratJaminan : '',
-        jaminan_bank_tanggal: isJaminan === 'Ya' ? (tanggalSuratJaminan || null) : null,
-        data_pribadi_tambahan: catatanLainnya
+        nama_jaminan: isJaminan === 'Ya' ? namaBank : '',
+        no_surat_jaminan: isJaminan === 'Ya' ? noSuratJaminan : '',
+        tanggal_jaminan: isJaminan === 'Ya' ? (tanggalSuratJaminan || null) : null,
+        data_pribadi_lainnya: catatanLainnya
       }
 
       const res = await updateUlokSubmission(ulokId, payload)

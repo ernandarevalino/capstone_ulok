@@ -79,11 +79,13 @@ export default function Section2BadanHukumAssessorPage() {
   }
 
   const fetchDocs = async () => {
-    if (!ulokId) return
+    if (!ulokId) return []
     const res = await getUploadedDocuments(ulokId)
     if (res.success && res.data) {
       setUploadedDocs(res.data)
+      return res.data
     }
+    return []
   }
 
   useEffect(() => {
@@ -94,25 +96,31 @@ export default function Section2BadanHukumAssessorPage() {
 
     const loadData = async () => {
       setIsLoading(true)
-      await fetchDocs()
+      const docs = await fetchDocs()
       const res = await getUlokDetail(ulokId)
       if (res.success && res.data) {
         const d = res.data
         setJenisAlasHak(d.jenis_alas_hak || '')
         setNoSertifikat(d.no_sertifikat_alas_hak || '')
-        setNamaSertifikat(d.nama_sertifikat_alas_hak || '')
+        setNamaSertifikat(d.nama_sertifikat || '')
         setLuasSertifikat(d.luas_sertifikat || '')
-        setMasaBerlakuSertifikat(d.masa_berlaku_sertifikat || '')
-        setNamaAjbLainnya(d.nama_ajb_lainnya || '')
+        setMasaBerlakuSertifikat(d.masa_berlaku || '')
+        setNamaAjbLainnya(d.nama_ajb || '')
         setNoAjbLainnya(d.no_ajb_lainnya || '')
-        if (d.nama_ajb_lainnya || d.no_ajb_lainnya) setIsLainnya(true)
+        if (d.nama_ajb || d.no_ajb_lainnya) setIsLainnya(true)
         setBentukObjek(d.bentuk_objek || '')
         setHargaSewa(d.harga_sewa || null)
         setIsJaminan(d.dokumen_jaminan || 'Tidak')
-        setNamaBank(d.jaminan_bank_nama || '')
-        setNoSuratJaminan(d.jaminan_bank_no_surat || '')
-        setTanggalSuratJaminan(d.jaminan_bank_tanggal || '')
-        setCatatanLainnya(d.data_pribadi_tambahan || '')
+        setNamaBank(d.nama_jaminan || '')
+        setNoSuratJaminan(d.no_surat_jaminan || '')
+        setTanggalSuratJaminan(d.tanggal_jaminan || '')
+        setCatatanLainnya(d.data_pribadi_lainnya || '')
+
+        if (d.tanggal_proses) setIsProsesSertifikat(true)
+        const berkasProsesExist = docs.some((doc: any) => 
+          ['covernote_notaris', 'tanda_terima_bpn', 'surat_perintah_setor', 'bukti_pembayaran'].includes(doc.document_type)
+        )
+        if (berkasProsesExist) setIsProsesSertifikat(true)
       }
       setIsLoading(false)
     }

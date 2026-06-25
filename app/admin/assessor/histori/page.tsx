@@ -117,10 +117,10 @@ export default function AssessorHistoriPage() {
         </span>
       )
     }
-    if (s === 'revision' || s === 'perlu revisi') {
+    if (s === 'revisi' || s === 'revision' || s === 'perlu revisi') {
       return (
         <span className="px-2.5 py-1 rounded-full text-xs font-bold border text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60">
-          Revision
+          Revisi
         </span>
       )
     }

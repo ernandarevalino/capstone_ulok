@@ -1,307 +1,399 @@
 # ULOK (Usulan Lokasi) Assessment System
 
 ## Project Overview
-This application is a comprehensive web-based system designed to manage and assess location proposals (ULOK) for PT. Midi Utama Indonesia Tbk, specifically for Alfamidi. It provides a structured workflow for submitting, reviewing, and evaluating potential store locations, utilizing the Simple Additive Weighting (SAW) method for decision support. The system caters to different user roles, ensuring a streamlined process from proposal creation to final approval.
+This application is a comprehensive web-based system designed to manage and assess location proposals (*Usulan Lokasi* or **ULOK**) for **PT. Midi Utama Indonesia Tbk (Alfamidi)**. It provides a structured workflow for submitting, reviewing, and evaluating potential store locations, utilizing the **Simple Additive Weighting (SAW)** method for decision support. 
+
+With role-based access control and a normalized database design, the system manages the entire lifecycle of a location proposal—from the initial draft submission by branches, legal document uploads, and verification by assessors, to final automated evaluations and administrative sign-offs.
+
+---
 
 ## Features
-- **User Authentication & Authorization**: Secure login system with role-based access control.
-- **Dashboard Views**: Tailored dashboards for Super Admin, Admin Cabang, and Assessor roles, providing relevant statistics and activities.
-- **ULOK Submission Management**: Admin Cabang can create, view, update, and delete location proposals.
-- **Document Upload & Management**: Ability to upload supporting documents for each ULOK, with verification status.
-- **ULOK Assessment**: Assessors review ULOKs, verify documents, update proposal statuses (In Review, Revision, Approved, Rejected), and calculate SAW scores.
-- **Comment System**: Users can add comments to ULOK submissions for feedback and communication.
-- **Notification System**: Real-time notifications for system events, status updates, and new comments.
-- **SAW Decision Support**: Automatic calculation of ULOK scores based on predefined criteria (Document Completeness, Mobilization Duration, Rental Price).
-- **Leaderboard & Reporting**: Display of top-scoring ULOKs and overall submission statistics.
-- **User Management (Super Admin)**: Super Admin can create, update, and delete Admin Cabang and Assessor accounts.
-- **Branch Management (Super Admin)**: Super Admin can view and manage branch information.
-- **Theme Toggle**: Dark and Light mode support.
+- **Role-Based Authentication & Authorization**: Distinct access controls and custom dashboards for **Super Admin**, **Admin Cabang**, and **Assessor** roles.
+- **Normalized Proposal Lifecycle**: Proposal data is cleanly distributed across specialized tables (owner details, certificates, legal AJB, and guarantees) linked dynamically via 1:1 relationships.
+- **Dynamic Checklist System**: Checks required documents according to the submitter's legal entity type (*Jenis Badan Hukum*: PT, Yayasan, Koperasi, Perorangan, Kuasa, Waris, or Hibah).
+- **Document Management**: Supabase-backed secure storage (`dokumen-ulok` bucket) for uploading, deleting, and verifying required legal files.
+- **Real-Time Notification System**: Triggers notifications for status changes, comments/feedbacks, and new accounts.
+- **SAW Decision Support**: Computes location suitability scores instantly using:
+  - **C1: Kelengkapan Dokumen (45%)** — Verified files vs. required checklist.
+  - **C2: Durasi Mobilisasi (35%)** — Review speed from initial review to approval.
+  - **C3: Harga Sewa (20%)** — Cost efficiency of the 5-year rental price.
+- **Submission Grouping (Antrean)**: Submissions are automatically grouped into 4 functional queues (Kelompok 1: New/Low Progress, Kelompok 2: Active Verification, Kelompok 3: Revision, Kelompok 4: Final/Approved).
+- **Comprehensive User & Branch Management**: Super Admin controls branch configurations and staff accounts.
 
-## User Roles and Permissions
-
-### 1. Super Admin
-- **Description**: Possesses full administrative control over the entire system.
-- **Permissions**:
-    - Manage all user accounts (Admin Cabang, Assessor).
-    - View all ULOK submissions across all branches.
-    - Access global system logs and notifications.
-    - Monitor dashboard statistics for all branches and assessors.
-    - Manage master data (e.g., checklist criteria for SAW calculation).
-
-### 2. Admin Cabang
-- **Description**: Manages ULOK submissions for their specific branch.
-- **Permissions**:
-    - Create, view, update, and delete ULOK submissions for their branch.
-    - Upload and manage supporting documents for their ULOKs.
-    - Monitor the status and SAW scores of their branch's ULOKs.
-    - Engage in discussions/comments on their ULOKs.
-    - View notifications relevant to their branch's submissions.
-
-### 3. Assessor
-- **Description**: Responsible for reviewing and assessing ULOK submissions from all branches.
-- **Permissions**:
-    - View all ULOK submissions in the system.
-    - Verify uploaded documents and update their verification status.
-    - Change the status of ULOK submissions (e.g., "In Review", "Revision", "Approved", "Rejected").
-    - Provide comments and feedback on ULOK submissions.
-    - Monitor overall ULOK status and review queues.
-    - Access SAW calculation results for each ULOK.
-    - View notifications relevant to their assessment tasks.
-
-## SAW (Simple Additive Weighting) Decision Support Explanation
-
-The SAW method is used to determine the final score of each ULOK submission, providing a quantitative basis for decision-making. The system evaluates ULOKs based on three main criteria:
-
-1.  **C1: Kelengkapan Dokumen (Document Completeness)** (Weight: 45%)
-    -   **Description**: This criterion assesses the completeness of required documents based on the `jenis_badan_hukum` (type of legal entity) of the ULOK. Documents are checked against a master checklist, and their verification status by an Assessor is crucial.
-    -   **Scoring**: The score is calculated based on the percentage of verified documents relative to the total required documents for a specific `jenis_badan_hukum`.
-        -   0% complete: Score 1
-        -   20-39% complete: Score 2
-        -   40-59% complete: Score 3
-        -   60-79% complete: Score 4
-        -   80-100% complete: Score 5
-
-2.  **C2: Durasi Mobilisasi (Mobilization Duration)** (Weight: 35%)
-    -   **Description**: This criterion measures the duration from the moment a ULOK enters the "In Review" status to its "Approved" status. A shorter duration indicates a more efficient and less problematic review process.
-    -   **Scoring**: The score is inversely proportional to the duration.
-        -   >30 days: Score 1
-        -   21-30 days: Score 2
-        -   13-20 days: Score 3
-        -   5-12 days: Score 4
-        -   <5 days: Score 5
-
-3.  **C3: Harga Sewa (Rental Price)** (Weight: 20%)
-    -   **Description**: This criterion evaluates the rental price of the proposed location. Lower rental prices are preferred, as they contribute to better financial viability.
-    -   **Scoring**: The score is inversely proportional to the total rental price for 5 years.
-        -   >550,000,000 IDR: Score 1
-        -   451,000,000 - 550,000,000 IDR: Score 2
-        -   351,000,000 - 450,000,000 IDR: Score 3
-        -   250,000,000 - 350,000,000 IDR: Score 4
-        -   <250,000,000 IDR: Score 5
-
-**Final Score Calculation**:
-Each criterion score (C1, C2, C3) is normalized (divided by 5, the max score) to get a ratio (R_c). The final score is then calculated using the weighted sum:
-
-`Final Score = (0.45 * R_c1) + (0.35 * R_c2) + (0.20 * R_c3)`
-
-Based on the `final_score`, the system provides an automated analysis and recommendation for the ULOK.
+---
 
 ## Tech Stack
-- **Framework**: Next.js 16.2.6 (React Framework)
-- **Styling**: Tailwind CSS 4.3.0, PostCSS
-- **Database & Authentication**: Supabase (PostgreSQL, Supabase Auth, Supabase Storage)
-- **Server Actions**: Next.js Server Actions
-- **Charting**: Recharts 3.8.1
-- **Icons**: Lucide React 1.16.0
-- **TypeScript**: 5.9.3
+- **Framework**: Next.js 16.2.6 (React 19 App Router)
+- **Styling**: Tailwind CSS v4.3.0 & PostCSS
+- **Backend & Database**: Supabase (PostgreSQL, Supabase Auth, Storage Buckets)
+- **Server Actions**: Native Next.js Server Actions for operations and state validation
+- **Decision Engine**: Custom SAW weight-calculation services
+- **UI & Visualization**: Recharts v3.8.1 (Leaderboard analysis charts) & Lucide React v1.16.0 (Icons)
+- **Language**: TypeScript v5.9.3
+
+---
 
 ## Folder Structure
+Unlike legacy structures, all code modules are hosted directly at the root of the project:
 ```
-.github/
-public/
-├── icons/             # SVG icons for the application
-└── images/            # Placeholder for images
-src/
-├── actions/           # Server Actions for database operations and business logic
-│   ├── assessor.ts    # Assessor-specific actions (review, status updates)
-│   ├── auth.ts        # Authentication actions (login, logout, profile management)
-│   ├── cabang.ts      # Admin Cabang-specific actions (ULOK creation, file uploads)
-│   ├── saw.ts         # SAW calculation logic
-│   └── superadmin.ts  # Super Admin-specific actions (user/branch management, notifications)
-├── app/               # Next.js App Router structure
-│   ├── admin/         # Admin dashboards
-│   │   ├── assessor/  # Assessor dashboard and related pages
-│   │   ├── cabang/    # Admin Cabang dashboard and related pages
-│   │   └── super-admin/ # Super Admin dashboard and related pages
-│   ├── login/         # Login and password recovery pages
-│   ├── globals.css    # Global CSS styles
-│   ├── layout.tsx     # Root layout for the application
-│   └── page.tsx       # Public homepage
-├── components/        # Reusable UI components
-│   ├── assessor/      # Assessor-specific UI components
-│   ├── cabang/        # Admin Cabang-specific UI components
-│   ├── super-admin/   # Super Admin-specific UI components
-│   ├── floating-controls.tsx # UI for floating elements
-│   ├── footer_global.tsx # Global footer component
-│   ├── profile_global.tsx # User profile display component
-│   └── theme-provider.tsx # Context provider for theme switching
-├── lib/               # Utility library files
-│   └── supabaseClient.ts # Supabase client initialization (client-side)
-└── utils/
-    └── supabase/server.ts # Supabase client initialization (server-side for Server Actions)
-```
-
-## Installation Guide
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/ernandarevalino/capstone_ulok.git
-cd capstone_ulok
+├── actions/               # Server Actions for backend logic and database query operations
+│   ├── assessor.ts        # Assessor operations (verification, status updates)
+│   ├── auth.ts            # Authentication flows (login, session, profile queries)
+│   ├── cabang.ts          # Branch Admin flows (submitting, updating sub-table data)
+│   ├── pengelompokan.ts   # Queue grouping logic (Kelompok 1, 2, 3, 4)
+│   ├── saw.ts             # Simple Additive Weighting (SAW) algorithm and scoring logic
+│   └── superadmin.ts      # Super Admin management (user creation, branch setup, global alerts)
+├── app/                   # Next.js App Router folders
+│   ├── admin/             # Role-specific layouts & dashboards
+│   │   ├── assessor/      # Assessor views, verification panels, and history lists
+│   │   ├── cabang/        # Location submission forms, detail views, and comments
+│   │   └── super-admin/   # Admin management, branch metrics, and notifications
+│   ├── login/             # Authentication interface
+│   ├── globals.css        # Tailwind directives and CSS definitions
+│   ├── layout.tsx         # Root document template
+│   └── page.tsx           # Dashboard landing entry route
+├── components/            # Reusable UI component modules
+│   ├── assessor/          # Assessor-specific components
+│   ├── cabang/            # Branch-specific components
+│   ├── super-admin/       # Admin-specific components
+│   ├── floating-controls.tsx # Floating UI tools
+│   ├── footer_global.tsx  # Shared footer
+│   ├── profile_global.tsx # Global profile details panel
+│   └── theme-provider.tsx # Theme controller (light / dark toggle)
+├── lib/                   # Supabase clients and helper libs
+│   └── supabaseClient.ts  # Public client config
+├── public/                # Static assets, SVG files, and icons
+├── sql/                   # Database script storage
+│   └── supabase_permissions.sql # Supabase Row-Level Security (RLS) and access rules
+└── utils/                 # Supabase server configurations
+    └── supabase/
+        └── server.ts      # SSR server action utility
 ```
 
-### 2. Install Dependencies
-This project uses `pnpm` as the package manager.
+---
+
+## Application Lifecycle & Workflows
+
+```mermaid
+graph TD
+    A[Admin Cabang: Create Proposal] -->|Initializes Sub-Tables| B[Status: Draft]
+    B -->|Upload Documents / Submit| C[Status: In Review]
+    C -->|Assessor Reviews Documents| D{Verify Documents}
+    D -->|Reject / Request Revision| E[Status: Revisi]
+    E -->|Update Info / Files| C
+    D -->|Approve & Verify| F[Recalculate SAW Scores]
+    F -->|Assessor Approves Proposal| G[Status: Approved]
+    F -->|Assessor Rejects Proposal| H[Status: Rejected]
+```
+
+### 1. Proposal Submission & Initialization
+When an **Admin Cabang** creates a new ULOK (`createUlokSubmission`), a parent record is inserted in `ulok_submissions` with the status `Draft`.
+Simultaneously, the system initializes empty 1:1 rows in five secondary tables to prevent null references during edit flows:
+*   `ulok_pemilik` (Owner Identities)
+*   `ulok_sertifikat` (Land Certificates)
+*   `ulok_legal` (AJB and Kelurahan letters)
+*   `ulok_jaminan` (Bank Guarantees)
+*   `metode_saw` (SAW Scores and analysis)
+
+### 2. Updating Data & Document Upload
+*   As the Branch Admin fills in details, payload values are dynamically mapped and routed to their respective table (`updateUlokSubmission`).
+*   Documents are uploaded directly into Supabase Storage (`dokumen-ulok` bucket) and logged in the `documents` table, associated with specific items in `checklist_master`.
+*   Upon uploading files or submitting, the status changes to `In Review`, and `first_in_review_at` is timestamped.
+
+### 3. Verification & Assessment
+*   The **Assessor** views the active queue. They can toggle verification for each uploaded file (`toggleDocumentVerification`).
+*   Comments can be exchanged between Branch Admins and Assessors for clarifications.
+*   The Assessor updates the proposal status using `updateUlokStatus` (`Approved`, `Revisi`, or `Rejected`).
+
+### 4. SAW Decision Support Execution
+Every time a document verification state is toggled or a status changes, `calculateULOKSAW` executes automatically to update scores:
+
+1.  **C1: Kelengkapan Dokumen (Weight: 45%)**
+    *   *Denominator*: Calculated dynamically based on legal entity rules. E.g., if a PT is "Dikuasakan", a Power of Attorney (`checklist_id: 10`) is added to the checklist.
+    *   *Numerator*: Unique documents verified (`is_verified = true`).
+    *   *Scoring*:
+        *   80% to 100% complete = **Score 5**
+        *   60% to 79% complete = **Score 4**
+        *   40% to 59% complete = **Score 3**
+        *   20% to 39% complete = **Score 2**
+        *   0% to 19% complete = **Score 1**
+2.  **C2: Durasi Mobilisasi (Weight: 35%)**
+    *   Measures review duration (in days) from `first_in_review_at` to `approved_at`. Only computed for proposals that reach `Approved` status.
+    *   *Scoring*:
+        *   < 5 days = **Score 5**
+        *   5 to 12 days = **Score 4**
+        *   13 to 20 days = **Score 3**
+        *   21 to 30 days = **Score 2**
+        *   > 30 days (or if not yet Approved) = **Score 1**
+3.  **C3: Harga Sewa (Weight: 20%)**
+    *   Based on the total 5-year rental price of the location.
+    *   *Scoring*:
+        *   < 250,000,000 IDR = **Score 5**
+        *   250,000,000 - 350,000,000 IDR = **Score 4**
+        *   351,000,000 - 450,000,000 IDR = **Score 3**
+        *   451,000,000 - 550,000,000 IDR = **Score 2**
+        *   > 550,000,000 IDR (or 0/null) = **Score 1**
+
+**SAW Formula**:
+$$\text{Final Score} = (0.45 \times \frac{C_1}{5}) + (0.35 \times \frac{C_2}{5}) + (0.20 \times \frac{C_3}{5})$$
+
+### 5. Automated Recommendation Categories
+*   **Final Score $\ge$ 0.75**: Primary Recommendation (*Rekomendasi Utama*). Highlighted as financially viable, legally secure, or processed quickly.
+*   **Final Score < 0.75**: Warns of potential legal bottlenecks (low C1), long delays (low C2), or excessive rental costs (low C3).
+
+### 6. Queue Grouping (Antrean Aktif)
+Proposals in review are routed dynamically based on progress percentages and status:
+*   **Kelompok 1 (Baru Masuk)**: Upload progress is < 20% or uploaded documents $\le$ 1.
+*   **Kelompok 2 (Antrean Aktif)**: Progress is $\ge$ 20% but < 100%. Under active evaluation.
+*   **Kelompok 3 (Perbaikan/Revisi)**: Submissions marked with status `Revisi`.
+*   **Kelompok 4 (Approved atau 100% Lengkap)**: Proposals that are Approved/Rejected, or have reached 100% document completion.
+
+---
+
+## Database Schema Design
+
+Below is the entity relationship layout showing the normalized database structure:
+
+```mermaid
+erDiagram
+    branches ||--o{ profiles : "branch_id"
+    profiles ||--o{ ulok_submissions : "admin_id"
+    profiles ||--o{ documents : "uploaded_by"
+    profiles ||--o{ comments : "user_id"
+    profiles ||--o{ notifications : "user_id"
+    
+    ulok_submissions ||--|| ulok_pemilik : "ulok_id (1:1)"
+    ulok_submissions ||--|| ulok_sertifikat : "ulok_id (1:1)"
+    ulok_submissions ||--|| ulok_legal : "ulok_id (1:1)"
+    ulok_submissions ||--|| ulok_jaminan : "ulok_id (1:1)"
+    ulok_submissions ||--|| metode_saw : "ulok_id (1:1)"
+    
+    ulok_submissions ||--o{ documents : "ulok_id"
+    ulok_submissions ||--o{ comments : "ulok_id"
+    
+    checklist_master ||--o{ documents : "checklist_id"
+```
+
+### PostgreSQL DDL Schema Setup
+Run this DDL script in your Supabase SQL Editor to establish the tables, relations, and primary constraints:
+
+```sql
+-- 1. Branches Table
+CREATE TABLE public.branches (
+  id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+  nama_cabang character varying NOT NULL,
+  kabupaten_kota character varying NOT NULL,
+  provinsi character varying NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT branches_pkey PRIMARY KEY (id)
+);
+
+-- 2. User Profiles Table
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  full_name text NOT NULL,
+  nik text NOT NULL UNIQUE,
+  role character varying NOT NULL DEFAULT 'admin_cabang'::character varying, -- super_admin, admin_cabang, assessor
+  avatar_url text,
+  branch_id integer,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  CONSTRAINT profiles_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.branches(id) ON DELETE SET NULL
+);
+
+-- 3. Main Proposals Submissions Table
+CREATE TABLE public.ulok_submissions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  admin_id uuid NOT NULL,
+  nama_lokasi character varying NOT NULL,
+  alamat_koordinat text,
+  detail_alamat text,
+  jenis_badan_hukum character varying NOT NULL,
+  nama_pemegang_hak character varying NOT NULL,
+  harga_sewa double precision DEFAULT 0,
+  status character varying NOT NULL DEFAULT 'Draft'::character varying, -- Draft, In Review, Revisi, Approved, Rejected
+  updated_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  first_in_review_at timestamp with time zone,
+  approved_at timestamp with time zone,
+  CONSTRAINT ulok_submissions_pkey PRIMARY KEY (id),
+  CONSTRAINT ulok_submissions_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT ulok_submissions_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL
+);
+
+-- 4. Owner Information Sub-Table (1:1)
+CREATE TABLE public.ulok_pemilik (
+  ulok_id uuid NOT NULL,
+  jenis_identitas character varying DEFAULT 'E-KTP'::character varying,
+  nik_pemilik character varying,
+  nama_kitas character varying,
+  no_kk character varying,
+  no_buku_nikah character varying,
+  nama_sebelum_ganti character varying,
+  nama_sesudah_ganti character varying,
+  no_surat_kematian character varying,
+  bentuk_objek character varying,
+  data_pribadi_lainnya text,
+  CONSTRAINT ulok_pemilik_pkey PRIMARY KEY (ulok_id),
+  CONSTRAINT ulok_pemilik_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE
+);
+
+-- 5. Land Certificate Details Sub-Table (1:1)
+CREATE TABLE public.ulok_sertifikat (
+  ulok_id uuid NOT NULL,
+  jenis_alas_hak character varying,
+  no_sertifikat_alas_hak character varying,
+  nama_sertifikat character varying,
+  luas_sertifikat double precision,
+  masa_berlaku date,
+  tanggal_proses date,
+  CONSTRAINT ulok_sertifikat_pkey PRIMARY KEY (ulok_id),
+  CONSTRAINT ulok_sertifikat_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE
+);
+
+-- 6. Legal / AJB Details Sub-Table (1:1)
+CREATE TABLE public.ulok_legal (
+  ulok_id uuid NOT NULL,
+  no_ajb_lainnya character varying,
+  nama_ajb character varying,
+  luas_ajb character varying,
+  no_surat_kelurahan character varying,
+  tanggal_surat date,
+  CONSTRAINT ulok_legal_pkey PRIMARY KEY (ulok_id),
+  CONSTRAINT ulok_legal_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE
+);
+
+-- 7. Guarantee / Jaminan Details Sub-Table (1:1)
+CREATE TABLE public.ulok_jaminan (
+  ulok_id uuid NOT NULL,
+  nama_jaminan character varying,
+  no_surat_jaminan character varying,
+  tanggal_jaminan date,
+  dokumen_jaminan boolean DEFAULT false,
+  CONSTRAINT ulok_jaminan_pkey PRIMARY KEY (ulok_id),
+  CONSTRAINT ulok_jaminan_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE
+);
+
+-- 8. SAW Evaluation Parameters Sub-Table (1:1)
+CREATE TABLE public.metode_saw (
+  ulok_id uuid NOT NULL,
+  c1_score integer DEFAULT 1,
+  c2_score integer DEFAULT 1,
+  c3_score integer DEFAULT 1,
+  final_score double precision DEFAULT 0.0,
+  saw_analysis_notes text,
+  CONSTRAINT metode_saw_pkey PRIMARY KEY (ulok_id),
+  CONSTRAINT metode_saw_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE
+);
+
+-- 9. Document Checklists Master Table
+CREATE TABLE public.checklist_master (
+  id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+  jenis_badan_hukum character varying NOT NULL,
+  nama_dokumen character varying NOT NULL,
+  is_negotiable boolean DEFAULT false,
+  CONSTRAINT checklist_master_pkey PRIMARY KEY (id)
+);
+
+-- 10. Documents Records Table
+CREATE TABLE public.documents (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  ulok_id uuid NOT NULL,
+  checklist_id integer,
+  uploaded_by uuid NOT NULL,
+  file_url text NOT NULL,
+  document_type character varying,
+  is_verified boolean DEFAULT false,
+  uploaded_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT documents_pkey PRIMARY KEY (id),
+  CONSTRAINT documents_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE,
+  CONSTRAINT documents_checklist_id_fkey FOREIGN KEY (checklist_id) REFERENCES public.checklist_master(id) ON DELETE SET NULL,
+  CONSTRAINT documents_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.profiles(id) ON DELETE CASCADE
+);
+
+-- 11. Comments Discussion Table
+CREATE TABLE public.comments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  ulok_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  message text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT comments_pkey PRIMARY KEY (id),
+  CONSTRAINT comments_ulok_id_fkey FOREIGN KEY (ulok_id) REFERENCES public.ulok_submissions(id) ON DELETE CASCADE,
+  CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE
+);
+
+-- 12. Real-time Notifications Table
+CREATE TABLE public.notifications (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid,
+  title character varying NOT NULL,
+  message text NOT NULL,
+  category character varying NOT NULL DEFAULT 'system'::character varying,
+  is_read boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE
+);
+```
+
+---
+
+## Environment Variables Configuration
+
+Create a `.env.local` file in the root of the project:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-powerful-service-role-key
+```
+
+*   `NEXT_PUBLIC_SUPABASE_URL`: Found under Project Settings > API in your Supabase dashboard.
+*   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Client-side key for standard access.
+*   `SUPABASE_SERVICE_ROLE_KEY`: Service-role key used for administrative actions (e.g. creating/managing users from Next.js server actions via `auth.admin`). **Never expose this on the client side.**
+
+---
+
+## Supabase Storage Buckets Setup
+To support file uploads, configure the following storage buckets in your Supabase console:
+1.  `avatars`: Publicly accessible bucket for user avatars.
+2.  `dokumen-ulok`: Secured bucket for location proposal legal documents.
+    *   *Path format:* Files are stored under the folder pattern `{ulokId}/{documentType}-{timestamp}.{extension}`.
+    *   Ensure appropriate RLS policies are enabled to restrict modification permissions to authorized roles.
+
+---
+
+## Setup & Running the Application
+
+This project uses `pnpm` as its package manager.
+
+### 1. Installation
+Install project dependencies:
 ```bash
 pnpm install
 ```
 
-## Environment Variables
-Create a `.env.local` file in the root of your project and add the following environment variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
-```
-
--   `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL. You can find this in your Supabase project settings under "API".
--   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase public anonymous key. Also found in your Supabase project settings under "API".
--   `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key. This is a powerful key and should be kept secret. It's used for server-side operations requiring elevated privileges (e.g., creating/managing users via `supabase.auth.admin`). You can find this in your Supabase project settings under "API Settings" > "Service Role Key (secret)".
-
-## Database and Supabase Setup
-
-This project relies heavily on Supabase for its backend, including database and authentication. Follow these steps to set up your Supabase project:
-
-### 1. Create a Supabase Project
-- Go to [Supabase](https://supabase.com/) and create a new project.
-
-### 2. Set Up Database Schema
-You will need to create the necessary tables and policies in your Supabase database. Below is a conceptual representation of the database entities detected from the application's code. You will need to translate these into actual SQL table creation scripts and Row Level Security (RLS) policies within your Supabase project.
-
-#### Detected Entities:
--   **`profiles`**: Stores user profiles, linked to Supabase Auth `users` table.
-    -   `id` (UUID, Primary Key, foreign key to `auth.users.id`)
-    -   `full_name` (Text)
-    -   `nik` (Text, Unique)
-    -   `role` (Enum: `super_admin`, `admin_cabang`, `assessor`)
-    -   `avatar_url` (Text, nullable)
-    -   `branch_id` (Integer, nullable, foreign key to `branches.id`)
-    -   `created_at` (Timestamp with time zone)
-
--   **`branches`**: Stores information about Alfamidi branches.
-    -   `id` (Integer, Primary Key)
-    -   `nama_cabang` (Text)
-    -   `kabupaten_kota` (Text)
-    -   `provinsi` (Text)
-
--   **`ulok_submissions`**: Stores details of each location proposal.
-    -   `id` (UUID, Primary Key)
-    -   `admin_id` (UUID, foreign key to `profiles.id`)
-    -   `nama_lokasi` (Text)
-    -   `jenis_badan_hukum` (Text: `PT`, `Yayasan`, `Koperasi`, `Perorangan`, `Kuasa`, `Waris`, `Hibah`)
-    -   `nama_pemegang_hak` (Text)
-    -   `status` (Enum: `Draft`, `In Review`, `Revision`, `Approved`, `Rejected`)
-    -   `alamat_koordinat` (Text, nullable)
-    -   `detail_alamat` (Text, nullable)
-    -   `jenis_identitas` (Text, nullable)
-    -   `nik_pemilik` (Text, nullable)
-    -   `nama_kitas` (Text, nullable)
-    -   `no_kk` (Text, nullable)
-    -   `no_buku_nikah` (Text, nullable)
-    -   `nama_sebelum_ganti` (Text, nullable)
-    -   `nama_sesudah_ganti` (Text, nullable)
-    -   `no_surat_kematian` (Text, nullable)
-    -   `jenis_alas_hak` (Text, nullable)
-    -   `no_sertifikat_alas_hak` (Text, nullable)
-    -   `nama_sertifikat_alas_hak` (Text, nullable)
-    -   `luas_sertifikat` (Float, nullable)
-    -   `masa_berlaku_sertifikat` (Date, nullable)
-    -   `nama_ajb_lainnya` (Text, nullable)
-    -   `no_ajb_lainnya` (Text, nullable)
-    -   `luas_ajb_lainnya` (Text, nullable)
-    -   `no_surat_kelurahan` (Text, nullable)
-    -   `tanggal_surat_kelurahan` (Date, nullable)
-    -   `tanggal_proses_sertifikat` (Date, nullable)
-    -   `bentuk_objek` (Text, nullable)
-    -   `harga_sewa` (Integer, nullable)
-    -   `dokumen_jaminan` (Boolean, nullable)
-    -   `jaminan_bank_nama` (Text, nullable)
-    -   `jaminan_bank_no_surat` (Text, nullable)
-    -   `jaminan_bank_tanggal` (Date, nullable)
-    -   `data_pribadi_tambahan` (Text, nullable)
-    -   `created_at` (Timestamp with time zone)
-    -   `updated_at` (Timestamp with time zone, nullable)
-    -   `first_in_review_at` (Timestamp with time zone, nullable)
-    -   `approved_at` (Timestamp with time zone, nullable)
-    -   `c1_score` (Integer, SAW score component, nullable)
-    -   `c2_score` (Integer, SAW score component, nullable)
-    -   `c3_score` (Integer, SAW score component, nullable)
-    -   `final_score` (Float, calculated SAW score, nullable)
-    -   `saw_analysis_notes` (Text, automated analysis, nullable)
-    -   `is_dikuasakan` (Boolean, nullable)
-
--   **`documents`**: Stores information about uploaded documents for each ULOK.
-    -   `id` (UUID, Primary Key)
-    -   `ulok_id` (UUID, foreign key to `ulok_submissions.id`)
-    -   `document_type` (Text)
-    -   `file_url` (Text)
-    -   `uploaded_at` (Timestamp with time zone)
-    -   `is_verified` (Boolean, default `false`)
-    -   `checklist_id` (Integer, nullable, foreign key to `checklist_master.id`)
-
--   **`checklist_master`**: Stores the master list of required documents for each `jenis_badan_hukum`.
-    -   `id` (Integer, Primary Key)
-    -   `jenis_badan_hukum` (Text)
-    -   `document_name` (Text)
-    -   `description` (Text, nullable)
-    -   `is_required` (Boolean, default `true`)
-
--   **`comments`**: Stores comments made on ULOK submissions.
-    -   `id` (UUID, Primary Key)
-    -   `ulok_id` (UUID, foreign key to `ulok_submissions.id`)
-    -   `user_id` (UUID, foreign key to `profiles.id`)
-    -   `message` (Text)
-    -   `created_at` (Timestamp with time zone)
-
--   **`notifications`**: Stores system notifications.
-    -   `id` (UUID, Primary Key)
-    -   `user_id` (UUID, nullable, foreign key to `profiles.id`)
-    -   `title` (Text)
-    -   `message` (Text)
-    -   `is_read` (Boolean, default `false`)
-    -   `category` (Text)
-    -   `created_at` (Timestamp with time zone)
-
-### 3. Configure Supabase Authentication
--   Enable Email authentication in your Supabase project under "Authentication" > "Settings".
--   The application generates emails using NIK (e.g., `NIK@alfamidi.com`) for new users. Ensure this is compatible with your Supabase email setup or adjust the user creation logic in `actions/superadmin.ts` if needed.
-
-### 4. Setup Storage Buckets
--   Create two storage buckets in your Supabase project under "Storage":
-    -   `avatars`: For user profile pictures.
-    -   `dokumen-ulok`: For ULOK supporting documents.
--   Configure appropriate Row Level Security (RLS) policies for these buckets to control access.
-
-## Running Development Server
-
-To run the application in development mode:
-
+### 2. Running in Development
+Start the local development server:
 ```bash
 pnpm run dev
 ```
+The application runs by default on `http://localhost:3000`.
 
-The application will be accessible at `http://localhost:3000`.
-
-## Build and Production Deployment
-
-To build the application for production:
-
+### 3. Production Build & Start
+Compile the optimized production application:
 ```bash
 pnpm run build
 ```
-
-To start the production server:
-
+Run the compiled server:
 ```bash
 pnpm run start
 ```
 
-## Screenshots
-
-*(This section is a placeholder. You would typically add screenshots of the application's key interfaces here.)*
+---
 
 ## License
-
-This project is licensed under the MIT License.
-
-```
+Licensed under the [MIT License](LICENSE).

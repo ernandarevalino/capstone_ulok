@@ -13,14 +13,30 @@ export async function calculateULOKSAW(ulokId: string) {
       throw new Error('Unauthorized: Silakan login kembali')
     }
 
-    const { data: submission, error: subError } = await supabase
+    const { data: rawSubmission, error: subError } = await supabase
       .from('ulok_submissions')
-      .select('*')
+      .select(`
+        *,
+        ulok_pemilik(*),
+        ulok_sertifikat(*),
+        ulok_legal(*),
+        ulok_jaminan(*),
+        metode_saw(*)
+      `)
       .eq('id', ulokId)
       .single()
 
-    if (subError || !submission) {
+    if (subError || !rawSubmission) {
       throw new Error('Gagal mengambil data usulan lokasi: ' + (subError?.message || 'Data tidak ditemukan'))
+    }
+
+    const submission = {
+      ...rawSubmission,
+      ...(rawSubmission as any).ulok_pemilik,
+      ...(rawSubmission as any).ulok_sertifikat,
+      ...(rawSubmission as any).ulok_legal,
+      ...(rawSubmission as any).ulok_jaminan,
+      ...(rawSubmission as any).metode_saw
     }
 
     const { data: documents, error: docError } = await supabase
@@ -388,15 +404,15 @@ export async function calculateULOKSAW(ulokId: string) {
 
     // === UPDATE DATABASE ===
     const { error: updateError } = await supabase
-      .from('ulok_submissions')
-      .update({
+      .from('metode_saw')
+      .upsert({
+        ulok_id: ulokId,
         c1_score,
         c2_score,
         c3_score,
         final_score,
         saw_analysis_notes
       })
-      .eq('id', ulokId)
 
     if (updateError) {
       throw new Error('Gagal memperbarui nilai analisis SAW di database: ' + updateError.message)
@@ -454,7 +470,7 @@ export async function getSAWLeaderboard() {
       }
     }
 
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
         *,
@@ -466,13 +482,18 @@ export async function getSAWLeaderboard() {
             id,
             nama_cabang
           )
-        )
+        ),
+        metode_saw(*)
       `)
-      .order('final_score', { ascending: false })
 
     if (error) {
       throw new Error('Gagal mengambil leaderboard: ' + error.message)
     }
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw
+    })).sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
 
     return {
       success: true,

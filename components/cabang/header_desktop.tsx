@@ -21,7 +21,7 @@ export default function HeaderDesktop() {
         const uId = res.profile.id;
 
         const fetchUnread = async () => {
-          const resNotif = await getNotificationsAction(uId);
+          const resNotif = await getNotificationsAction();
           if (resNotif && resNotif.success) {
             const unreadItems = resNotif.data.filter((item: any) => !item.is_read);
             setUnreadCount(unreadItems.length);

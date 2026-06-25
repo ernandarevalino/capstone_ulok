@@ -22,7 +22,7 @@ export default function HeaderMobile() {
         const uId = res.profile.id;
 
         const fetchUnread = async () => {
-          const resNotif = await getNotificationsAction(uId);
+          const resNotif = await getNotificationsAction();
           if (resNotif && resNotif.success) {
             const unreadItems = resNotif.data.filter((item: any) => !item.is_read);
             setUnreadCount(unreadItems.length);
@@ -109,6 +109,16 @@ export default function HeaderMobile() {
             }`}
           >
             Penilaian
+          </Link>
+
+          <Link 
+            href="/admin/assessor/pengelompokan" 
+            onClick={() => setIsOpen(false)} 
+            className={`p-2 rounded-md transition-colors ${
+              isActive('/admin/assessor/pengelompokan') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            }`}
+          >
+            Pengelompokan Dokumen
           </Link>
 
           <Link 

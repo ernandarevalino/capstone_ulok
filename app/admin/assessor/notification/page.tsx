@@ -25,23 +25,21 @@ export default function NotificationPage() {
     if (profileRes && profileRes.success && profileRes.profile) {
       const uId = profileRes.profile.id;
       setUserId(uId);
-      await fetchNotifications(uId);
-      await markAllAsRead(uId);
-    } else {
-      setLoading(false);
     }
+    await fetchNotifications();
+    await markAllAsRead();
   }
 
-  async function fetchNotifications(uId: string) {
-    const res = await getNotificationsAction(uId);
+  async function fetchNotifications() {
+    const res = await getNotificationsAction();
     if (res.success) {
       setNotifications(res.data);
     }
     setLoading(false);
   }
 
-  async function markAllAsRead(uId: string) {
-    await markAllNotificationsAsReadAction(uId);
+  async function markAllAsRead() {
+    await markAllNotificationsAsReadAction();
   }
 
   const handleDelete = async (id: number) => {

@@ -3,10 +3,24 @@
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
+// ====== HELPER: INIDIALISASI DINAMIS ======
+// Fungsi ini menjamin variabel .env dibaca saat runtime (saat tombol diklik), 
+// bukan saat file pertama kali di-load oleh Next.js.
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!serviceKey || serviceKey.trim() === '') {
+    throw new Error("Kritikal: SUPABASE_SERVICE_ROLE_KEY kosong atau tidak terbaca oleh Server!");
+  }
+
+  return createClient(url!, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
 
 interface GetUsersParams {
   role: 'admin_cabang' | 'assessor'
@@ -24,9 +38,30 @@ export async function createNotification(
   category: string = 'system'
 ) {
   try {
-    await supabaseAdmin
-      .from('notifications')
-      .insert([{ title, message, user_id: userId, category }]);
+    const supabase = await createServerClient();
+    if (userId) {
+      const { error } = await supabase
+        .from('notifications')
+        .insert([{ title, message, user_id: userId, category }]);
+      if (error) throw error;
+    } else {
+      const { data: superAdmins, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'super_admin');
+      if (error) throw error;
+
+      if (superAdmins && superAdmins.length > 0) {
+        const inserts = superAdmins.map(admin => ({
+          title,
+          message,
+          user_id: admin.id,
+          category
+        }));
+        const { error: insertErr } = await supabase.from('notifications').insert(inserts);
+        if (insertErr) throw insertErr;
+      }
+    }
   } catch (err) {
     console.error("Gagal mencatat log notifikasi ke database:", err);
   }
@@ -35,19 +70,15 @@ export async function createNotification(
 // === ACTIONS: AMBIL NOTIFIKASI ===
 export async function getNotificationsAction(userId: string | null = null) {
   try {
-    let query = supabaseAdmin
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data, error } = await supabase
       .from('notifications')
       .select('id, title, message, is_read, created_at, category, user_id')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data, error } = await query;
-
     if (error) throw error;
     return { success: true, data: data || [] };
   } catch (error: any) {
@@ -58,7 +89,15 @@ export async function getNotificationsAction(userId: string | null = null) {
 // === ACTIONS: HAPUS NOTIFIKASI ===
 export async function deleteNotificationAction(id: number) {
   try {
-    const { error } = await supabaseAdmin.from('notifications').delete().eq('id', id);
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
     if (error) throw error;
     return { success: true };
   } catch (error: any) {
@@ -69,18 +108,15 @@ export async function deleteNotificationAction(id: number) {
 // === ACTIONS: TANDAI SEMUA NOTIFIKASI SEBAGAI DIBACA ===
 export async function markAllNotificationsAsReadAction(userId: string | null = null) {
   try {
-    let query = supabaseAdmin
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
+      .eq('user_id', user.id)
       .eq('is_read', false);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { error } = await query;
     if (error) throw error;
     return { success: true };
   } catch (error: any) {
@@ -91,6 +127,7 @@ export async function markAllNotificationsAsReadAction(userId: string | null = n
 // === ACTIONS: AMBIL USERS BERDASARKAN ROLE ===
 export async function getUsersByRoleAction({ role, search = '', page = 1, limit = 7, branchFilter = '' }: GetUsersParams) {
   try {
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const from = (page - 1) * limit
     const to = from + limit - 1
 
@@ -141,6 +178,7 @@ export async function getUsersByRoleAction({ role, search = '', page = 1, limit 
 // === ACTIONS: AMBIL SEMUA CABANG ===
 export async function getAllBranchesAction() {
   try {
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const { data, error } = await supabaseAdmin
       .from('branches')
       .select('id, nama_cabang, kabupaten_kota, provinsi')
@@ -156,6 +194,7 @@ export async function getAllBranchesAction() {
 // === ACTIONS: AMBIL STATISTIK DASHBOARD ===
 export async function getDashboardStatsAction() {
   try {
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const { count: totalCabang, error: err1 } = await supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
@@ -196,13 +235,14 @@ interface CreateUserParams {
 // === ACTIONS: TAMBAH USER BARU ===
 export async function createUserAction({ password, fullName, nik, role, branchId }: CreateUserParams) {
   try {
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const cleanNik = nik.trim();
-    
-    const { data: existingNik } = await supabaseAdmin
+    const { data: existingNik, error: checkError } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('nik', cleanNik)
       .maybeSingle();
+    if (checkError) throw checkError;
 
     if (existingNik) {
       return { success: false, error: `NIK ${cleanNik} sudah terdaftar di sistem!` };
@@ -216,7 +256,9 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       email_confirm: true
     })
 
-    if (authError) throw authError
+    if (authError) {
+      throw new Error(`Gagal membuat user auth: ${authError.message}`);
+    }
     if (!authData.user) throw new Error("Gagal membuat kredensial auth user baru.")
 
     const { error: profileError } = await supabaseAdmin
@@ -232,7 +274,10 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       ])
 
     if (profileError) {
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      const { error: deleteAuthErr } = await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      if (deleteAuthErr) {
+        console.error("Gagal melakukan rollback auth user:", deleteAuthErr.message);
+      }
       throw profileError
     }
 
@@ -241,7 +286,6 @@ export async function createUserAction({ password, fullName, nik, role, branchId
       'Pengguna Baru Terdaftar',
       `Berhasil menambahkan ${roleLabel} baru atas nama ${fullName.trim()} (NIK: ${cleanNik}).`
     );
-
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -254,15 +298,17 @@ interface UpdateUserParams {
   nik: string
   deleteAvatar: boolean
   branchId?: number | null
-  password?: string 
+  password?: string
 }
 
 // === ACTIONS: UPDATE USER DATA ===
 export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password }: UpdateUserParams) {
   try {
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const cleanNik = nik.trim();
+    const supabase = await createServerClient();
 
-    const { data: existingUser, error: fetchError } = await supabaseAdmin
+    const { data: existingUser, error: fetchError } = await supabase
       .from('profiles')
       .select('full_name, nik, role, branch_id')
       .eq('id', id)
@@ -271,20 +317,19 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
     if (fetchError || !existingUser) throw new Error("Data pengguna tidak ditemukan.")
 
     if (cleanNik !== existingUser.nik) {
-      const { data: duplicateNik } = await supabaseAdmin
+      const { data: duplicateNik } = await supabase
         .from('profiles')
         .select('id')
         .eq('nik', cleanNik)
         .neq('id', id)
         .maybeSingle();
-
       if (duplicateNik) {
         return { success: false, error: `Gagal ubah data! NIK ${cleanNik} sudah digunakan oleh karyawan lain.` };
       }
     }
 
     const authUpdatePayload: any = {}
-    
+
     if (cleanNik !== existingUser.nik) {
       authUpdatePayload.email = `${cleanNik}@alfamidi.com`
     }
@@ -319,7 +364,7 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
     }
 
     if (Object.keys(updatePayload).length > 0) {
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('profiles')
         .update(updatePayload)
         .eq('id', id)
@@ -333,14 +378,12 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
       'Pembaruan Data Pengguna',
       `Profil${passwordMsg} ${roleLabel} dengan NIK ${existingUser.nik} telah berhasil diperbarui.`
     );
-
     await createNotification(
       'Akun Diperbarui Super Admin',
       'Data profil atau kredensial akun Anda telah disesuaikan oleh Super Admin.',
       id,
       'profile'
     );
-
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -350,11 +393,13 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
 // === ACTIONS: HAPUS USER ===
 export async function deleteUserAction(id: string) {
   try {
-    const { data: userTarget } = await supabaseAdmin
+    const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
+    const { data: userTarget, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('full_name, nik, role')
       .eq('id', id)
       .single();
+    if (fetchError) throw fetchError;
 
     const { error: profileErr } = await supabaseAdmin
       .from('profiles')
@@ -364,7 +409,9 @@ export async function deleteUserAction(id: string) {
     if (profileErr) throw profileErr
 
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(id)
-    if (authErr) throw authErr
+    if (authErr) {
+      throw new Error(`Gagal menghapus user auth: ${authErr.message}`);
+    }
 
     if (userTarget) {
       const roleLabel = userTarget.role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';

@@ -439,7 +439,7 @@ export default function PenilaianPage() {
       <div className="max-w-5xl mx-auto">
         {renderTableGroup("ULOK Baru (Belum Disentuh)", ["In Review"], "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60", "new_only")}
         {renderTableGroup("Sedang Direview (On Progress)", ["In Review"], "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60", "viewed_only")}
-        {renderTableGroup("Perlu Revisi (Dikembalikan ke Cabang)", ["Revision"], "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/60", "all")}
+        {renderTableGroup("Perlu Revisi (Dikembalikan ke Cabang)", ["Revisi"], "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/60", "all")}
         {renderTableGroup("Selesai Dinilai (Approved / Rejected)", ["Approved", "Rejected"], "bg-green-50 text-green-700 border border-green-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60", "all")}
       </div>
     </div>

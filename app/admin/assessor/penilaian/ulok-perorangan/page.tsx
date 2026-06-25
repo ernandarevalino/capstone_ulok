@@ -33,7 +33,7 @@ export default function DetailPenilaianPeroranganPage() {
     switch (status) {
       case 'In Review':
         return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/60'
-      case 'Revision':
+      case 'Revisi':
         return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
       case 'Approved':
         return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60'
@@ -239,7 +239,7 @@ export default function DetailPenilaianPeroranganPage() {
                 {(statusSubmission === 'Draft' || statusSubmission === 'In Review') && (
                   <option value={statusSubmission} disabled>{statusSubmission === 'Draft' ? 'Draft (Belum Direview)' : 'In Review'}</option>
                 )}
-                <option value="Revision">Revision</option>
+                <option value="Revisi">Revisi</option>
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
               </select>
