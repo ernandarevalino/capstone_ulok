@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
+import { Download } from 'lucide-react'
 
 export default function PengelompokanDashboard() {
   const router = useRouter()
@@ -33,6 +34,43 @@ export default function PengelompokanDashboard() {
     setMounted(true)
     fetchData()
   }, [])
+
+  const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
+
+  const handleDownload = async (url: string, filename: string) => {
+    if (!url) return
+    setDownloadingDocName(filename)
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      
+      let actualFilename = filename
+      try {
+        const urlObj = new URL(url)
+        const pathname = urlObj.pathname
+        const ext = pathname.split('.').pop()
+        if (ext && ext.length <= 4 && !filename.toLowerCase().endsWith('.' + ext.toLowerCase())) {
+          actualFilename = `${filename}.${ext}`
+        }
+      } catch (e) {
+        // fallback
+      }
+
+      a.download = actualFilename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(blobUrl)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Gagal mendownload file:", error)
+      alert("Gagal mengunduh berkas. Silakan coba lagi.")
+    } finally {
+      setDownloadingDocName(null)
+    }
+  }
 
   async function fetchData() {
     setLoading(true)
@@ -602,9 +640,41 @@ export default function PengelompokanDashboard() {
                                           )}
 
                                           {doc.is_uploaded ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-250 dark:border-emerald-900/50">
-                                              Terunggah
-                                            </span>
+                                            <div className="flex items-center gap-1.5 ml-2">
+                                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-250 dark:border-emerald-900/50">
+                                                Terunggah
+                                              </span>
+                                              {doc.file_url && (
+                                                <div className="flex gap-1">
+                                                  <a 
+                                                    href={doc.file_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
+                                                    title="View File"
+                                                  >
+                                                    <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
+                                                  </a>
+                                                  <button
+                                                    type="button"
+                                                    disabled={downloadingDocName === doc.nama_dokumen}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation()
+                                                      handleDownload(doc.file_url!, doc.nama_dokumen)
+                                                    }}
+                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                                                    title="Download File"
+                                                  >
+                                                    {downloadingDocName === doc.nama_dokumen ? (
+                                                      <span className="w-3 h-3 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                                                    ) : (
+                                                      <Download className="w-3 h-3" />
+                                                    )}
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
                                           ) : (
                                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-900/50 text-gray-500 dark:text-gray-450 border border-gray-200 dark:border-gray-800/80">
                                               Belum

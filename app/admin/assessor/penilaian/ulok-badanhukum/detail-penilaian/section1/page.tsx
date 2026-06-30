@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, Download } from 'lucide-react'
 import { toggleDocumentVerification } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 
@@ -20,6 +20,62 @@ export default function Section1BadanHukumAssessorPage() {
 
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
+
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null)
+
+  const formatWaktu = (uploadedAt: string | null | undefined) => {
+    if (!uploadedAt) return ''
+    try {
+      const date = new Date(uploadedAt)
+      if (isNaN(date.getTime())) return ''
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return ` (${day}-${month}-${year} ${hours}:${minutes}:${seconds})`
+    } catch (e) {
+      return ''
+    }
+  }
+
+  const handleDownload = async (fileUrl: string, docId: string, docType: string) => {
+    if (!fileUrl) return
+    setDownloadingDocId(docId)
+    try {
+      const response = await fetch(fileUrl)
+      if (!response.ok) throw new Error('Failed to fetch file')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      
+      let filename = `${docType}.pdf`
+      try {
+        const urlObj = new URL(fileUrl)
+        const pathname = urlObj.pathname
+        const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1)
+        if (lastPart) {
+          filename = decodeURIComponent(lastPart)
+        }
+      } catch (e) {
+        // fallback
+      }
+      
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Download failed:', error)
+      alert('Gagal mengunduh berkas. Silakan coba lagi.')
+    } finally {
+      setDownloadingDocId(null)
+    }
+  }
 
   const handleToggleVerify = async (docId: string, currentStatus: boolean) => {
     setVerifyingDocId(docId)
@@ -110,7 +166,7 @@ export default function Section1BadanHukumAssessorPage() {
         </div>
         {existingDoc ? (
           <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingDoc.uploaded_at)}</span>
             <div className="flex gap-1.5 items-center">
               
               <a 
@@ -122,6 +178,20 @@ export default function Section1BadanHukumAssessorPage() {
               >
                 <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
               </a>
+
+              <button
+                type="button"
+                disabled={downloadingDocId === existingDoc.id}
+                onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                title="Download File"
+              >
+                {downloadingDocId === existingDoc.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+              </button>
 
               <button
                 type="button"

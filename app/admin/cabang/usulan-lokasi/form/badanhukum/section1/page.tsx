@@ -19,6 +19,24 @@ export default function Section1BadanHukumPage() {
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
 
+  const formatWaktu = (uploadedAt: string | null | undefined) => {
+    if (!uploadedAt) return ''
+    try {
+      const date = new Date(uploadedAt)
+      if (isNaN(date.getTime())) return ''
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return ` (${day}-${month}-${year} ${hours}:${minutes}:${seconds})`
+    } catch (e) {
+      return ''
+    }
+  }
+
   const loadDataDanDokumen = async () => {
     if (!ulokId) return
     setIsLoading(true)
@@ -116,7 +134,7 @@ export default function Section1BadanHukumPage() {
         </div>
         {existingFile ? (
           <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-30">📄 Tersimpan</span>
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingFile.uploaded_at)}</span>
             <div className="flex gap-1.5 items-center">
               <a 
                 href={existingFile.file_url} 
