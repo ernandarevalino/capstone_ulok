@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
 import { Check, Loader2, AlertCircle, Download } from 'lucide-react'
-import { toggleDocumentVerification } from '@/actions/assessor'
+import { toggleDocumentVerification, updateLastReviewedTimestamp } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
+import { getCurrentProfile } from '@/actions/auth'
 
 export default function Section1PeroranganAssessorPage() {
   const router = useRouter()
@@ -13,7 +14,26 @@ export default function Section1PeroranganAssessorPage() {
   const ulokId = searchParams.get('id') || ''
   
   const [isLoading, setIsLoading] = useState(true)
+  const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
+
+  const formatLastReviewedDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum pernah direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum pernah direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`
+    } catch (e) {
+      return 'Belum pernah direview'
+    }
+  }
 
   const [statusKepemilikan, setStatusKepemilikan] = useState('Perorangan')
   const [namaPemegang, setNamaPemegang] = useState('')
@@ -132,6 +152,15 @@ export default function Section1PeroranganAssessorPage() {
     if (!ulokId) return
     setIsLoading(true)
     
+    try {
+      const profileRes = await getCurrentProfile()
+      if (profileRes.success && profileRes.profile?.role === 'assessor') {
+        await updateLastReviewedTimestamp(ulokId)
+      }
+    } catch (e) {
+      console.error("Gagal memperbarui timestamp terakhir direview:", e)
+    }
+    
     const resDetail = await getUlokDetail(ulokId)
     if (resDetail.success && resDetail.data) {
       const d = resDetail.data
@@ -144,6 +173,7 @@ export default function Section1PeroranganAssessorPage() {
       setNamaSebelumGanti(d.nama_sebelum_ganti || '')
       setNamaSesudahGanti(d.nama_sesudah_ganti || '')
       setNoSuratKematian(d.no_surat_kematian || '')
+      setLastReviewedAt(d.last_reviewed_at || null)
 
       if (d.nik_pemilik || d.nama_pemegang_hak) setHasEktp(true)
       if (d.nama_kitas) setHasKitas(true)
@@ -272,6 +302,9 @@ export default function Section1PeroranganAssessorPage() {
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 1: Identitas Pemilik & Status Kepemilikan</h1>
             <p className="text-xs text-blue-200/80 dark:text-gray-400 mt-0.5">Peninjauan isian identitas, kartu keluarga, surat keterangan perorangan.</p>
+            <p className="text-xs text-blue-200 dark:text-gray-300 font-semibold mt-2.5">
+              {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+            </p>
           </div>
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>
@@ -418,6 +451,9 @@ export default function Section1PeroranganAssessorPage() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Pilihan Hubungan Status Kepemilikan:</label>
+            <p className="text-xs text-blue-900 dark:text-blue-400 font-bold mb-3">
+              {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+            </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Perorangan', 'Kuasa', 'Waris', 'Hibah'].map((item) => (
                 <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-not-allowed transition font-bold text-xs ${statusKepemilikan === item ? 'border-blue-950 bg-blue-50/50 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500'}`}>

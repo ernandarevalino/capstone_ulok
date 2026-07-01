@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
 import { Check, Loader2, Download } from 'lucide-react'
-import { toggleDocumentVerification } from '@/actions/assessor'
+import { toggleDocumentVerification, updateLastReviewedTimestamp } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
+import { getCurrentProfile } from '@/actions/auth'
 
 export default function Section1BadanHukumAssessorPage() {
   const router = useRouter()
@@ -13,7 +14,26 @@ export default function Section1BadanHukumAssessorPage() {
   const ulokId = searchParams.get('id')
   
   const [isLoading, setIsLoading] = useState(true)
+  const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
+
+  const formatLastReviewedDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum pernah direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum pernah direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`
+    } catch (e) {
+      return 'Belum pernah direview'
+    }
+  }
   const [statusPajak, setStatusPajak] = useState('Non-PKP')
   const [isDikuasakan, setIsDikuasakan] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
@@ -124,6 +144,15 @@ export default function Section1BadanHukumAssessorPage() {
 
     const initLoad = async () => {
       setIsLoading(true)
+
+      try {
+        const profileRes = await getCurrentProfile()
+        if (profileRes.success && profileRes.profile?.role === 'assessor') {
+          await updateLastReviewedTimestamp(ulokId)
+        }
+      } catch (e) {
+        console.error("Gagal memperbarui timestamp terakhir direview:", e)
+      }
       
       const resDocs = await getUploadedDocuments(ulokId)
       let currentDocs: any[] = []
@@ -134,6 +163,7 @@ export default function Section1BadanHukumAssessorPage() {
 
       const detailRes = await getUlokDetail(ulokId)
       if (detailRes.success && detailRes.data) {
+        setLastReviewedAt(detailRes.data.last_reviewed_at || null)
         if (detailRes.data.is_dikuasakan !== undefined) {
           setIsDikuasakan(detailRes.data.is_dikuasakan)
         }
@@ -259,6 +289,9 @@ export default function Section1BadanHukumAssessorPage() {
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 1: Legalitas Instansi & Berkas Manajemen Badan Hukum</h1>
             <p className="text-xs text-blue-200/80 dark:text-gray-400 mt-0.5">Peninjauan berkas otentik pendirian instansi, perizinan berusaha, perpajakan, dan dokumen direksi.</p>
+            <p className="text-xs text-blue-200 dark:text-gray-300 font-semibold mt-2.5">
+              {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+            </p>
           </div>
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">1 / 2</span>
         </div>

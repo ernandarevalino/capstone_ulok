@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
+import { updateUlokProgressAndTimestamp } from './pengelompokan'
+import { calculateProgress } from '@/utils/progress'
 
 export async function getAssessorSubmissions() {
   try {
@@ -22,10 +24,11 @@ export async function getAssessorSubmissions() {
             nama_cabang
           )
         ),
-        documents (
-          id,
-          is_verified
-        ),
+        ulok_pemilik(*),
+        ulok_sertifikat(*),
+        ulok_legal(*),
+        ulok_jaminan(*),
+        documents (*),
         metode_saw(*)
       `)
       .not('status', 'eq', 'Draft')
@@ -33,10 +36,16 @@ export async function getAssessorSubmissions() {
 
     if (error) throw error
 
-    const data = (rawData || []).map((item: any) => ({
-      ...item,
-      ...item.metode_saw
-    }))
+    const data = (rawData || []).map((item: any) => {
+      const { numerator, denominator, persentase } = calculateProgress(item, item.documents || [])
+      return {
+        ...item,
+        ...item.metode_saw,
+        numerator,
+        denominator,
+        persentase
+      }
+    })
 
     return { success: true, data }
   } catch (error: any) {
@@ -172,6 +181,7 @@ export async function toggleDocumentVerification(documentId: string, currentStat
     if (error) throw error
 
     if (data && data.ulok_id) {
+      await updateUlokProgressAndTimestamp(data.ulok_id)
       await calculateULOKSAW(data.ulok_id)
     }
 
@@ -197,5 +207,46 @@ export async function getNotificationsAction(userId: string | null = null) {
     return { success: true, data: data || [] }
   } catch (error: any) {
     return { success: false, error: error.message, data: [] }
+  }
+}
+
+export async function updateLastReviewedTimestamp(ulokId: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new Error('Gagal memuat profil pengguna')
+    }
+
+    if (profile.role !== 'assessor') {
+      return { success: false, error: 'Unauthorized: Hanya assessor yang dapat memperbarui timestamp' }
+    }
+
+    const { error: updateError } = await supabase
+      .from('ulok_submissions')
+      .update({ last_reviewed_at: new Date().toISOString() })
+      .eq('id', ulokId)
+
+    if (updateError) throw updateError
+
+    revalidatePath('/admin/assessor/penilaian')
+    revalidatePath('/admin/assessor/penilaian/ulok-badanhukum')
+    revalidatePath('/admin/assessor/penilaian/ulok-perorangan')
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/perorangan')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/badanhukum')
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
 }

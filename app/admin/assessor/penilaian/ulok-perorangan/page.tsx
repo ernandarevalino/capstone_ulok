@@ -22,6 +22,25 @@ export default function DetailPenilaianPeroranganPage() {
   
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
+
+  const formatLastReviewedDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum pernah direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum pernah direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`
+    } catch (e) {
+      return 'Belum pernah direview'
+    }
+  }
 
   const [comments, setComments] = useState<any[]>([])
   const [newComment, setNewComment] = useState('')
@@ -72,6 +91,7 @@ export default function DetailPenilaianPeroranganPage() {
         setStatusBadan(res.data.jenis_badan_hukum || '')
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setStatusSubmission(res.data.status || 'Draft')
+        setLastReviewedAt(res.data.last_reviewed_at || null)
         
         const commentsRes = await getComments(ulokId)
         if (commentsRes.success && commentsRes.data) {
@@ -278,6 +298,9 @@ export default function DetailPenilaianPeroranganPage() {
                 disabled
                 className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
               />
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
+                {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+              </p>
             </div>
           </div>
         </div>

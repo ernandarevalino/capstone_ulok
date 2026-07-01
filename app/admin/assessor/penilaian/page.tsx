@@ -8,6 +8,40 @@ export default function PenilaianPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const formatLastReviewedShort = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      return `${day}-${month}-${year} ${hours}:${minutes}`
+    } catch (e) {
+      return 'Belum direview'
+    }
+  };
+
+  const formatTimestamp = (dateStr: string | null | undefined) => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return ''
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      return `${day}-${month}-${year} ${hours}:${minutes}`
+    } catch (e) {
+      return ''
+    }
+  };
+
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -230,13 +264,12 @@ export default function PenilaianPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
-                  <th className="p-4 w-1/4">
+                  <th className="p-4 w-[28%]">
                     <div className="flex items-center">
                       Nama ULOK
                       {renderSortButton("nama_lokasi")}
                     </div>
                   </th>
-                  <th className="p-4">Asal Cabang</th>
                   <th className="p-4">
                     <div className="flex items-center">
                       Tanggal Diajukan
@@ -246,6 +279,7 @@ export default function PenilaianPage() {
                   <th className="p-4">Kepemilikan</th>
                   <th className="p-4 text-center">Skor SAW</th>
                   <th className="p-4 text-center">Status Berkas</th>
+                  <th className="p-4 text-center">Progres</th>
                   <th className="p-4 text-center w-20">Aksi</th>
                 </tr>
               </thead>
@@ -267,17 +301,23 @@ export default function PenilaianPage() {
                     const branchName = item.profiles?.branches?.nama_cabang || "Cabang Pusat / Lainnya";
                     return (
                       <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
-                        <td className="p-4 flex items-center gap-3" title={item.nama_lokasi}>
-                          <span className="text-sm select-none">📁</span>
-                          <span className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] max-w-[180px] truncate block whitespace-nowrap">
-                            {item.nama_lokasi}
-                          </span>
-                        </td>
-
-                        <td className="p-4">
-                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2.5 py-1 rounded-md text-[11px] border">
-                            {branchName}
-                          </span>
+                        <td className="p-4" title={`${item.nama_lokasi} (cabang ${branchName})`}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm select-none">📁</span>
+                            <div>
+                              <div className="leading-snug max-w-[280px]">
+                                <span className="font-semibold text-gray-700 dark:text-gray-200 text-[13px] break-words">
+                                  {item.nama_lokasi}
+                                </span>{" "}
+                                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal whitespace-normal break-words inline-block">
+                                  (cabang {branchName})
+                                </span>
+                              </div>
+                              <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
+                                Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                              </div>
+                            </div>
+                          </div>
                         </td>
 
                         <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
@@ -297,6 +337,19 @@ export default function PenilaianPage() {
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase inline-block ${colorStyles}`}>
                             {item.status === "In Review" && !viewedIds.includes(item.id) ? "BARU MASUK" : item.status}
                           </span>
+                        </td>
+
+                        <td className="p-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                          <div>
+                            <span>
+                              {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
+                            </span>
+                            {item.persentase === 100 && item.documents_completed_at && (
+                              <div className="text-[10px] text-gray-400 dark:text-gray-500 font-normal mt-0.5 whitespace-nowrap">
+                                Lengkap pada: {formatTimestamp(item.documents_completed_at)}
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td className="p-4 text-center w-20">
@@ -346,9 +399,17 @@ export default function PenilaianPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <span className="text-base select-none">📁</span>
-                          <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-all leading-snug">
-                            {item.nama_lokasi}
-                          </span>
+                          <div>
+                            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-words leading-snug">
+                              {item.nama_lokasi}
+                              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-normal ml-1 break-words">
+                                (cabang {branchName})
+                              </span>
+                            </span>
+                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
+                              Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                            </div>
+                          </div>
                         </div>
                         <span className={`px-2.5 py-1 shrink-0 rounded-full text-[9px] font-black tracking-wide uppercase inline-block text-center ${colorStyles}`}>
                           {item.status === "In Review" && !viewedIds.includes(item.id) ? "BARU MASUK" : item.status}
@@ -357,12 +418,6 @@ export default function PenilaianPage() {
 
                       {/* Detail Info Grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-600 dark:text-gray-400 pt-1.5 border-t border-gray-50 dark:border-gray-800">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Asal Cabang</p>
-                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-2 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-700">
-                            {branchName}
-                          </span>
-                        </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Tanggal Diajukan</p>
                           <p className="font-medium text-gray-700 dark:text-gray-300">
@@ -379,6 +434,19 @@ export default function PenilaianPage() {
                           <p className="font-mono font-black text-sm text-purple-700 dark:text-purple-400">
                             {item.final_score !== null && item.final_score !== undefined ? item.final_score.toFixed(2) : "0.00"}
                           </p>
+                        </div>
+                        <div className="col-span-2 pt-1 border-t border-dashed border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Progres Berkas</span>
+                            <p className="font-bold text-xs text-blue-950 dark:text-blue-400">
+                              {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
+                            </p>
+                          </div>
+                          {item.persentase === 100 && item.documents_completed_at && (
+                            <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
+                              Lengkap: {formatTimestamp(item.documents_completed_at)}
+                            </span>
+                          )}
                         </div>
                       </div>
 

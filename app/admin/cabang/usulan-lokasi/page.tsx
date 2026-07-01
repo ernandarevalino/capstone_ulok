@@ -7,6 +7,40 @@ import { getUlokSubmissions, createUlokSubmission, deleteUlokSubmission } from '
 export default function UsulanLokasiPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const formatLastReviewedShort = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      return `${day}-${month}-${year} ${hours}:${minutes}`
+    } catch (e) {
+      return 'Belum direview'
+    }
+  };
+
+  const formatTimestamp = (dateStr: string | null | undefined) => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return ''
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      return `${day}-${month}-${year} ${hours}:${minutes}`
+    } catch (e) {
+      return ''
+    }
+  };
   
   const [submissions, setSubmissions] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -273,13 +307,14 @@ export default function UsulanLokasiPage() {
                     </div>
                   </th>
                   <th className="p-4 text-center">Status Assessor</th>
+                  <th className="p-4 text-center">Progres</th>
                   <th className="p-4 text-center w-56">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedData.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada data usulan lokasi</td>
+                    <td colSpan={6} className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada data usulan lokasi</td>
                   </tr>
                 ) : (
                   displayedData.map((item) => (
@@ -287,9 +322,16 @@ export default function UsulanLokasiPage() {
                       key={item.id} 
                       className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
                     >
-                      <td className="p-4 flex items-center gap-3">
-                        <span className="text-xl text-amber-500">📁</span>
-                        <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl text-amber-500">📁</span>
+                          <div>
+                            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
+                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
+                              Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
                         {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -301,6 +343,18 @@ export default function UsulanLokasiPage() {
                         <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
                           {item.status === 'Draft' ? 'Belum Direview' : item.status}
                         </span>
+                      </td>
+                      <td className="p-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        <div>
+                          <span>
+                            {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
+                          </span>
+                          {item.persentase === 100 && item.documents_completed_at && (
+                            <div className="text-[10px] text-gray-400 dark:text-gray-500 font-normal mt-0.5 whitespace-nowrap">
+                              Lengkap pada: {formatTimestamp(item.documents_completed_at)}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex justify-center items-center gap-2">
@@ -342,9 +396,14 @@ export default function UsulanLokasiPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="text-xl text-amber-500 select-none">📁</span>
-                        <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-all leading-snug">
-                          {item.nama_lokasi}
-                        </span>
+                        <div>
+                          <span className="font-bold text-gray-800 dark:text-gray-100 text-sm break-all leading-snug">
+                            {item.nama_lokasi}
+                          </span>
+                          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
+                            Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                          </div>
+                        </div>
                       </div>
                       <span className={`px-2.5 py-1 shrink-0 rounded-full text-[10px] font-bold inline-block text-center ${colorStyles}`}>
                         {item.status === 'Draft' ? 'Belum Direview' : item.status}
@@ -352,10 +411,10 @@ export default function UsulanLokasiPage() {
                     </div>
 
                     {/* Detail Info Grid */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-gray-600 dark:text-gray-400 pt-1.5 border-t border-gray-50 dark:border-gray-800">
+                    <div className="grid grid-cols-3 gap-x-2 gap-y-3 text-xs text-gray-600 dark:text-gray-400 pt-1.5 border-t border-gray-50 dark:border-gray-800">
                       <div>
                         <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Tanggal Dibuat</p>
-                        <p className="font-medium text-gray-700 dark:text-gray-300">
+                        <p className="font-medium text-gray-700 dark:text-gray-300 truncate">
                           {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
@@ -363,6 +422,17 @@ export default function UsulanLokasiPage() {
                         <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Kepemilikan</p>
                         <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{item.jenis_badan_hukum}</p>
                         <p className="text-[10px] text-gray-400 truncate">({item.nama_pemegang_hak})</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Progres</p>
+                        <p className="font-bold text-blue-950 dark:text-blue-400 truncate">
+                          {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
+                        </p>
+                        {item.persentase === 100 && item.documents_completed_at && (
+                          <p className="text-[9px] text-gray-400 leading-tight">
+                            Lengkap: {formatTimestamp(item.documents_completed_at)}
+                          </p>
+                        )}
                       </div>
                     </div>
 

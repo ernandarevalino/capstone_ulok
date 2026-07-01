@@ -13,7 +13,26 @@ export default function Section2BadanHukumAssessorPage() {
   const ulokId = searchParams.get('id')
 
   const [isLoading, setIsLoading] = useState(true)
+  const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null)
+
+  const formatLastReviewedDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Belum pernah direview'
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Belum pernah direview'
+      const pad = (num: number) => String(num).padStart(2, '0')
+      const day = pad(date.getDate())
+      const month = pad(date.getMonth() + 1)
+      const year = String(date.getFullYear()).slice(-2)
+      const hours = pad(date.getHours())
+      const minutes = pad(date.getMinutes())
+      const seconds = pad(date.getSeconds())
+      return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`
+    } catch (e) {
+      return 'Belum pernah direview'
+    }
+  }
 
   const [jenisAlasHak, setJenisAlasHak] = useState('')
   const [noSertifikat, setNoSertifikat] = useState('')
@@ -171,6 +190,7 @@ export default function Section2BadanHukumAssessorPage() {
         setNoSuratJaminan(d.no_surat_jaminan || '')
         setTanggalSuratJaminan(d.tanggal_jaminan || '')
         setCatatanLainnya(d.data_pribadi_lainnya || '')
+        setLastReviewedAt(d.last_reviewed_at || null)
 
         if (d.tanggal_proses) setIsProsesSertifikat(true)
         const berkasProsesExist = docs.some((doc: any) => 
@@ -308,6 +328,9 @@ export default function Section2BadanHukumAssessorPage() {
           <div>
             <h1 className="text-lg font-bold">Penilaian Section 2: Legalitas Lahan, Perizinan Objek & Jaminan Bank</h1>
             <p className="text-xs text-blue-200/80 dark:text-gray-400 mt-0.5">Peninjauan sertifikat fisik objek tanah beserta jaminan finansial perbankan di sini.</p>
+            <p className="text-xs text-blue-200 dark:text-gray-300 font-semibold mt-2.5">
+              {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+            </p>
           </div>
           <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20 dark:border-gray-700">2 / 2</span>
         </div>

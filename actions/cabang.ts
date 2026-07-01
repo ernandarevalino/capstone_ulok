@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
+import { updateUlokProgressAndTimestamp } from './pengelompokan'
+import { calculateProgress } from '@/utils/progress'
 
 // === ACTIONS: AMBIL DAFTAR USULAN LOKASI ===
 export async function getUlokSubmissions() {
@@ -40,6 +42,11 @@ export async function getUlokSubmissions() {
       .from('ulok_submissions')
       .select(`
         *,
+        ulok_pemilik(*),
+        ulok_sertifikat(*),
+        ulok_legal(*),
+        ulok_jaminan(*),
+        documents (*),
         metode_saw(*)
       `)
       .in('admin_id', branchAdminIds)
@@ -47,10 +54,16 @@ export async function getUlokSubmissions() {
 
     if (error) throw error
 
-    const data = (rawData || []).map((item: any) => ({
-      ...item,
-      ...item.metode_saw
-    }))
+    const data = (rawData || []).map((item: any) => {
+      const { numerator, denominator, persentase } = calculateProgress(item, item.documents || [])
+      return {
+        ...item,
+        ...item.metode_saw,
+        numerator,
+        denominator,
+        persentase
+      }
+    })
 
     return { success: true, data }
   } catch (error: any) {
@@ -474,6 +487,7 @@ export async function updateUlokSubmission(id: string, payload: any) {
       }
     }
 
+    await updateUlokProgressAndTimestamp(id)
     await calculateULOKSAW(id)
 
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -607,6 +621,8 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       }
     }
 
+    await updateUlokProgressAndTimestamp(ulokId)
+
     revalidatePath('/admin/cabang/usulan-lokasi')
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section1`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section2`)
@@ -624,6 +640,12 @@ export async function deleteUlokFile(docId: string, fileUrl: string) {
   try {
     const supabase = await createClient()
     
+    const { data: docData } = await supabase
+      .from('documents')
+      .select('ulok_id')
+      .eq('id', docId)
+      .single()
+
     const segments = fileUrl.split('/dokumen-ulok/')
     if (segments.length > 1) {
       const storageFilePath = segments[1]
@@ -636,6 +658,10 @@ export async function deleteUlokFile(docId: string, fileUrl: string) {
       .eq('id', docId)
 
     if (dbError) throw dbError
+
+    if (docData?.ulok_id) {
+      await updateUlokProgressAndTimestamp(docData.ulok_id)
+    }
 
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section2`)
     revalidatePath(`/admin/cabang/usulan-lokasi/form/badanhukum/section2`)
