@@ -217,7 +217,101 @@ export default function Section2PeroranganAssessorPage() {
     }, 1500)
   }
 
+  const getFilenameFromUrl = (url: string, defaultName = 'File') => {
+    if (!url) return defaultName
+    try {
+      const urlObj = new URL(url)
+      const pathname = urlObj.pathname
+      const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1)
+      if (lastPart) return decodeURIComponent(lastPart)
+    } catch (e) {
+      const lastSlash = url.lastIndexOf('/')
+      if (lastSlash !== -1) {
+        const lastPart = url.substring(lastSlash + 1)
+        if (lastPart) return decodeURIComponent(lastPart)
+      }
+    }
+    return defaultName
+  }
+
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
+    if (docType === 'dokumen_tambahan') {
+      const existingDocs = uploadedDocs.filter(d => d.document_type === docType)
+
+      return (
+        <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
+          <div>
+            <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block leading-snug">{label}</span>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{hint}</p>
+          </div>
+          {existingDocs.length > 0 ? (
+            <div className="space-y-2">
+              {existingDocs.map((existingDoc) => {
+                const filename = getFilenameFromUrl(existingDoc.file_url, 'dokumen_tambahan.pdf')
+                return (
+                  <div key={existingDoc.id} className="flex flex-col gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded border border-emerald-200 dark:border-emerald-900/40">
+                    <span className="text-[10px] text-gray-700 dark:text-gray-300 font-semibold break-all leading-normal">
+                      {filename}
+                    </span>
+                    <div className="flex items-center justify-between gap-2 border-t border-emerald-100 dark:border-emerald-900/30 pt-1.5 mt-0.5">
+                      <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingDoc.uploaded_at)}</span>
+                      <div className="flex gap-1.5 items-center">
+                        <a 
+                          href={existingDoc.file_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
+                          title="View File"
+                        >
+                          <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+                        </a>
+
+                        <button
+                          type="button"
+                          disabled={downloadingDocId === existingDoc.id}
+                          onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
+                          className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                          title="Download File"
+                        >
+                          {downloadingDocId === existingDoc.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={verifyingDocId === existingDoc.id}
+                          onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
+                          title="Verify Document"
+                          className={`p-1 rounded border shadow-sm transition-all flex items-center justify-center ${
+                            existingDoc.is_verified
+                              ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800'
+                              : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
+                          } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
+                        >
+                          {verifyingDocId === existingDoc.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="p-1.5 rounded border border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 flex items-center">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold italic select-none">⚠️ Belum ada dokumen terunggah</span>
+            </div>
+          )}
+        </div>
+      )
+    }
+
     const existingDoc = uploadedDocs.find(d => d.document_type === docType)
 
     return (

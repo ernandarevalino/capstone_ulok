@@ -126,6 +126,138 @@ export default function Section2BadanHukumPage() {
     })
   }
 
+  const handleMultipleFileUpload = async (docType: string, files: FileList) => {
+    if (!files || files.length === 0 || !ulokId) return
+
+    startTransition(async () => {
+      let hasError = false
+      let errorMessage = ''
+
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await uploadUlokFile(ulokId, docType, formData)
+        if (!res.success) {
+          hasError = true
+          errorMessage = res.error || 'Gagal mengunggah salah satu file'
+        }
+      }
+
+      if (!hasError) {
+        setSuccessModalText('Semua berkas berhasil diperbarui!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+      } else {
+        alert(`Gagal mengunggah berkas: ` + errorMessage)
+      }
+
+      const resDocs = await getUploadedDocuments(ulokId)
+      if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
+    })
+  }
+
+  const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
+    if (docType === 'dokumen_tambahan') {
+      const existingFiles = uploadedDocs.filter(doc => doc.document_type === docType)
+      return (
+        <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
+          <div>
+            <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
+          </div>
+          {existingFiles.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              {existingFiles.map((file) => (
+                <div key={file.id} className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">
+                    📄 Tersimpan{formatWaktu(file.uploaded_at)}
+                  </span>
+                  <div className="flex gap-1.5 items-center">
+                    <a 
+                      href={file.file_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
+                      title="View File"
+                    >
+                      <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+                    </a>
+                    <button 
+                      type="button" 
+                      onClick={() => setDeleteTarget({ id: file.id, url: file.file_url })} 
+                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
+                      title="Delete File"
+                    >
+                      <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <input 
+            type="file" 
+            multiple
+            accept=".pdf, .jpg, .jpeg, .png"
+            disabled={isPending}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleMultipleFileUpload(docType, e.target.files)
+              }
+            }}
+            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
+          />
+        </div>
+      )
+    }
+
+    const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
+        <div>
+          <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
+        </div>
+        {existingFile ? (
+          <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingFile.uploaded_at)}</span>
+            <div className="flex gap-1.5 items-center">
+              <a 
+                href={existingFile.file_url} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
+                title="View File"
+              >
+                <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+              </a>
+              <button 
+                type="button" 
+                onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
+                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
+                title="Delete File"
+              >
+                <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <input 
+            type="file" 
+            accept=".pdf, .jpg, .jpeg, .png"
+            disabled={isPending}
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
+            }}
+            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
+          />
+        )}
+      </div>
+    )
+  }
+
   const executeDelete = async () => {
     if (!deleteTarget) return
 
@@ -190,51 +322,7 @@ export default function Section2BadanHukumPage() {
     })
   }
 
-  const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
-    const existingFile = uploadedDocs.find(doc => doc.document_type === docType)
-    return (
-      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
-        <div>
-          <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
-        </div>
-        {existingFile ? (
-          <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingFile.uploaded_at)}</span>
-            <div className="flex gap-1.5 items-center">
-              <a 
-                href={existingFile.file_url} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
-                title="View File"
-              >
-                <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
-              </a>
-              <button 
-                type="button" 
-                onClick={() => setDeleteTarget({ id: existingFile.id, url: existingFile.file_url })} 
-                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
-                title="Delete File"
-              >
-                <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <input 
-            type="file" 
-            accept=".pdf, .jpg, .jpeg, .png"
-            disabled={isPending}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
-            }}
-            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
-          />
-        )}
-      </div>
-    )
-  }
+
 
   if (isLoading) {
     return (

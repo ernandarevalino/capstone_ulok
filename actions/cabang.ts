@@ -516,7 +516,8 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     if (!file) throw new Error('Berkas data file fisik kosong.')
 
     const fileExtension = file.name.split('.').pop()
-    const storagePath = `${ulokId}/${docType}-${Date.now()}.${fileExtension}`
+    const randomString = Math.random().toString(36).substring(2, 7)
+    const storagePath = `${ulokId}/${docType}-${Date.now()}-${randomString}.${fileExtension}`
     
     const { error: storageError } = await supabase.storage
       .from('dokumen-ulok')
@@ -528,12 +529,16 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       .from('dokumen-ulok')
       .getPublicUrl(storagePath)
 
-    const { data: existingDoc } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('ulok_id', ulokId)
-      .eq('document_type', docType)
-      .maybeSingle()
+    let existingDoc = null
+    if (docType !== 'dokumen_tambahan') {
+      const { data } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('ulok_id', ulokId)
+        .eq('document_type', docType)
+        .maybeSingle()
+      existingDoc = data
+    }
 
     if (existingDoc) {
       const { error: updateError } = await supabase
