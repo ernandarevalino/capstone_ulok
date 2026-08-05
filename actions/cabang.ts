@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
 import { updateUlokProgressAndTimestamp } from './pengelompokan'
-import { calculateProgress } from '@/utils/progress'
+import { calculateProgress, getEffectiveChecklistId } from '@/utils/progress'
 
 // === ACTIONS: AMBIL DAFTAR USULAN LOKASI ===
 export async function getUlokSubmissions() {
@@ -303,6 +303,9 @@ export async function getUploadedDocuments(ulokId: string) {
       .from('documents')
       .select('*')
       .eq('ulok_id', ulokId)
+      .order('is_latest', { ascending: false })
+      .order('version', { ascending: false })
+      .order('uploaded_at', { ascending: false })
 
     if (error) throw error
     return { success: true, data }
@@ -529,40 +532,58 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       .from('dokumen-ulok')
       .getPublicUrl(storagePath)
 
-    let existingDoc = null
-    if (docType !== 'dokumen_tambahan') {
-      const { data } = await supabase
-        .from('documents')
-        .select('id')
-        .eq('ulok_id', ulokId)
-        .eq('document_type', docType)
-        .maybeSingle()
-      existingDoc = data
+    let checklistId = null
+    const { data: submission } = await supabase
+      .from('ulok_submissions')
+      .select('jenis_badan_hukum')
+      .eq('id', ulokId)
+      .single()
+
+    if (submission) {
+      checklistId = getEffectiveChecklistId({ document_type: docType }, submission.jenis_badan_hukum)
     }
 
-    if (existingDoc) {
-      const { error: updateError } = await supabase
+    let nextVersion = 1
+    if (docType !== 'dokumen_tambahan') {
+      const query = supabase
         .from('documents')
-        .update({ 
-          file_url: publicUrl, 
-          uploaded_at: new Date().toISOString(),
-          uploaded_by: user.id
-        })
-        .eq('id', existingDoc.id)
-      if (updateError) throw updateError
-    } else {
-      const { error: insertError } = await supabase
-        .from('documents')
-        .insert([
-          { 
-            ulok_id: ulokId, 
-            document_type: docType, 
-            file_url: publicUrl,
-            uploaded_by: user.id
-          }
-        ])
-      if (insertError) throw insertError
+        .select('id, version')
+        .eq('ulok_id', ulokId)
+      
+      if (checklistId !== null && checklistId !== undefined) {
+        query.eq('checklist_id', checklistId)
+      } else {
+        query.eq('document_type', docType)
+      }
+
+      const { data: existingDocs } = await query
+
+      if (existingDocs && existingDocs.length > 0) {
+        const maxVersion = existingDocs.reduce((max, d) => Math.max(max, d.version || 1), 0)
+        nextVersion = maxVersion + 1
+
+        const existingIds = existingDocs.map(d => d.id)
+        await supabase
+          .from('documents')
+          .update({ is_latest: false })
+          .in('id', existingIds)
+      }
     }
+
+    const { error: insertError } = await supabase
+      .from('documents')
+      .insert([
+        { 
+          ulok_id: ulokId, 
+          document_type: docType,
+          checklist_id: checklistId,
+          file_url: publicUrl,
+          uploaded_by: user.id,
+          version: nextVersion,
+          is_latest: true
+        }
+      ])
+    if (insertError) throw insertError
 
     const { data: currentUlok, error: ulokError } = await supabase
       .from('ulok_submissions')
@@ -647,7 +668,7 @@ export async function deleteUlokFile(docId: string, fileUrl: string) {
     
     const { data: docData } = await supabase
       .from('documents')
-      .select('ulok_id')
+      .select('ulok_id, checklist_id, document_type, is_latest')
       .eq('id', docId)
       .single()
 
@@ -664,8 +685,37 @@ export async function deleteUlokFile(docId: string, fileUrl: string) {
 
     if (dbError) throw dbError
 
-    if (docData?.ulok_id) {
-      await updateUlokProgressAndTimestamp(docData.ulok_id)
+    if (docData) {
+      const { ulok_id, checklist_id, document_type, is_latest } = docData
+      
+      // If deleted file was the latest, promote the previous highest version
+      if (is_latest && document_type !== 'dokumen_tambahan') {
+        const query = supabase
+          .from('documents')
+          .select('id')
+          .eq('ulok_id', ulok_id)
+        
+        if (checklist_id !== null && checklist_id !== undefined) {
+          query.eq('checklist_id', checklist_id)
+        } else {
+          query.eq('document_type', document_type)
+        }
+
+        const { data: prevDocs } = await query
+          .order('version', { ascending: false })
+          .limit(1)
+
+        if (prevDocs && prevDocs.length > 0) {
+          await supabase
+            .from('documents')
+            .update({ is_latest: true })
+            .eq('id', prevDocs[0].id)
+        }
+      }
+
+      if (ulok_id) {
+        await updateUlokProgressAndTimestamp(ulok_id)
+      }
     }
 
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section2`)

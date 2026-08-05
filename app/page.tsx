@@ -143,7 +143,6 @@ export default function WelcomePage() {
                   fill
                   sizes="(max-w-176px) 100vw, 176px"
                   className="object-contain" 
-                  priority
                 />
               </div>
               <div className="hidden dark:block relative w-full h-11">
@@ -153,7 +152,6 @@ export default function WelcomePage() {
                   fill
                   sizes="(max-w-176px) 100vw, 176px"
                   className="object-contain" 
-                  priority
                 />
               </div>
             </div>

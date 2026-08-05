@@ -175,7 +175,10 @@ export async function getPengelompokanData() {
         ...(rawItem as any).metode_saw
       }
 
-      const docs = rawItem.documents || []
+      const docs = (rawItem.documents || []).sort((a: any, b: any) => {
+        if (a.is_latest !== b.is_latest) return a.is_latest ? -1 : 1
+        return (b.version || 1) - (a.version || 1) || new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+      })
 
       // Calculate checklistMasterIds (denominator)
       const checklistMasterIds = getChecklistMasterIds(flattenedSubmission, docs)

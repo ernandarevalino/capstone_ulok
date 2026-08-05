@@ -37,10 +37,15 @@ export async function getAssessorSubmissions() {
     if (error) throw error
 
     const data = (rawData || []).map((item: any) => {
-      const { numerator, denominator, persentase } = calculateProgress(item, item.documents || [])
+      const sortedDocs = (item.documents || []).sort((a: any, b: any) => {
+        if (a.is_latest !== b.is_latest) return a.is_latest ? -1 : 1
+        return (b.version || 1) - (a.version || 1) || new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+      })
+      const { numerator, denominator, persentase } = calculateProgress(item, sortedDocs)
       return {
         ...item,
         ...item.metode_saw,
+        documents: sortedDocs,
         numerator,
         denominator,
         persentase

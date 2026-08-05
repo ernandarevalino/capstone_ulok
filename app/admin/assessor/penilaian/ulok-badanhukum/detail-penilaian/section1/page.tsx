@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
-import { Check, Loader2, Download } from 'lucide-react'
+import { Check, Loader2, Download, History } from 'lucide-react'
 import { toggleDocumentVerification, updateLastReviewedTimestamp } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 import { getCurrentProfile } from '@/actions/auth'
@@ -186,7 +186,8 @@ export default function Section1BadanHukumAssessorPage() {
   }
 
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
-    const existingDoc = uploadedDocs.find(d => d.document_type === docType)
+    const allFiles = uploadedDocs.filter(d => d.document_type === docType)
+    const existingDoc = allFiles.find(d => d.is_latest) || allFiles[0]
 
     return (
       <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
@@ -395,6 +396,99 @@ export default function Section1BadanHukumAssessorPage() {
             {renderUploadSlot("ektp_direksi", "E-KTP Direksi / Pengurus", "Scan lembar identitas jajaran pengurus usaha")}
             {renderUploadSlot("rups_persetujuan", "Surat Persetujuan Dewan Komisaris / RUPS (PT)", "Format scan surat keputusan keputusan sewa")}
           </div>
+        </div>
+
+        {/* === HISTORI REVISI DOKUMEN === */}
+        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
+          <div className="border-b border-gray-200 dark:border-gray-800 pb-2">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+              <History className="w-4 h-4 text-blue-900 dark:text-blue-400" />
+              Histori Revisi Dokumen (Versi Lama)
+            </h3>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+              Daftar file versi sebelumnya yang telah diperbarui oleh Admin Cabang untuk dibandingkan.
+            </p>
+          </div>
+
+          {(() => {
+            const sectionDocTypes = ["ektp_mewakili", "akta_pendirian", "anggaran_dasar", "nib_oss", "npwp_badan", "sppkp", "surat_pernyataan_nonpkp", "akta_kuasa", "akta_penyesuaian", "akta_direksi_komisaris", "akta_pengurus", "ektp_direksi", "rups_persetujuan"];
+            const getDocLabel = (type: string) => {
+              const labels: Record<string, string> = {
+                ektp_mewakili: "E-KTP (Yang Mewakili / Menandatangani)",
+                akta_pendirian: "Akta Pendirian & SK Menteri",
+                anggaran_dasar: "Anggaran Dasar Terbaru & SK Menteri",
+                nib_oss: "NIB OSS RBA",
+                npwp_badan: "NPWP Badan Usaha",
+                sppkp: "Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)",
+                surat_pernyataan_nonpkp: "Surat Pernyataan Non-PKP",
+                akta_kuasa: "Akta Kuasa Notariil / Legalisasi",
+                akta_penyesuaian: "Akta Penyesuaian dengan UU No. 40 Tahun 2007",
+                akta_direksi_komisaris: "Akta Susunan Direksi & Komisaris Terakhir",
+                akta_pengurus: "Akta Susunan Pengurus Terakhir",
+                ektp_direksi: "E-KTP Direksi / Pengurus",
+                rups_persetujuan: "Surat Persetujuan Dewan Komisaris / RUPS",
+              };
+              return labels[type] || type;
+            };
+
+            const historyFiles = uploadedDocs.filter(d => !d.is_latest && sectionDocTypes.includes(d.document_type));
+
+            if (historyFiles.length === 0) {
+              return (
+                <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 text-center">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-medium italic select-none">
+                    ℹ️ Tidak ada riwayat revisi berkas lama pada section ini.
+                  </span>
+                </div>
+              );
+            }
+
+            // Group files by type
+            const grouped = historyFiles.reduce((acc, file) => {
+              if (!acc[file.document_type]) acc[file.document_type] = [];
+              acc[file.document_type].push(file);
+              return acc;
+            }, {} as Record<string, any[]>);
+
+            return (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {(Object.entries(grouped) as [string, any[]][]).map(([docType, files]) => (
+                  <div key={docType} className="py-3 first:pt-0 last:pb-0 space-y-2">
+                    <span className="text-[11px] font-extrabold text-gray-700 dark:text-gray-300 block">
+                      {getDocLabel(docType)}
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {files.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-150 dark:border-gray-700/30">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-[10px] font-bold text-gray-650 dark:text-gray-300 flex items-center gap-1.5">
+                              <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded text-[8px] font-extrabold">
+                                v{file.version || 1}
+                              </span>
+                              Versi Lama
+                            </span>
+                            <span className="text-[8px] text-gray-400 dark:text-gray-500 italic">
+                              Diunggah: {formatWaktu(file.uploaded_at).trim().replace(/[()]/g, '')}
+                            </span>
+                          </div>
+                          <a 
+                            href={file.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="p-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 flex items-center gap-1 text-[9px] font-bold"
+                            title="Buka File"
+                          >
+                            <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+                            Buka File
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* === NAVIGASI === */}
