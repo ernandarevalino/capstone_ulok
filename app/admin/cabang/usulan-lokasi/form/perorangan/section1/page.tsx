@@ -282,13 +282,13 @@ export default function Section1PeroranganPage() {
                     {historyFiles.map((file) => (
                       <div key={file.id} className="flex items-center justify-between gap-2 bg-gray-100/50 dark:bg-gray-800/30 p-1.5 rounded-lg border border-gray-200/40 dark:border-gray-700/20 w-full">
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-0.5">
+                          <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-0.5">
                             <span className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-455 px-1 py-0.2 rounded text-[7px]">
                               v{file.version || 1}
                             </span>
                             Versi Lama
                           </span>
-                          <span className="text-[7px] text-gray-400 dark:text-gray-500 italic">
+                          <span className="text-[11px] text-gray-400 dark:text-gray-500 italic">
                             Unggah{formatWaktu(file.uploaded_at)}
                           </span>
                         </div>
@@ -300,7 +300,7 @@ export default function Section1PeroranganPage() {
                             className="p-0.5 rounded bg-white dark:bg-gray-755 border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-300 transition-all"
                             title="View File"
                           >
-                            <img src="/icons/icon-view.svg" alt="View" className="w-3/3 object-contain dark:invert" />
+                            <img src="/icons/icon-view.svg" alt="View" className="w-4 h-4 object-contain dark:invert" />
                           </a>
                           <button 
                             type="button" 
