@@ -243,7 +243,7 @@ export default function ProfileGlobal() {
         <div className="p-4 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 rounded-2xl text-xs flex items-start gap-3 leading-relaxed font-medium shadow-xs">
           <Info className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400 mt-0.5" />
           <span>
-            Akun Anda sepenuhnya dikelola oleh sistem pusat keamanan PRIOLO. Perubahan data krusial seperti NIK, nama lengkap, serta {profile?.role === 'admin_cabang' ? 'mutasi wilayah penugasan kantor cabang' : 'tingkat otorisasi hak akses penilai'} hanya dapat diproses secara resmi melalui koordinasi langsung dengan tim <strong>Super Admin</strong>.
+            Akun Anda sepenuhnya dikelola oleh sistem pusat keamanan PRISMA. Perubahan data krusial seperti NIK, nama lengkap, serta {profile?.role === 'admin_cabang' ? 'mutasi wilayah penugasan kantor cabang' : 'tingkat otorisasi hak akses penilai'} hanya dapat diproses secara resmi melalui koordinasi langsung dengan tim <strong>Super Admin</strong>.
           </span>
         </div>
 
@@ -266,7 +266,7 @@ export default function ProfileGlobal() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
             <img src="/icons/icon-hand.svg" alt="Confirm Logout" className="w-16 h-16 mx-auto mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Apakah Anda yakin ingin keluar dari aplikasi PRIOLO?
+              Apakah Anda yakin ingin keluar dari aplikasi PRISMA?
             </p>
             <div className="flex items-center justify-center gap-4 pt-2">
               <button

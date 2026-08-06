@@ -55,7 +55,7 @@ export default function HeaderMobile() {
         <Link href="/admin/cabang" className="flex items-center">
           <img 
             src="/images/logo-priolo-white.png" 
-            alt="Logo Priolo" 
+            alt="Logo PRISMA" 
             className="h-9 w-auto object-contain" 
           />
         </Link>

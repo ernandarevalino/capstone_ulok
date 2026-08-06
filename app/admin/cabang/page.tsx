@@ -123,7 +123,9 @@ export default function AdminCabangPage() {
             🏢 Dashboard Cabang
           </span>
           <h1 className="text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-            Selamat Datang Kembali, {fullName}!
+            Selamat Datang Kembali, {loading ? (
+              <span className="inline-block h-6 w-32 bg-white/20 animate-pulse rounded-md align-middle" />
+            ) : fullName}!
           </h1>
           <p className="text-blue-100/80 dark:text-slate-300 text-xs md:text-sm max-w-xl leading-relaxed">
             Pantau status usulan lokasi (ULOK) cabang Anda, kelola draf dokumen, perbaiki revisi, dan pantau penilaian real-time di sini.
@@ -135,7 +137,11 @@ export default function AdminCabangPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-gray-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Total Pengajuan</p>
-            <h3 className="text-3xl font-black text-gray-800 dark:text-slate-100 tracking-tight">{loading ? '...' : totalSubmissions}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-gray-800 dark:text-slate-100 tracking-tight">{totalSubmissions}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Semua berkas terdaftar</p>
           </div>
           <div className="bg-[#142B4D]/10 dark:bg-slate-800 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -146,7 +152,11 @@ export default function AdminCabangPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-slate-400 shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Status Draft</p>
-            <h3 className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">{loading ? '...' : draftCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">{draftCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Belum diajukan ke pusat</p>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -157,7 +167,11 @@ export default function AdminCabangPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-[#FE9A00] text-xs font-bold uppercase tracking-wider">Dalam Review</p>
-            <h3 className="text-3xl font-black text-[#FE9A00] tracking-tight">{loading ? '...' : inReviewCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-[#FE9A00] tracking-tight">{inReviewCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Sedang dinilai assessor</p>
           </div>
           <div className="bg-[#FE9A00]/10 dark:bg-[#FE9A00]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -168,7 +182,11 @@ export default function AdminCabangPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-[#D11A22] text-xs font-bold uppercase tracking-wider">Butuh Revisi</p>
-            <h3 className="text-3xl font-black text-[#D11A22] tracking-tight">{loading ? '...' : revisionCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-[#D11A22] tracking-tight">{revisionCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Perlu perbaikan berkas</p>
           </div>
           <div className="bg-[#D11A22]/10 dark:bg-[#D11A22]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -185,40 +203,62 @@ export default function AdminCabangPage() {
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Visualisasi penyebaran status usulan lokasi saat ini</p>
         </div>
-        <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-6">
-          <div className="w-full md:w-1/2 h-full min-h-[180px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={displayChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={88}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {displayChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} className="transition-all duration-300 hover:opacity-80 outline-none" />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomChartTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-2">
-            <h4 className="text-xs font-extrabold uppercase text-gray-400 dark:text-slate-500 tracking-wider mb-2">Legenda Status</h4>
-            {displayChartData.map((entry, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                  <span className="text-gray-600 dark:text-slate-300">{entry.name}</span>
-                </div>
-                <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{entry.value}</span>
+        {loading ? (
+          <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-6">
+            <div className="w-full md:w-1/2 flex justify-center items-center">
+              <div className="relative w-40 h-40 rounded-full border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-900 border border-dashed border-gray-100 dark:border-slate-800" />
               </div>
-            ))}
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col gap-3">
+              <div className="h-3 w-32 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md mb-2" />
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-slate-800/50 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse" />
+                    <div className="w-28 h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  </div>
+                  <div className="w-8 h-5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-6">
+            <div className="w-full md:w-1/2 h-full min-h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={displayChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={88}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {displayChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} className="transition-all duration-300 hover:opacity-80 outline-none" />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomChartTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col gap-2">
+              <h4 className="text-xs font-extrabold uppercase text-gray-400 dark:text-slate-500 tracking-wider mb-2">Legenda Status</h4>
+              {displayChartData.map((entry, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-gray-600 dark:text-slate-300">{entry.name}</span>
+                  </div>
+                  <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -236,7 +276,20 @@ export default function AdminCabangPage() {
 
           <div className="p-4 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[350px] scrollbar-thin">
             {loading ? (
-              <div className="text-center py-12 text-xs text-gray-400 dark:text-slate-500">Loading aktivitas...</div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="py-3 flex gap-3 px-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse mt-1.5 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-2/5" />
+                        <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-12" />
+                      </div>
+                      <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-4/5" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-12 text-xs text-gray-400 dark:text-slate-500 italic">Tidak ada aktivitas terbaru.</div>
             ) : (
@@ -283,9 +336,22 @@ export default function AdminCabangPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50 text-gray-700 dark:text-slate-300">
                 {loading ? (
-                  <tr>
-                    <td colSpan={4} className="text-center p-12 text-xs text-gray-400 dark:text-slate-500">Loading data skor...</td>
-                  </tr>
+                  [1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n}>
+                      <td className="p-3.5 pl-5">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-2/3" />
+                      </td>
+                      <td className="p-3.5">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-20" />
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="h-4.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full w-16 mx-auto" />
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-10 mx-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : topScores.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center p-12 text-xs text-gray-400 dark:text-slate-500 italic">Belum ada lokasi yang dinilai.</td>

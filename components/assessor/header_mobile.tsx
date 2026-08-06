@@ -55,7 +55,7 @@ export default function HeaderMobile() {
         <Link href="/admin/assessor" className="flex items-center">
           <img 
             src="/images/logo-priolo-white.png" 
-            alt="Logo Priolo" 
+            alt="Logo PRISMA" 
             className="h-9 w-auto object-contain" 
           />
           <span className="text-[9px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase">

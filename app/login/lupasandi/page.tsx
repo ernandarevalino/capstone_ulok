@@ -45,12 +45,12 @@ export default function LupaSandiPage() {
           <div className="mb-4 flex justify-center transition-transform duration-300 hover:scale-102">
             <img
               src="/images/logo-priolo.png"
-              alt="Logo Priolo Alfamidi"
+              alt="Logo PRISMA Alfamidi"
               className="block dark:hidden h-20 w-auto object-contain"
             />
             <img
               src="/images/logo-priolo-white.png"
-              alt="Logo Priolo Alfamidi White"
+              alt="Logo PRISMA Alfamidi White"
               className="hidden dark:block h-18 w-auto object-contain"
             />
           </div>

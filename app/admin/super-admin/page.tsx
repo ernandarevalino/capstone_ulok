@@ -102,9 +102,13 @@ export default function SuperAdminDashboard() {
         <div className="bg-white dark:bg-[#111C34] p-5 rounded-2xl border border-gray-100 dark:border-gray-800/40 border-t-4 border-t-[#142B4D] flex items-center justify-between shadow-xs hover:shadow-[0_20px_40px_-15px_rgba(20,43,77,0.25)] dark:hover:shadow-[0_20px_45px_-10px_rgba(20,43,77,0.45)] hover:border-[#142B4D]/30 dark:hover:border-[#142B4D]/60 hover:-translate-y-1.5 transition-all duration-300 ease-out group cursor-pointer">
           <div className="space-y-1.5">
             <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider transition-colors duration-300 group-hover:text-[#142B4D] dark:group-hover:text-blue-400">Total Admin Cabang</p>
-            <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
-              {loading ? '...' : `${stats.adminCabang} User`}
-            </h3>
+            {loading ? (
+              <div className="h-9 w-20 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
+                {stats.adminCabang} User
+              </h3>
+            )}
             <Link href="/admin/super-admin/daftaruser/admincabang" className="text-[11px] text-[#142B4D] dark:text-blue-400 font-bold inline-flex items-center gap-1 pt-1 transition-opacity duration-200 hover:opacity-75">
               Kelola Admin Cabang 
               <ArrowRight className="w-3 h-3 transform transition-transform duration-300 ease-out group-hover:translate-x-1.5" />
@@ -123,9 +127,13 @@ export default function SuperAdminDashboard() {
         <div className="bg-white dark:bg-[#111C34] p-5 rounded-2xl border border-gray-100 dark:border-gray-800/40 border-t-4 border-t-[#FE9A00] flex items-center justify-between shadow-xs hover:shadow-[0_20px_40px_-15px_rgba(254,154,0,0.2)] dark:hover:shadow-[0_20px_45px_-10px_rgba(254,154,0,0.35)] hover:border-[#FE9A00]/30 dark:hover:border-[#FE9A00]/50 hover:-translate-y-1.5 transition-all duration-300 ease-out group cursor-pointer">
           <div className="space-y-1.5">
             <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider transition-colors duration-300 group-hover:text-[#FE9A00]">Total Tim Assessor</p>
-            <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
-              {loading ? '...' : `${stats.assessor} User`}
-            </h3>
+            {loading ? (
+              <div className="h-9 w-20 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
+                {stats.assessor} User
+              </h3>
+            )}
             <Link href="/admin/super-admin/daftaruser/assessor" className="text-[11px] text-[#FE9A00] font-bold inline-flex items-center gap-1 pt-1 transition-opacity duration-200 hover:opacity-75">
               Kelola Tim Penilai 
               <ArrowRight className="w-3 h-3 transform transition-transform duration-300 ease-out group-hover:translate-x-1.5" />
@@ -144,9 +152,13 @@ export default function SuperAdminDashboard() {
         <div className="bg-white dark:bg-[#111C34] p-5 rounded-2xl border border-gray-100 dark:border-gray-800/40 border-t-4 border-t-[#D11A22] flex items-center justify-between shadow-xs hover:shadow-[0_20px_40px_-15px_rgba(209,26,34,0.18)] dark:hover:shadow-[0_20px_45px_-10px_rgba(209,26,34,0.35)] hover:border-[#D11A22]/30 dark:hover:border-[#D11A22]/50 hover:-translate-y-1.5 transition-all duration-300 ease-out group cursor-pointer">
           <div className="space-y-1.5">
             <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider transition-colors duration-300 group-hover:text-[#D11A22]">Total Pengajuan ULOK</p>
-            <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
-              {loading ? '...' : `${stats.totalUlok} Berkas`}
-            </h3>
+            {loading ? (
+              <div className="h-9 w-20 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight">
+                {stats.totalUlok} Berkas
+              </h3>
+            )}
             <span className="text-[11px] text-gray-400 dark:text-slate-500 block pt-1 font-bold tracking-wide transition-colors duration-300 group-hover:text-[#D11A22]">
               Terintegrasi Pusat
             </span>
@@ -171,42 +183,64 @@ export default function SuperAdminDashboard() {
           </h3>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Visualisasi perbandingan volume user aktif dan dokumen usulan masuk</p>
         </div>
-        <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-4">
-          <div className="w-full md:w-1/2 h-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={displayChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {displayChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} className="outline-none stroke-white dark:stroke-[#111C34] stroke-2" />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomChartTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-2">
-            <h4 className="text-xs font-extrabold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-2">Legenda Parameter</h4>
-            {displayChartData.map((entry, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1.5 border-b border-gray-50 dark:border-gray-800/30">
-                <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 rounded-md" style={{ backgroundColor: entry.color }} />
-                  <span className="text-gray-700 dark:text-gray-300">{entry.name}</span>
-                </div>
-                <span className="text-gray-900 dark:text-white font-extrabold">
-                  {loading ? '...' : entry.value}
-                </span>
+        {loading ? (
+          <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-6">
+            <div className="w-full md:w-1/2 flex justify-center items-center">
+              <div className="relative w-40 h-40 rounded-full border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-white dark:bg-[#111C34] border border-dashed border-gray-100 dark:border-gray-800/40" />
               </div>
-            ))}
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col gap-3">
+              <div className="h-3 w-32 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md mb-2" />
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800/30 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded bg-gray-200 dark:bg-slate-800 animate-pulse" />
+                    <div className="w-32 h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  </div>
+                  <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="h-64 flex flex-col md:flex-row items-center justify-around gap-4">
+            <div className="w-full md:w-1/2 h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={displayChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {displayChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} className="outline-none stroke-white dark:stroke-[#111C34] stroke-2" />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomChartTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col gap-2">
+              <h4 className="text-xs font-extrabold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-2">Legenda Parameter</h4>
+              {displayChartData.map((entry, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1.5 border-b border-gray-50 dark:border-gray-800/30">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded-md" style={{ backgroundColor: entry.color }} />
+                    <span className="text-gray-700 dark:text-gray-300">{entry.name}</span>
+                  </div>
+                  <span className="text-gray-900 dark:text-white font-extrabold">
+                    {entry.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* === LAYOUT BAWAH === */}
@@ -230,7 +264,20 @@ export default function SuperAdminDashboard() {
 
           <div className="p-5 flex-1 divide-y divide-gray-100 dark:divide-gray-800/30 overflow-y-auto max-h-87.5">
             {loading ? (
-              <div className="text-center py-12 text-sm text-gray-400 dark:text-gray-500">Memuat log aktivitas...</div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <div key={n} className="py-3 flex gap-3 px-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse mt-1.5 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-1/3" />
+                        <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-12" />
+                      </div>
+                      <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-5/6" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-12 text-sm text-gray-400 dark:text-gray-500">Tidak ada aktivitas terdeteksi dari Cabang maupun Assessor.</div>
             ) : (

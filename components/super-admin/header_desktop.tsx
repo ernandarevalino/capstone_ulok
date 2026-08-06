@@ -49,7 +49,7 @@ export default function HeaderDesktop() {
       <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
         <img 
           src="/images/logo-priolo-white.png" 
-          alt="Logo Priolo" 
+          alt="Logo PRISMA" 
           className="h-12 w-auto object-contain" 
         />
       </Link>
