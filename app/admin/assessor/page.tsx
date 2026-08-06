@@ -134,7 +134,9 @@ export default function AssessorDashboardPage() {
             ⚡ Live Update Sistem
           </span>
           <h1 className="text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-            Panel Assessor Nasional, {fullName}!
+            Panel Assessor Nasional, {loading ? (
+              <span className="inline-block h-6 w-32 bg-white/20 animate-pulse rounded-md align-middle" />
+            ) : fullName}!
           </h1>
           <p className="text-blue-100/80 dark:text-slate-300 text-xs md:text-sm max-w-2xl leading-relaxed">
             Anda memegang kendali penilaian seluruh cabang. Periksa antrean review usulan lokasi (ULOK), berikan catatan revisi, dan pantau perangkingan nilai SAW terbaik secara terpusat.
@@ -147,7 +149,11 @@ export default function AssessorDashboardPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-[#FE9A00] text-xs font-bold uppercase tracking-wider">Antrean Review</p>
-            <h3 className="text-3xl font-black text-[#FE9A00] tracking-tight">{loading ? '...' : inReviewCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-[#FE9A00] tracking-tight">{inReviewCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Menunggu penilaian Anda</p>
           </div>
           <div className="bg-[#FE9A00]/10 dark:bg-[#FE9A00]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -158,7 +164,11 @@ export default function AssessorDashboardPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-[#D11A22] text-xs font-bold uppercase tracking-wider">Sedang Direvisi</p>
-            <h3 className="text-3xl font-black text-[#D11A22] tracking-tight">{loading ? '...' : revisionCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-[#D11A22] tracking-tight">{revisionCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Dikembalikan ke cabang</p>
           </div>
           <div className="bg-[#D11A22]/10 dark:bg-[#D11A22]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -169,7 +179,11 @@ export default function AssessorDashboardPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-emerald-500 shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">Selesai Dinilai</p>
-            <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{loading ? '...' : completedCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{completedCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Approved & Rejected</p>
           </div>
           <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -180,7 +194,11 @@ export default function AssessorDashboardPage() {
         <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
           <div className="space-y-1">
             <p className="text-[#142B4D] dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Cabang Berpartisipasi</p>
-            <h3 className="text-3xl font-black text-[#142B4D] dark:text-white tracking-tight">{loading ? '...' : activeBranchesCount}</h3>
+            {loading ? (
+              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+            ) : (
+              <h3 className="text-3xl font-black text-[#142B4D] dark:text-white tracking-tight">{activeBranchesCount}</h3>
+            )}
             <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Cabang mengirim data aktif</p>
           </div>
           <div className="bg-[#142B4D]/10 dark:bg-slate-800 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
@@ -199,39 +217,60 @@ export default function AssessorDashboardPage() {
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Komposisi tumpukan pekerjaan review saat ini</p>
           </div>
-          <div className="h-64 flex flex-col sm:flex-row items-center justify-around gap-6">
-            <div className="w-full sm:w-1/2 h-full min-h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={displayPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={85}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {displayPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className="outline-none transition-all duration-300 hover:opacity-80" />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomChartTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="w-full sm:w-1/2 flex flex-col gap-2">
-              {displayPieData.map((entry, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 px-2 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                    <span className="text-gray-600 dark:text-slate-300">{entry.name}</span>
-                  </div>
-                  <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{entry.value} Data</span>
+          {loading ? (
+            <div className="h-64 flex flex-col sm:flex-row items-center justify-around gap-6">
+              <div className="w-full sm:w-1/2 flex justify-center items-center">
+                <div className="relative w-40 h-40 rounded-full border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-900 border border-dashed border-gray-100 dark:border-slate-800" />
                 </div>
-              ))}
+              </div>
+              <div className="w-full sm:w-1/2 flex flex-col gap-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-slate-800/50 px-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse" />
+                      <div className="w-28 h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                    </div>
+                    <div className="w-12 h-5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="h-64 flex flex-col sm:flex-row items-center justify-around gap-6">
+              <div className="w-full sm:w-1/2 h-full min-h-[180px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={displayPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {displayPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} className="outline-none transition-all duration-300 hover:opacity-80" />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomChartTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-full sm:w-1/2 flex flex-col gap-2">
+                {displayPieData.map((entry, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 px-2 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                      <span className="text-gray-600 dark:text-slate-300">{entry.name}</span>
+                    </div>
+                    <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{entry.value} Data</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
@@ -242,25 +281,39 @@ export default function AssessorDashboardPage() {
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Cabang penyuplai usulan lokasi terbanyak di luar tipe draf</p>
           </div>
-          <div className="h-64 w-full">
-            {branchDistribution.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-gray-400 italic">Tidak ada data distribusi cabang</div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={branchDistribution} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" className="dark:stroke-slate-800" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" allowDecimals={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: 'rgba(20, 43, 77, 0.04)' }} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    {branchDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="#142B4D" className="fill-[#142B4D] dark:fill-blue-600 transition-all duration-300 hover:opacity-80" />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          {loading ? (
+            <div className="h-64 flex items-end justify-between gap-4 px-4 pt-8 pb-2">
+              {[70, 45, 85, 55, 65].map((h, i) => (
+                <div key={i} className="flex flex-col items-center gap-2.5 w-full">
+                  <div 
+                    className="w-full bg-gray-200 dark:bg-slate-800 animate-pulse rounded-t-lg" 
+                    style={{ height: `${h}%` }} 
+                  />
+                  <div className="w-10 h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              {branchDistribution.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400 italic">Tidak ada data distribusi cabang</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={branchDistribution} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" className="dark:stroke-slate-800" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" allowDecimals={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: 'rgba(20, 43, 77, 0.04)' }} />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                      {branchDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill="#142B4D" className="fill-[#142B4D] dark:fill-blue-600 transition-all duration-300 hover:opacity-80" />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -279,7 +332,20 @@ export default function AssessorDashboardPage() {
 
           <div className="p-3 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[350px] scrollbar-thin">
             {loading ? (
-              <div className="text-center py-12 text-xs text-gray-400">Loading antrean berkas...</div>
+              <div className="space-y-3.5 py-2">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-3">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-3/4" />
+                      <div className="flex gap-2">
+                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-24" />
+                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-16" />
+                      </div>
+                    </div>
+                    <div className="h-8 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-xl w-full sm:w-28 shrink-0" />
+                  </div>
+                ))}
+              </div>
             ) : reviewQueue.length === 0 ? (
               <div className="text-center py-12 text-xs text-gray-400 italic">Semua berkas masuk telah mulai dinilai atau dinilai penuh! ✨</div>
             ) : (
@@ -330,9 +396,22 @@ export default function AssessorDashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50 text-gray-700 dark:text-slate-300">
                 {loading ? (
-                  <tr>
-                    <td colSpan={4} className="text-center p-12 text-xs text-gray-400">Loading data peringkat...</td>
-                  </tr>
+                  [1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n}>
+                      <td className="p-3.5 pl-5">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-2/3" />
+                      </td>
+                      <td className="p-3.5">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-24" />
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="h-4.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full w-16 mx-auto" />
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-10 mx-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : topNationalScores.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center p-12 text-xs text-gray-400 italic">Belum ada lokasi yang dinilai skala nasional.</td>

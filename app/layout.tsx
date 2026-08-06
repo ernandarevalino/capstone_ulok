@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Priolo",
+  title: "PRISMA",
   description: "Sistem Penunjang Keputusan Pemrosesan Dokumen ULOK",
   icons: {
     icon: "/icons/logo.png",

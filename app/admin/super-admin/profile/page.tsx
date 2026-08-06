@@ -232,7 +232,7 @@ export default function SuperAdminProfilePage() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
             <img src="/icons/icon-hand.svg" alt="Confirm Logout" className="w-16 h-16 mx-auto mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Apakah Anda yakin ingin keluar dari panel Super Admin PRIOLO?
+              Apakah Anda yakin ingin keluar dari panel Super Admin PRISMA?
             </p>
             <div className="flex items-center justify-center gap-4 pt-2">
               <button

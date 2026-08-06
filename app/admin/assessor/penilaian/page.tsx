@@ -62,7 +62,7 @@ export default function PenilaianPage() {
   useEffect(() => {
     fetchData();
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("priolo_assessor_viewed_ulok");
+      const saved = localStorage.getItem("prisma_assessor_viewed_ulok");
       if (saved) {
         try {
           setViewedIds(JSON.parse(saved));
@@ -144,7 +144,7 @@ export default function PenilaianPage() {
         const updatedViewed = [...viewedIds, id];
         setViewedIds(updatedViewed);
         if (typeof window !== "undefined") {
-          localStorage.setItem("priolo_assessor_viewed_ulok", JSON.stringify(updatedViewed));
+          localStorage.setItem("prisma_assessor_viewed_ulok", JSON.stringify(updatedViewed));
         }
       }
       router.push(`${getFormRoute(jenisBadanHukum)}?id=${id}`);
@@ -515,7 +515,7 @@ export default function PenilaianPage() {
       <div className="max-w-255 mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-12">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Validasi & Penilaian Usulan Lokasi</h1>
-          <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">Sistem Pendukung Keputusan pemilihan lokasi ekspansi gerai baru PRIOLO.</p>
+          <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">Sistem Pendukung Keputusan pemilihan lokasi ekspansi gerai baru PRISMA.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:shrink-0">
           <div className="flex items-center gap-2 relative w-full lg:w-auto">
