@@ -70,15 +70,6 @@ export default function HeaderDesktop() {
           Dashboard
         </Link>
 
-        <Link
-          href="/admin/assessor/penilaian"
-          className={`pb-1 transition-colors border-b-2 ${isActive('/admin/assessor/penilaian')
-            ? 'text-white border-white'
-            : 'text-gray-400 border-transparent hover:text-white'
-            }`}
-        >
-          Penilaian
-        </Link>
 
         <Link
           href="/admin/assessor/pengelompokan"

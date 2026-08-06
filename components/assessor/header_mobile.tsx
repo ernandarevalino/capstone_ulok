@@ -101,15 +101,6 @@ export default function HeaderMobile() {
             Dashboard
           </Link>
 
-          <Link 
-            href="/admin/assessor/penilaian" 
-            onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/assessor/penilaian') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
-            }`}
-          >
-            Penilaian
-          </Link>
 
           <Link 
             href="/admin/assessor/pengelompokan" 

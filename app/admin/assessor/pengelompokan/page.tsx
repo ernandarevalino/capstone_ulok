@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useTransition } from 'react'
+import React, { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
 import { Download } from 'lucide-react'
@@ -101,55 +101,23 @@ export default function PengelompokanDashboard() {
     })
   }
 
-  // Get active tab data
-  const getActiveTabData = (): UlokGroupItem[] => {
-    switch (activeTab) {
-      case 'antreanAktif':
-        return data.antreanAktif
-      case 'patutDilihat':
-        return data.patutDilihat
-      case 'perluRevisi':
-        return data.perluRevisi
-      case 'selesai':
-        // Specifically for selesai, sort by SAW final score descending
-        return [...data.selesai].sort((a, b) => (b.saw?.final_score || 0) - (a.saw?.final_score || 0))
-      default:
-        return []
-    }
-  }
-
-  // Extract unique branch names from the dataset dynamically
-  const allBranches = Array.from(
-    new Set(
-      [
-        ...data.antreanAktif,
-        ...data.patutDilihat,
-        ...data.perluRevisi,
-        ...data.selesai
-      ]
-        .map((item) => item.profiles?.branches?.nama_cabang)
-        .filter(Boolean) as string[]
-    )
-  ).sort()
-
-  const badanHukumOptions = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
+  const queryLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery])
 
   // Helper to filter proposal items by all active filters
-  const applyAllFilters = (item: UlokGroupItem) => {
+  const applyAllFilters = React.useCallback((item: UlokGroupItem) => {
     // 1. Search Query filter
-    const q = searchQuery.toLowerCase()
     let matchesSearch = true
-    if (q) {
+    if (queryLower) {
       const namaLokasi = (item.nama_lokasi || '').toLowerCase()
       const namaPemilik = (item.nama_pemegang_hak || '').toLowerCase()
       const asalCabang = (item.profiles?.branches?.nama_cabang || '').toLowerCase()
       const jenisBadanHukum = (item.jenis_badan_hukum || '').toLowerCase()
 
       matchesSearch = (
-        namaLokasi.includes(q) ||
-        namaPemilik.includes(q) ||
-        asalCabang.includes(q) ||
-        jenisBadanHukum.includes(q)
+        namaLokasi.includes(queryLower) ||
+        namaPemilik.includes(queryLower) ||
+        asalCabang.includes(queryLower) ||
+        jenisBadanHukum.includes(queryLower)
       )
     }
 
@@ -160,30 +128,58 @@ export default function PengelompokanDashboard() {
     const matchesBadanHukum = selectedBadanHukum === 'all' || item.jenis_badan_hukum === selectedBadanHukum
 
     return matchesSearch && matchesBranch && matchesBadanHukum
-  }
+  }, [queryLower, selectedBranch, selectedBadanHukum])
 
-  // Filter items in active tab based on active filters
-  const filteredData = getActiveTabData().filter(applyAllFilters)
+  // Memoize filtered tab data
+  const filteredAntreanAktif = useMemo(() => data.antreanAktif.filter(applyAllFilters), [data.antreanAktif, applyAllFilters])
+  const filteredPatutDilihat = useMemo(() => data.patutDilihat.filter(applyAllFilters), [data.patutDilihat, applyAllFilters])
+  const filteredPerluRevisi = useMemo(() => data.perluRevisi.filter(applyAllFilters), [data.perluRevisi, applyAllFilters])
+  const filteredSelesai = useMemo(() => {
+    const list = data.selesai.filter(applyAllFilters)
+    return [...list].sort((a, b) => (b.saw?.final_score || 0) - (a.saw?.final_score || 0))
+  }, [data.selesai, applyAllFilters])
 
-  // Get dynamic count of filtered items per tab in real-time
-  const getFilteredCountForTab = (tabId: 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'): number => {
-    let list: UlokGroupItem[] = []
-    switch (tabId) {
+  // Memoize current active tab's filtered data
+  const filteredData = useMemo(() => {
+    switch (activeTab) {
       case 'antreanAktif':
-        list = data.antreanAktif
-        break
+        return filteredAntreanAktif
       case 'patutDilihat':
-        list = data.patutDilihat
-        break
+        return filteredPatutDilihat
       case 'perluRevisi':
-        list = data.perluRevisi
-        break
+        return filteredPerluRevisi
       case 'selesai':
-        list = data.selesai
-        break
+        return filteredSelesai
+      default:
+        return []
     }
-    return list.filter(applyAllFilters).length
-  }
+  }, [activeTab, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
+
+  // Memoize count of filtered items per tab in real-time
+  const tabCounts = useMemo(() => ({
+    antreanAktif: filteredAntreanAktif.length,
+    patutDilihat: filteredPatutDilihat.length,
+    perluRevisi: filteredPerluRevisi.length,
+    selesai: filteredSelesai.length
+  }), [filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
+
+  // Extract unique branch names from the dataset dynamically
+  const allBranches = useMemo(() => {
+    return Array.from(
+      new Set(
+        [
+          ...data.antreanAktif,
+          ...data.patutDilihat,
+          ...data.perluRevisi,
+          ...data.selesai
+        ]
+          .map((item) => item.profiles?.branches?.nama_cabang)
+          .filter(Boolean) as string[]
+      )
+    ).sort()
+  }, [data])
+
+  const badanHukumOptions = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
 
   // Pagination calculations
   const totalItems = filteredData.length
@@ -251,7 +247,7 @@ export default function PengelompokanDashboard() {
                         className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       >
                         <option value="all">Semua Cabang</option>
-                        {allBranches.map((br) => (
+                        {allBranches.map((br: any) => (
                           <option key={br} value={br}>
                             {br}
                           </option>
@@ -330,28 +326,28 @@ export default function PengelompokanDashboard() {
                 label: 'Antrean Aktif',
                 subtitle: 'Sedang Proses Review',
                 color: 'amber',
-                count: getFilteredCountForTab('antreanAktif')
+                count: tabCounts.antreanAktif
               },
               {
                 id: 'patutDilihat',
                 label: 'Patut Dilihat',
                 subtitle: 'Rekomendasi Prioritas',
                 color: 'purple',
-                count: getFilteredCountForTab('patutDilihat')
+                count: tabCounts.patutDilihat
               },
               {
                 id: 'perluRevisi',
                 label: 'Perlu Revisi',
                 subtitle: 'Dikembalikan ke Cabang',
                 color: 'rose',
-                count: getFilteredCountForTab('perluRevisi')
+                count: tabCounts.perluRevisi
               },
               {
                 id: 'selesai',
                 label: 'Selesai Dinilai',
                 subtitle: 'Approved & Rejected',
                 color: 'emerald',
-                count: getFilteredCountForTab('selesai')
+                count: tabCounts.selesai
               }
             ].map((tab) => {
               const isActive = activeTab === tab.id
@@ -445,7 +441,7 @@ export default function PengelompokanDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {displayedItems.map((item) => {
+                  {displayedItems.map((item: any) => {
                     const branchName = item.profiles?.branches?.nama_cabang || 'Cabang Pusat'
                     const detailRouteLabel = isPending ? '⏳' : 'Detail 🔍'
 
@@ -603,7 +599,7 @@ export default function PengelompokanDashboard() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {item.checklistStatus && item.checklistStatus.length > 0 ? (
-                                    item.checklistStatus.map((doc, idx) => (
+                                    item.checklistStatus.map((doc: any, idx: number) => (
                                       <div
                                         key={idx}
                                         className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${doc.is_uploaded

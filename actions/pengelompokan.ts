@@ -238,36 +238,30 @@ export async function getPengelompokanData() {
 
       // Check groupings
       if (item.status === 'Approved' || item.status === 'Rejected') {
-        // Call calculateULOKSAW to ensure fresh SAW score calculations
-        try {
-          const sawRes = await calculateULOKSAW(item.id)
-          if (sawRes.success && sawRes.data) {
-            item.saw = {
-              c1_score: sawRes.data.c1_score,
-              c2_score: sawRes.data.c2_score,
-              c3_score: sawRes.data.c3_score,
-              final_score: sawRes.data.final_score,
-              saw_analysis_notes: sawRes.data.saw_analysis_notes
-            }
-          } else if (rawItem.metode_saw) {
-            item.saw = {
-              c1_score: rawItem.metode_saw.c1_score,
-              c2_score: rawItem.metode_saw.c2_score,
-              c3_score: rawItem.metode_saw.c3_score,
-              final_score: rawItem.metode_saw.final_score,
-              saw_analysis_notes: rawItem.metode_saw.saw_analysis_notes
-            }
+        // Use existing metode_saw data if available to avoid slow sequential DB writes/reads in a loop.
+        // Calculate/recalculate only if there's no cached SAW score.
+        if (rawItem.metode_saw) {
+          item.saw = {
+            c1_score: rawItem.metode_saw.c1_score,
+            c2_score: rawItem.metode_saw.c2_score,
+            c3_score: rawItem.metode_saw.c3_score,
+            final_score: rawItem.metode_saw.final_score,
+            saw_analysis_notes: rawItem.metode_saw.saw_analysis_notes
           }
-        } catch (sawErr) {
-          console.error(`Gagal menghitung skor SAW untuk ID ${item.id}:`, sawErr)
-          if (rawItem.metode_saw) {
-            item.saw = {
-              c1_score: rawItem.metode_saw.c1_score,
-              c2_score: rawItem.metode_saw.c2_score,
-              c3_score: rawItem.metode_saw.c3_score,
-              final_score: rawItem.metode_saw.final_score,
-              saw_analysis_notes: rawItem.metode_saw.saw_analysis_notes
+        } else {
+          try {
+            const sawRes = await calculateULOKSAW(item.id)
+            if (sawRes.success && sawRes.data) {
+              item.saw = {
+                c1_score: sawRes.data.c1_score,
+                c2_score: sawRes.data.c2_score,
+                c3_score: sawRes.data.c3_score,
+                final_score: sawRes.data.final_score,
+                saw_analysis_notes: sawRes.data.saw_analysis_notes
+              }
             }
+          } catch (sawErr) {
+            console.error(`Gagal menghitung skor SAW untuk ID ${item.id}:`, sawErr)
           }
         }
         selesai.push(item)

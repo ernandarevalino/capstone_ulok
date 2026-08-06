@@ -456,20 +456,6 @@ export async function getSAWLeaderboard() {
       throw new Error('Unauthorized: Silakan login kembali')
     }
 
-    const { data: allSubmissions, error: allSubError } = await supabase
-      .from('ulok_submissions')
-      .select('id')
-
-    if (allSubError) {
-      throw new Error('Gagal mengambil daftar usulan lokasi: ' + allSubError.message)
-    }
-
-    if (allSubmissions && allSubmissions.length > 0) {
-      for (const sub of allSubmissions) {
-        await calculateULOKSAW(sub.id)
-      }
-    }
-
     const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
@@ -488,6 +474,23 @@ export async function getSAWLeaderboard() {
 
     if (error) {
       throw new Error('Gagal mengambil leaderboard: ' + error.message)
+    }
+
+    // Only calculate/recalculate for submissions that don't have a metode_saw record yet
+    // to prevent slow sequential loops on every fetch.
+    if (rawData) {
+      for (const item of rawData) {
+        if (!item.metode_saw && item.status !== 'Draft') {
+          try {
+            const calcRes = await calculateULOKSAW(item.id)
+            if (calcRes.success && calcRes.data) {
+              item.metode_saw = calcRes.data
+            }
+          } catch (sawErr) {
+            console.error(`Gagal menghitung SAW on-demand untuk ${item.id}:`, sawErr)
+          }
+        }
+      }
     }
 
     const data = (rawData || []).map((item: any) => ({

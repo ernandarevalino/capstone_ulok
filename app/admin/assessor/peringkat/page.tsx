@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { getSAWLeaderboard } from '@/actions/saw'
 import { Trophy, Medal, AlertCircle, MapPin, ChevronDown, ChevronUp, Star, Award, Sparkles } from 'lucide-react'
+
+const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at;
 
 export default function PeringkatAssessorPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
@@ -27,9 +29,9 @@ export default function PeringkatAssessorPage() {
     loadData()
   }, [])
 
-  const toggleCard = (id: string) => {
+  const toggleCard = useCallback((id: string) => {
     setOpenCardId(prev => (prev === id ? null : id))
-  }
+  }, [])
 
   const top3Data = useMemo(() => leaderboard.slice(0, 3), [leaderboard])
   const remainingData = useMemo(() => leaderboard.slice(3), [leaderboard])
@@ -40,8 +42,6 @@ export default function PeringkatAssessorPage() {
     const start = (currentPage - 1) * itemsPerPage
     return remainingData.slice(start, start + itemsPerPage)
   }, [remainingData, currentPage])
-
-  const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at
 
   if (isLoading) {
     return (
