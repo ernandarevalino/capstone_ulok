@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createNotification } from '@/actions/superadmin'
 import { calculateULOKSAW } from '@/actions/saw'
 import { updateUlokProgressAndTimestamp } from './pengelompokan'
-import { calculateProgress, getEffectiveChecklistId } from '@/utils/progress'
+import { calculateProgress, getEffectiveChecklistId, getChecklistMasterIds } from '@/utils/progress'
 
 // === ACTIONS: AMBIL DAFTAR USULAN LOKASI ===
 export async function getUlokSubmissions() {
@@ -54,14 +54,68 @@ export async function getUlokSubmissions() {
 
     if (error) throw error
 
+    // Fetch all checklist master records
+    const { data: checklistMaster, error: checklistError } = await supabase
+      .from('checklist_master')
+      .select('*')
+
+    if (checklistError) throw checklistError
+
     const data = (rawData || []).map((item: any) => {
-      const { numerator, denominator, persentase } = calculateProgress(item, item.documents || [])
+      const flattenedSubmission = {
+        ...item,
+        ...(item.ulok_pemilik || {}),
+        ...(item.ulok_sertifikat || {}),
+        ...(item.ulok_legal || {}),
+        ...(item.ulok_jaminan || {}),
+        ...(item.metode_saw || {})
+      }
+
+      const docs = (item.documents || []).sort((a: any, b: any) => {
+        if (a.is_latest !== b.is_latest) return a.is_latest ? -1 : 1
+        return (b.version || 1) - (a.version || 1) || new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+      })
+
+      const checklistMasterIds = getChecklistMasterIds(flattenedSubmission, docs)
+      const denominator = checklistMasterIds.length
+
+      const uniqueUploadedIds = new Set<number>()
+      for (const doc of docs) {
+        const effectiveId = getEffectiveChecklistId(doc, flattenedSubmission.jenis_badan_hukum)
+        if (effectiveId !== null && checklistMasterIds.includes(effectiveId)) {
+          uniqueUploadedIds.add(effectiveId)
+        }
+      }
+
+      const numerator = uniqueUploadedIds.size
+      const persentase = denominator > 0 ? parseFloat(((numerator / denominator) * 100).toFixed(2)) : 0
+
+      // Get checklist status list for accordion dropdown using LEFT JOIN logic
+      const filteredChecklist = (checklistMaster || [])
+        .filter((cm) => cm.jenis_badan_hukum === item.jenis_badan_hukum && checklistMasterIds.includes(cm.id))
+        .sort((a, b) => a.id - b.id)
+
+      const checklistStatus = filteredChecklist.map((cm) => {
+        const doc = docs.find((d: any) => {
+          if (d.checklist_id === cm.id) return true
+          const effectiveId = getEffectiveChecklistId(d, flattenedSubmission.jenis_badan_hukum)
+          return effectiveId === cm.id
+        })
+        return {
+          nama_dokumen: cm.nama_dokumen,
+          is_uploaded: !!(doc && doc.file_url),
+          file_url: doc?.file_url || undefined,
+          is_negotiable: !!cm.is_negotiable
+        }
+      })
+
       return {
         ...item,
         ...item.metode_saw,
         numerator,
         denominator,
-        persentase
+        persentase,
+        checklistStatus
       }
     })
 

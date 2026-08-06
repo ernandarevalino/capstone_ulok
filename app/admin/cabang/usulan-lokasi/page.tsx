@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUlokSubmissions, createUlokSubmission, deleteUlokSubmission } from '@/actions/cabang'
+import { Download } from 'lucide-react'
 
 export default function UsulanLokasiPage() {
   const router = useRouter()
@@ -44,6 +45,44 @@ export default function UsulanLokasiPage() {
   
   const [submissions, setSubmissions] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
+  const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
+
+  const handleDownload = async (url: string, filename: string) => {
+    if (!url) return
+    setDownloadingDocName(filename)
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      
+      let actualFilename = filename
+      try {
+        const urlObj = new URL(url)
+        const pathname = urlObj.pathname
+        const ext = pathname.split('.').pop()
+        if (ext && ext.length <= 4 && !filename.toLowerCase().endsWith('.' + ext.toLowerCase())) {
+          actualFilename = `${filename}.${ext}`
+        }
+      } catch (e) {
+        // fallback
+      }
+
+      a.download = actualFilename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(blobUrl)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Gagal mendownload file:", error)
+      alert("Gagal mengunduh berkas. Silakan coba lagi.")
+    } finally {
+      setDownloadingDocName(null)
+    }
+  }
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, namaLokasi: string } | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false)
@@ -317,66 +356,195 @@ export default function UsulanLokasiPage() {
                     <td colSpan={6} className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada data usulan lokasi</td>
                   </tr>
                 ) : (
-                  displayedData.map((item) => (
-                    <tr 
-                      key={item.id} 
-                      className="border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl text-amber-500">📁</span>
-                          <div>
-                            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
-                            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
-                              Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                  displayedData.map((item) => {
+                    const isExpanded = expandedRowId === item.id;
+                    return (
+                      <React.Fragment key={item.id}>
+                        <tr 
+                          onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
+                          className={`border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors cursor-pointer select-none ${isExpanded ? 'bg-gray-50/40 dark:bg-gray-900/10' : ''}`}
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              {/* Chevron Arrow Toggle */}
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setExpandedRowId(isExpanded ? null : item.id)
+                                }}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 rounded-lg transition-all duration-200 flex items-center justify-center cursor-pointer"
+                                title={isExpanded ? "Sembunyikan Checklist" : "Tampilkan Checklist"}
+                              >
+                                <img
+                                  src="/icons/icon-expand.svg"
+                                  alt="Expand/Collapse"
+                                  className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                />
+                              </div>
+                              <span className="text-xl text-amber-500">📁</span>
+                              <div>
+                                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{item.nama_lokasi}</span>
+                                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">
+                                  Review: {formatLastReviewedShort(item.last_reviewed_at)}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </td>
-                      <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                        <span className="font-medium text-gray-800 dark:text-gray-200">{item.jenis_badan_hukum}</span> ({item.nama_pemegang_hak})
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
-                          {item.status === 'Draft' ? 'Belum Direview' : item.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-                        <div>
-                          <span>
-                            {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
-                          </span>
-                          {item.persentase === 100 && item.documents_completed_at && (
-                            <div className="text-[10px] text-gray-400 dark:text-gray-500 font-normal mt-0.5 whitespace-nowrap">
-                              Lengkap pada: {formatTimestamp(item.documents_completed_at)}
+                          </td>
+                          <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
+                            {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </td>
+                          <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
+                            <span className="font-medium text-gray-800 dark:text-gray-200">{item.jenis_badan_hukum}</span> ({item.nama_pemegang_hak})
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${colorStyles}`}>
+                              {item.status === 'Draft' ? 'Belum Direview' : item.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            <div>
+                              <span>
+                                {item.numerator ?? 0}/{item.denominator ?? 0} ({Math.round(item.persentase ?? 0)}%)
+                              </span>
+                              {item.persentase === 100 && item.documents_completed_at && (
+                                <div className="text-[10px] text-gray-400 dark:text-gray-500 font-normal mt-0.5 whitespace-nowrap">
+                                  Lengkap pada: {formatTimestamp(item.documents_completed_at)}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="flex justify-center items-center gap-2">
-                          <button
-                            onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
-                            className="p-2 rounded-lg bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-950 dark:hover:text-blue-400 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
-                            title="Lihat Detail"
-                          >
-                            <img src="/icons/icon-location-edit.svg" alt="Lihat" className="w-4 h-4 dark:brightness-0 dark:invert" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
-                            disabled={isPending}
-                            className="p-2 rounded-lg bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:scale-100 flex items-center justify-center"
-                            title="Hapus Usulan"
-                          >
-                            <img src="/icons/icon-remove.svg" alt="Delete" className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                          </td>
+                          <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-center items-center gap-2">
+                              <button
+                                onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
+                                className="p-2 rounded-lg bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-950 dark:hover:text-blue-400 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center"
+                                title="Lihat Detail"
+                              >
+                                <img src="/icons/icon-location-edit.svg" alt="Lihat" className="w-4 h-4 dark:brightness-0 dark:invert" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
+                                disabled={isPending}
+                                className="p-2 rounded-lg bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:scale-100 flex items-center justify-center"
+                                title="Hapus Usulan"
+                              >
+                                <img src="/icons/icon-remove.svg" alt="Delete" className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Accordion Row Checklists */}
+                        {isExpanded && (
+                          <tr className="bg-gray-50/60 dark:bg-gray-900/30 transition-all duration-300">
+                            <td colSpan={6} className="p-5 border-t border-gray-100 dark:border-gray-800">
+                              <div className="bg-white dark:bg-gray-950 rounded-2xl p-5 border border-gray-200/60 dark:border-gray-800/85 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-850 pb-3">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                                      📋 Status Checklist Dokumen ({item.persentase}% - {item.numerator}/{item.denominator} Terupload)
+                                    </h4>
+                                  </div>
+                                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                    Jalur: {item.jenis_badan_hukum}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {item.checklistStatus && item.checklistStatus.length > 0 ? (
+                                    item.checklistStatus.map((doc: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${doc.is_uploaded
+                                          ? 'bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-100/80 dark:border-emerald-900/30 hover:border-emerald-250 dark:hover:border-emerald-800'
+                                          : 'bg-gray-50/40 dark:bg-gray-950/10 border-gray-150 dark:border-gray-900/40 hover:border-gray-250 dark:hover:border-gray-800'
+                                          }`}
+                                      >
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                          {doc.is_uploaded ? (
+                                            <span className="text-emerald-500 dark:text-emerald-400 flex-shrink-0 text-xs font-bold bg-emerald-100/60 dark:bg-emerald-950/40 w-5 h-5 rounded-full flex items-center justify-center">
+                                              ✓
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400 dark:text-gray-605 flex-shrink-0 text-xs font-bold bg-gray-100 dark:bg-gray-900/60 w-5 h-5 rounded-full flex items-center justify-center">
+                                              ✕
+                                            </span>
+                                          )}
+                                          <span
+                                            className={`text-xs font-semibold truncate ${doc.is_uploaded
+                                              ? 'text-gray-800 dark:text-gray-205'
+                                              : 'text-gray-400 dark:text-gray-500'
+                                              }`}
+                                            title={doc.nama_dokumen}
+                                          >
+                                            {doc.nama_dokumen}
+                                          </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                          {doc.is_negotiable && (
+                                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200/40 dark:border-amber-900/40 select-none">
+                                              Opsional
+                                            </span>
+                                          )}
+
+                                          {doc.is_uploaded ? (
+                                            <div className="flex items-center gap-1.5 ml-2">
+                                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-250 dark:border-emerald-900/50">
+                                                Terunggah
+                                              </span>
+                                              {doc.file_url && (
+                                                <div className="flex gap-1">
+                                                  <a 
+                                                    href={doc.file_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
+                                                    title="View File"
+                                                  >
+                                                    <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
+                                                  </a>
+                                                  <button
+                                                    type="button"
+                                                    disabled={downloadingDocName === doc.nama_dokumen}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation()
+                                                      handleDownload(doc.file_url!, doc.nama_dokumen)
+                                                    }}
+                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                                                    title="Download File"
+                                                  >
+                                                    {downloadingDocName === doc.nama_dokumen ? (
+                                                      <span className="w-3 h-3 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                                                    ) : (
+                                                      <Download className="w-3 h-3" />
+                                                    )}
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-900/50 text-gray-500 dark:text-gray-450 border border-gray-200 dark:border-gray-800/80">
+                                              Belum
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="col-span-full py-4 text-center text-xs text-gray-400 italic">
+                                      Tidak ada data checklist wajib untuk badan hukum ini.
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>
