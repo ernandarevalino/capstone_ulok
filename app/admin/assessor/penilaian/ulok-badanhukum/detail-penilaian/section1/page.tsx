@@ -42,6 +42,11 @@ export default function Section1BadanHukumAssessorPage() {
   const [successModalText, setSuccessModalText] = useState('')
 
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null)
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
+
+  const toggleAccordion = (docType: string) => {
+    setOpenAccordions(prev => ({ ...prev, [docType]: !prev[docType] }))
+  }
 
   const formatWaktu = (uploadedAt: string | null | undefined) => {
     if (!uploadedAt) return ''
@@ -188,61 +193,140 @@ export default function Section1BadanHukumAssessorPage() {
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
     const allFiles = uploadedDocs.filter(d => d.document_type === docType)
     const existingDoc = allFiles.find(d => d.is_latest) || allFiles[0]
+    const historyFiles = existingDoc 
+      ? allFiles.filter(d => d.id !== existingDoc.id).sort((a, b) => (a.version || 1) - (b.version || 1))
+      : []
 
     return (
-      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
+      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2.5 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
         <div>
           <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block leading-snug">{label}</span>
           <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{hint}</p>
         </div>
         {existingDoc ? (
-          <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">📄 Tersimpan{formatWaktu(existingDoc.uploaded_at)}</span>
-            <div className="flex gap-1.5 items-center">
-              
-              <a 
-                href={existingDoc.file_url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
-                title="View File"
-              >
-                <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
-              </a>
+          <div className="flex flex-col gap-2 w-full">
+            {/* Latest File Box */}
+            <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-200 dark:border-emerald-900/40 w-full">
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] text-emerald-800 dark:text-emerald-400 font-extrabold flex items-center gap-1">
+                  <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wide">
+                    v{existingDoc.version || 1}
+                  </span>
+                  Terbaru
+                </span>
+                <span className="text-[8px] text-gray-500 dark:text-gray-400 italic">
+                  Tersimpan{formatWaktu(existingDoc.uploaded_at)}
+                </span>
+              </div>
+              <div className="flex gap-1.5 items-center shrink-0">
+                <a 
+                  href={existingDoc.file_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
+                  title="View File"
+                >
+                  <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
+                </a>
 
-              <button
-                type="button"
-                disabled={downloadingDocId === existingDoc.id}
-                onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
-                className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
-                title="Download File"
-              >
-                {downloadingDocId === existingDoc.id ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  disabled={downloadingDocId === existingDoc.id}
+                  onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                  title="Download File"
+                >
+                  {downloadingDocId === existingDoc.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                </button>
 
-              <button
-                type="button"
-                disabled={verifyingDocId === existingDoc.id}
-                onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
-                title="Verify Document"
-                className={`p-1 rounded border shadow-sm transition-all flex items-center justify-center ${
-                  existingDoc.is_verified
-                    ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800'
-                    : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
-                } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
-              >
-                {verifyingDocId === existingDoc.id ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Check className="w-3.5 h-3.5 stroke-[3px]" />
-                )}
-              </button>
-
+                <button
+                  type="button"
+                  disabled={verifyingDocId === existingDoc.id}
+                  onClick={() => handleToggleVerify(existingDoc.id, !!existingDoc.is_verified)}
+                  title="Verify Document"
+                  className={`p-1 rounded border shadow-sm transition-all flex items-center justify-center ${
+                    existingDoc.is_verified
+                      ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800'
+                      : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-955/40 dark:text-rose-400 dark:border-rose-900/60'
+                  } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
+                >
+                  {verifyingDocId === existingDoc.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                  )}
+                </button>
+              </div>
             </div>
+
+            {/* Inline Accordion for History Files */}
+            {historyFiles.length > 0 && (
+              <div className="w-full mt-1 border-t border-gray-250/30 dark:border-gray-700/30 pt-1.5 animate-fadeIn">
+                <button
+                  type="button"
+                  onClick={() => toggleAccordion(docType)}
+                  className="w-full flex items-center justify-between text-[9px] font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors py-0.5"
+                >
+                  <span className="flex items-center gap-1 select-none">
+                    📜 Lihat Riwayat Versi Lama ({historyFiles.length})
+                  </span>
+                  <span className={`transform transition-transform duration-205 ${openAccordions[docType] ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+
+                {openAccordions[docType] && (
+                  <div className="mt-1.5 space-y-1.5 pl-0.5 max-h-36 overflow-y-auto w-full">
+                    {historyFiles.map((file) => (
+                      <div 
+                        key={file.id} 
+                        className="flex items-center justify-between gap-2 bg-gray-50/70 dark:bg-gray-900/35 p-1.5 rounded-lg border border-dashed border-gray-200 dark:border-gray-800 w-full"
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[8px] font-extrabold text-gray-655 dark:text-gray-400 flex items-center gap-1">
+                            <span className="bg-gray-200 dark:bg-gray-800 text-gray-550 dark:text-gray-400 px-1 py-0.2 rounded text-[7px] font-bold">
+                              v{file.version || 1}
+                            </span>
+                            Versi Lama
+                          </span>
+                          <span className="text-[7px] text-gray-400 dark:text-gray-500 italic mt-0.5">
+                            Diunggah: {formatWaktu(file.uploaded_at).trim().replace(/[()]/g, '').slice(0, 17)}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 items-center shrink-0">
+                          <a 
+                            href={file.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="p-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xs text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition-all flex items-center justify-center"
+                            title="View File"
+                          >
+                            <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
+                          </a>
+                          <button
+                            type="button"
+                            disabled={downloadingDocId === file.id}
+                            onClick={() => handleDownload(file.file_url, file.id, file.document_type)}
+                            className="p-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xs text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                            title="Download File"
+                          >
+                            {downloadingDocId === file.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Download className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="p-1.5 rounded border border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 flex items-center">
@@ -398,98 +482,7 @@ export default function Section1BadanHukumAssessorPage() {
           </div>
         </div>
 
-        {/* === HISTORI REVISI DOKUMEN === */}
-        <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4 shadow-sm">
-          <div className="border-b border-gray-200 dark:border-gray-800 pb-2">
-            <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
-              <History className="w-4 h-4 text-blue-900 dark:text-blue-400" />
-              Histori Revisi Dokumen (Versi Lama)
-            </h3>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-              Daftar file versi sebelumnya yang telah diperbarui oleh Admin Cabang untuk dibandingkan.
-            </p>
-          </div>
 
-          {(() => {
-            const sectionDocTypes = ["ektp_mewakili", "akta_pendirian", "anggaran_dasar", "nib_oss", "npwp_badan", "sppkp", "surat_pernyataan_nonpkp", "akta_kuasa", "akta_penyesuaian", "akta_direksi_komisaris", "akta_pengurus", "ektp_direksi", "rups_persetujuan"];
-            const getDocLabel = (type: string) => {
-              const labels: Record<string, string> = {
-                ektp_mewakili: "E-KTP (Yang Mewakili / Menandatangani)",
-                akta_pendirian: "Akta Pendirian & SK Menteri",
-                anggaran_dasar: "Anggaran Dasar Terbaru & SK Menteri",
-                nib_oss: "NIB OSS RBA",
-                npwp_badan: "NPWP Badan Usaha",
-                sppkp: "Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)",
-                surat_pernyataan_nonpkp: "Surat Pernyataan Non-PKP",
-                akta_kuasa: "Akta Kuasa Notariil / Legalisasi",
-                akta_penyesuaian: "Akta Penyesuaian dengan UU No. 40 Tahun 2007",
-                akta_direksi_komisaris: "Akta Susunan Direksi & Komisaris Terakhir",
-                akta_pengurus: "Akta Susunan Pengurus Terakhir",
-                ektp_direksi: "E-KTP Direksi / Pengurus",
-                rups_persetujuan: "Surat Persetujuan Dewan Komisaris / RUPS",
-              };
-              return labels[type] || type;
-            };
-
-            const historyFiles = uploadedDocs.filter(d => !d.is_latest && sectionDocTypes.includes(d.document_type));
-
-            if (historyFiles.length === 0) {
-              return (
-                <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 text-center">
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-medium italic select-none">
-                    ℹ️ Tidak ada riwayat revisi berkas lama pada section ini.
-                  </span>
-                </div>
-              );
-            }
-
-            // Group files by type
-            const grouped = historyFiles.reduce((acc, file) => {
-              if (!acc[file.document_type]) acc[file.document_type] = [];
-              acc[file.document_type].push(file);
-              return acc;
-            }, {} as Record<string, any[]>);
-
-            return (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {(Object.entries(grouped) as [string, any[]][]).map(([docType, files]) => (
-                  <div key={docType} className="py-3 first:pt-0 last:pb-0 space-y-2">
-                    <span className="text-[11px] font-extrabold text-gray-700 dark:text-gray-300 block">
-                      {getDocLabel(docType)}
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {files.map((file) => (
-                        <div key={file.id} className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-150 dark:border-gray-700/30">
-                          <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="text-[10px] font-bold text-gray-650 dark:text-gray-300 flex items-center gap-1.5">
-                              <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded text-[8px] font-extrabold">
-                                v{file.version || 1}
-                              </span>
-                              Versi Lama
-                            </span>
-                            <span className="text-[8px] text-gray-400 dark:text-gray-500 italic">
-                              Diunggah: {formatWaktu(file.uploaded_at).trim().replace(/[()]/g, '')}
-                            </span>
-                          </div>
-                          <a 
-                            href={file.file_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="p-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 flex items-center gap-1 text-[9px] font-bold"
-                            title="Buka File"
-                          >
-                            <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
-                            Buka File
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
 
         {/* === NAVIGASI === */}
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
