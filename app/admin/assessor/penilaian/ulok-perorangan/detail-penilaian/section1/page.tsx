@@ -194,7 +194,7 @@ export default function Section1PeroranganAssessorPage() {
 
   useEffect(() => {
     if (!ulokId) {
-      router.push('/admin/assessor/penilaian')
+      router.push('/admin/assessor/pengelompokan')
       return
     }
     loadDataDanDokumen()
@@ -367,7 +367,7 @@ export default function Section1PeroranganAssessorPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/assessor/penilaian')} 
+            onClick={() => router.push('/admin/assessor/pengelompokan')} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
             Penilaian Usulan

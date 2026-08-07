@@ -191,12 +191,13 @@ export function DetailPenilaianBadanHukumClient({
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
+          router.push('/admin/assessor/pengelompokan')
         }, 1500)
       } else {
         alert('Gagal mengubah status berkas: ' + res.error)
       }
     })
-  }, [ulokId])
+  }, [ulokId, router])
 
   const memoizedCommentsList = useMemo(() => {
     if (comments.length === 0) {
@@ -229,7 +230,7 @@ export function DetailPenilaianBadanHukumClient({
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/assessor/penilaian')} 
+            onClick={() => router.push('/admin/assessor/pengelompokan')} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
             Penilaian Usulan
@@ -240,9 +241,9 @@ export function DetailPenilaianBadanHukumClient({
 
         {/* === HEADER & NAVIGASI BALIK === */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button 
-              onClick={() => router.push('/admin/assessor/penilaian')}
+              onClick={() => router.push('/admin/assessor/pengelompokan')}
               className="text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition bg-white dark:bg-gray-900 p-2.5 rounded-full shadow-xs border border-gray-200 dark:border-gray-800 active:scale-90 flex items-center justify-center"
               title="Kembali"
             >
