@@ -4,13 +4,17 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 // === ACTIONS: HITUNG SKOR SAW ===
-export async function calculateULOKSAW(ulokId: string) {
+export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
   try {
     const supabase = await createClient()
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      throw new Error('Unauthorized: Silakan login kembali')
+    let user = verifiedUser
+    if (!user) {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser) {
+        throw new Error('Unauthorized: Silakan login kembali')
+      }
+      user = authUser
     }
 
     const { data: rawSubmission, error: subError } = await supabase
@@ -459,7 +463,11 @@ export async function getSAWLeaderboard() {
     const { data: rawData, error } = await supabase
       .from('ulok_submissions')
       .select(`
-        *,
+        id,
+        nama_lokasi,
+        status,
+        harga_sewa,
+        first_in_review_at,
         profiles:admin_id (
           id,
           full_name,
@@ -469,7 +477,13 @@ export async function getSAWLeaderboard() {
             nama_cabang
           )
         ),
-        metode_saw(*)
+        metode_saw (
+          c1_score,
+          c2_score,
+          c3_score,
+          final_score,
+          saw_analysis_notes
+        )
       `)
 
     if (error) {
@@ -479,24 +493,29 @@ export async function getSAWLeaderboard() {
     // Only calculate/recalculate for submissions that don't have a metode_saw record yet
     // to prevent slow sequential loops on every fetch.
     if (rawData) {
-      for (const item of rawData) {
-        if (!item.metode_saw && item.status !== 'Draft') {
+      const promises = rawData.map(async (item) => {
+        const hasMetodeSaw = Array.isArray(item.metode_saw) ? item.metode_saw.length > 0 : !!item.metode_saw
+        if (!hasMetodeSaw && item.status !== 'Draft') {
           try {
-            const calcRes = await calculateULOKSAW(item.id)
+            const calcRes = await calculateULOKSAW(item.id, user)
             if (calcRes.success && calcRes.data) {
-              item.metode_saw = calcRes.data
+              (item as any).metode_saw = calcRes.data
             }
           } catch (sawErr) {
             console.error(`Gagal menghitung SAW on-demand untuk ${item.id}:`, sawErr)
           }
         }
-      }
+      })
+      await Promise.all(promises)
     }
 
-    const data = (rawData || []).map((item: any) => ({
-      ...item,
-      ...item.metode_saw
-    })).sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
+    const data = (rawData || []).map((item: any) => {
+      const ms = Array.isArray(item.metode_saw) ? item.metode_saw[0] : item.metode_saw
+      return {
+        ...item,
+        ...ms
+      }
+    }).sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
 
     return {
       success: true,
