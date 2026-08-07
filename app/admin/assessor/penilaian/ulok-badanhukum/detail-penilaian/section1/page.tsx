@@ -186,8 +186,10 @@ export default function Section1BadanHukumAssessorPage() {
     initLoad()
   }, [ulokId])
 
-  const handleReplyGroup = (groupName: string) => {
-    router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}&prefill=${encodeURIComponent(`⚠️ [Catatan Assessor - Grup: ${groupName}]: `)}`)
+  const handleReplyDocument = (docName: string, fileName?: string) => {
+    const fileDetail = fileName ? ` (${fileName})` : ''
+    const prefix = `⚠️ [Catatan Assessor - Dokumen: ${docName}${fileDetail}]: `
+    router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}&prefill=${encodeURIComponent(prefix)}`)
   }
 
   const renderUploadSlot = (docType: string, label: string, hint: string) => {
@@ -263,6 +265,14 @@ export default function Section1BadanHukumAssessorPage() {
               </div>
             </div>
 
+                <button
+                  type="button"
+                  onClick={() => handleReplyDocument(label, existingDoc.filename)}
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
+                  title="Beri Catatan untuk Dokumen Ini"
+                >
+                  <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
+                </button>
             {/* Inline Accordion for History Files */}
             {historyFiles.length > 0 && (
               <div className="w-full mt-1 border-t border-gray-250/30 dark:border-gray-700/30 pt-1.5 animate-fadeIn">
@@ -391,7 +401,7 @@ export default function Section1BadanHukumAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Dokumen Utama & Legalitas Dasar")}
+              onClick={() => handleReplyDocument("Dokumen Utama & Legalitas Dasar")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
@@ -418,7 +428,7 @@ export default function Section1BadanHukumAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Status Pajak & Pelimpahan Kuasa")}
+              onClick={() => handleReplyDocument("Status Pajak & Pelimpahan Kuasa")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
@@ -465,7 +475,7 @@ export default function Section1BadanHukumAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Dokumen Susunan Pengurus & Direksi")}
+              onClick={() => handleReplyDocument("Dokumen Susunan Pengurus & Direksi")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
