@@ -208,8 +208,10 @@ export default function Section2PeroranganAssessorPage() {
     loadData()
   }, [ulokId])
 
-  const handleReplyGroup = (groupName: string) => {
-    router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}&prefill=${encodeURIComponent(`⚠️ [Catatan Assessor - Grup: ${groupName}]: `)}`)
+  const handleReplyDocument = (docName: string, fileName?: string) => {
+    const fileDetail = fileName ? ` (${fileName})` : ''
+    const prefix = `⚠️ [Catatan Assessor - Dokumen: ${docName}${fileDetail}]: `
+    router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}&prefill=${encodeURIComponent(prefix)}`)
   }
 
   const handleSelesaiPenilaian = () => {
@@ -301,6 +303,14 @@ export default function Section2PeroranganAssessorPage() {
                           ) : (
                             <Check className="w-3.5 h-3.5 stroke-[3px]" />
                           )}
+                          <button
+                            type="button"
+                            onClick={() => handleReplyDocument(label, filename)}
+                            className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
+                            title="Beri Catatan untuk Dokumen Ini"
+                          >
+                            <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
+                          </button>
                         </button>
                       </div>
                     </div>
@@ -524,7 +534,7 @@ export default function Section2PeroranganAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Alas Hak / Bukti Kepemilikan Lahan")}
+              onClick={() => handleReplyDocument("Alas Hak / Bukti Kepemilikan Lahan")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
@@ -626,7 +636,7 @@ export default function Section2PeroranganAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Kondisi Fisik Objek & Izin Pelengkap")}
+              onClick={() => handleReplyDocument("Kondisi Fisik Objek & Izin Pelengkap")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
@@ -673,7 +683,7 @@ export default function Section2PeroranganAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Status Penjaminan Keuangan / Finansial")}
+              onClick={() => handleReplyDocument("Status Penjaminan Keuangan / Finansial")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
@@ -720,7 +730,7 @@ export default function Section2PeroranganAssessorPage() {
             
             <button
               type="button"
-              onClick={() => handleReplyGroup("Data Catatan & Pendukung Tambahan")}
+              onClick={() => handleReplyDocument("Data Catatan & Pendukung Tambahan")}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
             >
               <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
