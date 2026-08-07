@@ -1,4 +1,4 @@
-# PRIOLO (Prioritizing Location) - ULOK Assessment System
+av# PRIOLO (Prioritizing Location) - ULOK Assessment System
 
 ## Project Overview & Deployment
 This application is a comprehensive web-based decision support system designed to manage and assess location proposals (*Usulan Lokasi* or **ULOK**) for **PT. Midi Utama Indonesia Tbk (Alfamidi)**. It bridges the gap between digitalizing legal documentation and calculating location feasibility for store expansions.
