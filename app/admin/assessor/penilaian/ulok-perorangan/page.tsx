@@ -15,7 +15,7 @@ export default async function DetailPenilaianPeroranganPage({
   const prefill = resolvedParams?.prefill || ''
 
   if (!ulokId) {
-    redirect('/admin/assessor/penilaian')
+    redirect('/admin/assessor/pengelompokan')
   }
 
   // Fetch all necessary data in parallel directly on the server to optimize load performance
@@ -30,7 +30,7 @@ export default async function DetailPenilaianPeroranganPage({
   const currentUserId = user?.id || null
 
   if (!res.success || !res.data) {
-    redirect('/admin/assessor/penilaian')
+    redirect('/admin/assessor/pengelompokan')
   }
 
   const initialDetail = res.data
