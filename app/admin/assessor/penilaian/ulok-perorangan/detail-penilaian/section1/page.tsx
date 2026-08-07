@@ -411,7 +411,7 @@ export default function Section1PeroranganAssessorPage() {
               Reply / Beri Catatan
             </button>
           </div>
-            
+          
           {/* === FORM: CHECKBOX E-KTP === */}
           <div className="rounded-3xl p-4 bg-gray-50/35 dark:bg-gray-800/15 space-y-3 border border-transparent dark:border-gray-800">
             <label className="flex items-center gap-2 font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed text-xs">

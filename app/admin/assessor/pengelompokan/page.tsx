@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
-import { Download } from 'lucide-react'
+import { Download, FilePlus, Clock, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react'
 
 export default function PengelompokanDashboard() {
   const router = useRouter()
@@ -12,6 +12,7 @@ export default function PengelompokanDashboard() {
   // State
   const [mounted, setMounted] = useState(false)
   const [data, setData] = useState<PengelompokanResult>({
+    baruMasuk: [],
     antreanAktif: [],
     patutDilihat: [],
     perluRevisi: [],
@@ -20,7 +21,7 @@ export default function PengelompokanDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'>('antreanAktif')
+  const [activeTab, setActiveTab] = useState<'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'>('baruMasuk')
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const [selectedBadanHukum, setSelectedBadanHukum] = useState<string>('all')
@@ -131,6 +132,7 @@ export default function PengelompokanDashboard() {
   }, [queryLower, selectedBranch, selectedBadanHukum])
 
   // Memoize filtered tab data
+  const filteredBaruMasuk = useMemo(() => data.baruMasuk.filter(applyAllFilters), [data.baruMasuk, applyAllFilters])
   const filteredAntreanAktif = useMemo(() => data.antreanAktif.filter(applyAllFilters), [data.antreanAktif, applyAllFilters])
   const filteredPatutDilihat = useMemo(() => data.patutDilihat.filter(applyAllFilters), [data.patutDilihat, applyAllFilters])
   const filteredPerluRevisi = useMemo(() => data.perluRevisi.filter(applyAllFilters), [data.perluRevisi, applyAllFilters])
@@ -142,6 +144,8 @@ export default function PengelompokanDashboard() {
   // Memoize current active tab's filtered data
   const filteredData = useMemo(() => {
     switch (activeTab) {
+      case 'baruMasuk':
+        return filteredBaruMasuk
       case 'antreanAktif':
         return filteredAntreanAktif
       case 'patutDilihat':
@@ -153,21 +157,23 @@ export default function PengelompokanDashboard() {
       default:
         return []
     }
-  }, [activeTab, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
+  }, [activeTab, filteredBaruMasuk, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
 
   // Memoize count of filtered items per tab in real-time
   const tabCounts = useMemo(() => ({
+    baruMasuk: filteredBaruMasuk.length,
     antreanAktif: filteredAntreanAktif.length,
     patutDilihat: filteredPatutDilihat.length,
     perluRevisi: filteredPerluRevisi.length,
     selesai: filteredSelesai.length
-  }), [filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
+  }), [filteredBaruMasuk, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
 
   // Extract unique branch names from the dataset dynamically
   const allBranches = useMemo(() => {
     return Array.from(
       new Set(
         [
+          ...data.baruMasuk,
           ...data.antreanAktif,
           ...data.patutDilihat,
           ...data.perluRevisi,
@@ -189,7 +195,7 @@ export default function PengelompokanDashboard() {
   const activeFilterCount = (selectedBranch !== 'all' ? 1 : 0) + (selectedBadanHukum !== 'all' ? 1 : 0)
 
   // Reset page on tab change
-  const handleTabChange = (tab: 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai') => {
+  const handleTabChange = (tab: 'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai') => {
     setActiveTab(tab)
     setCurrentPage(1)
     setExpandedRowId(null)
@@ -322,42 +328,56 @@ export default function PengelompokanDashboard() {
             {/* TABS BUTTONS */}
             {[
               {
+                id: 'baruMasuk',
+                label: 'Baru Masuk',
+                subtitle: 'Usulan Baru (Draft)',
+                color: 'blue',
+                count: tabCounts.baruMasuk,
+                icon: <FilePlus className="w-4 h-4" />
+              },
+              {
                 id: 'antreanAktif',
                 label: 'Antrean Aktif',
                 subtitle: 'Sedang Proses Review',
                 color: 'amber',
-                count: tabCounts.antreanAktif
+                count: tabCounts.antreanAktif,
+                icon: <Clock className="w-4 h-4" />
               },
               {
                 id: 'patutDilihat',
                 label: 'Patut Dilihat',
                 subtitle: 'Rekomendasi Prioritas',
                 color: 'purple',
-                count: tabCounts.patutDilihat
+                count: tabCounts.patutDilihat,
+                icon: <Sparkles className="w-4 h-4" />
               },
               {
                 id: 'perluRevisi',
                 label: 'Perlu Revisi',
                 subtitle: 'Dikembalikan ke Cabang',
                 color: 'rose',
-                count: tabCounts.perluRevisi
+                count: tabCounts.perluRevisi,
+                icon: <AlertTriangle className="w-4 h-4" />
               },
               {
                 id: 'selesai',
                 label: 'Selesai Dinilai',
                 subtitle: 'Approved & Rejected',
                 color: 'emerald',
-                count: tabCounts.selesai
+                count: tabCounts.selesai,
+                icon: <CheckSquare className="w-4 h-4" />
               }
             ].map((tab) => {
               const isActive = activeTab === tab.id
               const activeColorClass =
+                tab.id === 'baruMasuk' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500' :
                 tab.id === 'antreanAktif' ? 'border-amber-600 text-amber-600 dark:text-amber-400 dark:border-amber-500' :
                   tab.id === 'patutDilihat' ? 'border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-500' :
                     tab.id === 'perluRevisi' ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-500' :
                       'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-500'
 
               const countBadgeBgClass =
+                tab.id === 'baruMasuk' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' :
                 tab.id === 'antreanAktif' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' :
                   tab.id === 'patutDilihat' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300' :
                     tab.id === 'perluRevisi' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' :
@@ -373,7 +393,10 @@ export default function PengelompokanDashboard() {
                     }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-[15px]">{tab.label}</span>
+                    <div className="flex items-center gap-1.5">
+                      {tab.icon}
+                      <span className="font-bold text-[15px]">{tab.label}</span>
+                    </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-black select-none ${countBadgeBgClass}`}>
                       {tab.count}
                     </span>
@@ -467,6 +490,8 @@ export default function PengelompokanDashboard() {
                       statusBadgeStyles = 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
                     } else if (item.status === 'In Review') {
                       statusBadgeStyles = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50'
+                    } else if (item.status === 'Draft') {
+                      statusBadgeStyles = 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50'
                     }
 
                     const isExpanded = expandedRowId === item.id

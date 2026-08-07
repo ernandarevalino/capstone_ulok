@@ -66,6 +66,7 @@ export interface UlokGroupItem {
 }
 
 export interface PengelompokanResult {
+  baruMasuk: UlokGroupItem[];    // Status: 'Draft'
   antreanAktif: UlokGroupItem[]; // Status: 'In Review' (Semua)
   patutDilihat: UlokGroupItem[]; // Status: 'In Review' DAN lolos kriteria Smart Filter
   perluRevisi: UlokGroupItem[];  // Status: 'Revisi'
@@ -128,7 +129,7 @@ export async function getPengelompokanData() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
-    // Query non-draft submissions
+    // Query submissions
     const { data: rawSubmissions, error: queryError } = await supabase
       .from('ulok_submissions')
       .select(`
@@ -146,7 +147,6 @@ export async function getPengelompokanData() {
         ulok_jaminan(*),
         metode_saw(*)
       `)
-      .not('status', 'eq', 'Draft')
 
     if (queryError) throw queryError
 
@@ -159,6 +159,7 @@ export async function getPengelompokanData() {
 
     const submissions = rawSubmissions || []
 
+    const baruMasuk: UlokGroupItem[] = []
     const antreanAktif: UlokGroupItem[] = []
     const patutDilihat: UlokGroupItem[] = []
     const perluRevisi: UlokGroupItem[] = []
@@ -237,7 +238,9 @@ export async function getPengelompokanData() {
       }
 
       // Check groupings
-      if (item.status === 'Approved' || item.status === 'Rejected') {
+      if (item.status === 'Draft') {
+        baruMasuk.push(item)
+      } else if (item.status === 'Approved' || item.status === 'Rejected') {
         // Use existing metode_saw data if available to avoid slow sequential DB writes/reads in a loop.
         // Calculate/recalculate only if there's no cached SAW score.
         if (rawItem.metode_saw) {
@@ -306,6 +309,7 @@ export async function getPengelompokanData() {
     })
 
     // Sort other groups by last updated
+    const sortedBaruMasuk = sortByLastUpdated(baruMasuk)
     const sortedAntreanAktif = sortByLastUpdated(antreanAktif)
     const sortedPerluRevisi = sortByLastUpdated(perluRevisi)
     const sortedSelesai = sortByLastUpdated(selesai)
@@ -313,6 +317,7 @@ export async function getPengelompokanData() {
     return {
       success: true,
       data: {
+        baruMasuk: sortedBaruMasuk,
         antreanAktif: sortedAntreanAktif,
         patutDilihat,
         perluRevisi: sortedPerluRevisi,
