@@ -86,7 +86,9 @@ export default function DaftarAdminCabangPage() {
 
     startTransition(async () => {
       const res = await createUserAction({ 
-        ...formData, 
+        password: formData.password,
+        fullName: formData.fullName,
+        nik: parseInt(formData.nik, 10),
         role: 'admin_cabang', 
         branchId: formData.branchId ? parseInt(formData.branchId) : null 
       });
@@ -112,7 +114,7 @@ export default function DaftarAdminCabangPage() {
       const res = await updateUserAction({ 
         id: editData.id, 
         fullName: editData.fullName,
-        nik: editData.nik, 
+        nik: parseInt(editData.nik, 10), 
         deleteAvatar: editData.deleteAvatar, 
         branchId: editData.branchId ? parseInt(editData.branchId) : null, 
         password: editData.password || undefined 
@@ -287,7 +289,7 @@ export default function DaftarAdminCabangPage() {
                     <td className="p-4 font-semibold text-gray-700 dark:text-gray-200 text-sm">{user.full_name}</td>
                     <td className="p-4 text-sm">
                       <div className="font-mono font-bold text-gray-800 dark:text-gray-300">{user.nik}</div>
-                      <div className="text-[11px] text-gray-400 font-mono">{user.nik}@alfamidi.com</div>
+                      <div className="text-[11px] text-gray-400 font-mono">{user.nik}@mu.co.id</div>
                     </td>
                     <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
                       {user.branches ? (
@@ -437,7 +439,7 @@ export default function DaftarAdminCabangPage() {
                     placeholder="Contoh: 12605011"
                     className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-mono font-bold focus:outline-none focus:border-blue-950" 
                   />
-                  <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 italic">Email otomatis: {formData.nik || 'NIK'}@alfamidi.com</p>
+                  <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 italic">Email otomatis: {formData.nik || 'NIK'}@mu.co.id</p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">PASSWORD</label>

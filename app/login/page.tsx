@@ -126,7 +126,7 @@ export default function LoginPage() {
                   type="email"
                   id="email"
                   required
-                  placeholder="NIK@alfamidi.com"
+                  placeholder="NIK@mu.co.id"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 pl-10 pr-4 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-[#1A2647] outline-none hover:border-[#142B4D] dark:hover:border-[#FE9A00] focus:border-[#FE9A00] dark:focus:border-[#FE9A00] focus:ring-4 focus:ring-[#FE9A00]/10 dark:focus:ring-[#FE9A00]/20 transition-all duration-200 font-medium placeholder-gray-400 dark:placeholder-gray-500"

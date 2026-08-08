@@ -155,7 +155,12 @@ export async function getUsersByRoleAction({ role, search = '', page = 1, limit 
     }
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,nik.ilike.%${search}%`)
+      const searchNum = parseInt(search, 10);
+      if (!isNaN(searchNum)) {
+        query = query.or(`full_name.ilike.%${search}%,nik.eq.${searchNum}`);
+      } else {
+        query = query.or(`full_name.ilike.%${search}%`);
+      }
     }
 
     const { data, count, error } = await query
@@ -227,7 +232,7 @@ export async function getDashboardStatsAction() {
 interface CreateUserParams {
   password: string
   fullName: string
-  nik: string
+  nik: number
   role: 'admin_cabang' | 'assessor'
   branchId?: number | null
 }
@@ -236,24 +241,24 @@ interface CreateUserParams {
 export async function createUserAction({ password, fullName, nik, role, branchId }: CreateUserParams) {
   try {
     const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
-    const cleanNik = nik.trim();
     const { data: existingNik, error: checkError } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('nik', cleanNik)
+      .eq('nik', nik)
       .maybeSingle();
     if (checkError) throw checkError;
 
     if (existingNik) {
-      return { success: false, error: `NIK ${cleanNik} sudah terdaftar di sistem!` };
+      return { success: false, error: `NIK ${nik} sudah terdaftar di sistem!` };
     }
 
-    const generatedEmail = `${cleanNik}@alfamidi.com`;
+    const generatedEmail = `${nik}@mu.co.id`;
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: generatedEmail,
       password: password,
-      email_confirm: true
+      email_confirm: true,
+      user_metadata: { full_name: fullName.trim(), nik, role }
     })
 
     if (authError) {
@@ -267,7 +272,7 @@ export async function createUserAction({ password, fullName, nik, role, branchId
         {
           id: authData.user.id,
           full_name: fullName.trim(),
-          nik: cleanNik,
+          nik: nik,
           role: role,
           branch_id: branchId || null
         }
@@ -284,7 +289,7 @@ export async function createUserAction({ password, fullName, nik, role, branchId
     const roleLabel = role === 'admin_cabang' ? 'Admin Cabang' : 'Assessor';
     await createNotification(
       'Pengguna Baru Terdaftar',
-      `Berhasil menambahkan ${roleLabel} baru atas nama ${fullName.trim()} (NIK: ${cleanNik}).`
+      `Berhasil menambahkan ${roleLabel} baru atas nama ${fullName.trim()} (NIK: ${nik}).`
     );
     return { success: true }
   } catch (error: any) {
@@ -295,7 +300,7 @@ export async function createUserAction({ password, fullName, nik, role, branchId
 interface UpdateUserParams {
   id: string
   fullName: string
-  nik: string
+  nik: number
   deleteAvatar: boolean
   branchId?: number | null
   password?: string
@@ -305,7 +310,6 @@ interface UpdateUserParams {
 export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password }: UpdateUserParams) {
   try {
     const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
-    const cleanNik = nik.trim();
     const supabase = await createServerClient();
 
     const { data: existingUser, error: fetchError } = await supabase
@@ -316,22 +320,22 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
 
     if (fetchError || !existingUser) throw new Error("Data pengguna tidak ditemukan.")
 
-    if (cleanNik !== existingUser.nik) {
+    if (nik !== existingUser.nik) {
       const { data: duplicateNik } = await supabase
         .from('profiles')
         .select('id')
-        .eq('nik', cleanNik)
+        .eq('nik', nik)
         .neq('id', id)
         .maybeSingle();
       if (duplicateNik) {
-        return { success: false, error: `Gagal ubah data! NIK ${cleanNik} sudah digunakan oleh karyawan lain.` };
+        return { success: false, error: `Gagal ubah data! NIK ${nik} sudah digunakan oleh karyawan lain.` };
       }
     }
 
     const authUpdatePayload: any = {}
 
-    if (cleanNik !== existingUser.nik) {
-      authUpdatePayload.email = `${cleanNik}@alfamidi.com`
+    if (nik !== existingUser.nik) {
+      authUpdatePayload.email = `${nik}@mu.co.id`
     }
     if (password && password.trim() !== '') {
       authUpdatePayload.password = password.trim()
@@ -349,8 +353,8 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
     if (fullName.trim() !== existingUser.full_name) {
       updatePayload.full_name = fullName.trim()
     }
-    if (cleanNik !== existingUser.nik) {
-      updatePayload.nik = cleanNik
+    if (nik !== existingUser.nik) {
+      updatePayload.nik = nik
     }
     if (deleteAvatar) {
       updatePayload.avatar_url = null
@@ -400,13 +404,6 @@ export async function deleteUserAction(id: string) {
       .eq('id', id)
       .single();
     if (fetchError) throw fetchError;
-
-    const { error: profileErr } = await supabaseAdmin
-      .from('profiles')
-      .delete()
-      .eq('id', id)
-
-    if (profileErr) throw profileErr
 
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(id)
     if (authErr) {
