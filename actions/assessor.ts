@@ -255,3 +255,48 @@ export async function updateLastReviewedTimestamp(ulokId: string) {
     return { success: false, error: error.message }
   }
 }
+
+export async function transitionDraftToInReview(id: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data: ulok, error: fetchError } = await supabase
+      .from('ulok_submissions')
+      .select('status, first_in_review_at')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !ulok) throw new Error('Usulan lokasi tidak ditemukan')
+
+    if (ulok.status === 'Draft') {
+      const now = new Date().toISOString()
+      const updatePayload: any = {
+        status: 'In Review',
+        last_reviewed_at: now,
+        updated_at: now
+      }
+      if (!ulok.first_in_review_at) {
+        updatePayload.first_in_review_at = now
+      }
+
+      const { error: updateError } = await supabase
+        .from('ulok_submissions')
+        .update(updatePayload)
+        .eq('id', id)
+
+      if (updateError) throw updateError
+
+      await calculateULOKSAW(id)
+
+      revalidatePath('/admin/assessor/pengelompokan')
+      revalidatePath('/admin/assessor/penilaian')
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}

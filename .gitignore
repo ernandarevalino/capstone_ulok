@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent rules
+.agents/rules/capstone-agent-rule.md
+.agents/tasks/task_spec.md
