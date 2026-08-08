@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile, deleteUlokFile } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
+import { softDeleteDocument } from '@/actions/recyclebin'
 
 export default function Section1BadanHukumPage() {
   const router = useRouter()
@@ -107,10 +108,10 @@ export default function Section1BadanHukumPage() {
     if (!deleteTarget) return
 
     startTransition(async () => {
-      const res = await deleteUlokFile(deleteTarget.id, deleteTarget.url)
+      const res = await softDeleteDocument(deleteTarget.id)
       if (res.success) {
         setDeleteTarget(null)
-        setSuccessModalText('Berkas berhasil dihapus!')
+        setSuccessModalText('Berkas berhasil dipindahkan ke tempat sampah!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -119,7 +120,7 @@ export default function Section1BadanHukumPage() {
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
-        setSuccessModalText("Gagal menghapus berkas: " + res.error)
+        setSuccessModalText("Gagal memindahkan berkas ke tempat sampah: " + res.error)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)

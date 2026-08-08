@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUlokSubmissions, createUlokSubmission, deleteUlokSubmission } from '@/actions/cabang'
-import { Download } from 'lucide-react'
+import { getUlokSubmissions, createUlokSubmission } from '@/actions/cabang'
+import { softDeleteUlok } from '@/actions/recyclebin'
+import { Download, Trash2 } from 'lucide-react'
 
 export default function UsulanLokasiPage() {
   const router = useRouter()
@@ -220,9 +221,9 @@ export default function UsulanLokasiPage() {
     const namaToDelete = deleteTarget.namaLokasi
 
     startTransition(async () => {
-      const res = await deleteUlokSubmission(idToDelete)
+      const res = await softDeleteUlok(idToDelete)
       if (res.success) {
-        setSuccessMessage(`ULOK '${namaToDelete}' berhasil dihapus`)
+        setSuccessMessage(`ULOK '${namaToDelete}' berhasil dipindahkan ke tempat sampah`)
         setShowSuccessModal(true)
         fetchSubmissions()
         setDeleteTarget(null)
@@ -230,7 +231,7 @@ export default function UsulanLokasiPage() {
           setShowSuccessModal(false)
         }, 1500)
       } else {
-        alert("Gagal menghapus: " + res.error)
+        alert("Gagal memindahkan ke tempat sampah: " + res.error)
       }
     })
   }
@@ -680,6 +681,14 @@ export default function UsulanLokasiPage() {
               className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-950 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-950/10 w-full sm:w-60 sm:focus:w-72 transition-all duration-300 shadow-sm"
             />
           </div>
+
+          <button 
+            onClick={() => router.push('/admin/cabang/usulan-lokasi/recyclebin')}
+            className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-red-650 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center w-10 h-10 shrink-0 shadow-sm"
+            title="Tempat Sampah (Recycle Bin)"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
 
           <button 
             onClick={() => setIsModalOpen(true)}

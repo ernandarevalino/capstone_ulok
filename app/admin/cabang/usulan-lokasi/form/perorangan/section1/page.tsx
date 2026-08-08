@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile, deleteUlokFile } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
+import { softDeleteDocument } from '@/actions/recyclebin'
 
 export default function Section1PeroranganPage() {
   const router = useRouter()
@@ -116,11 +117,11 @@ export default function Section1PeroranganPage() {
     if (!deleteTarget) return
 
     startTransition(async () => {
-      const res = await deleteUlokFile(deleteTarget.id, deleteTarget.url)
+      const res = await softDeleteDocument(deleteTarget.id)
       if (res.success) {
         setDeleteTarget(null)
         
-        setSuccessModalText('Berkas berhasil dihapus!')
+        setSuccessModalText('Berkas berhasil dipindahkan ke tempat sampah!')
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)

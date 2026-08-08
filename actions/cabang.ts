@@ -50,6 +50,7 @@ export async function getUlokSubmissions() {
         metode_saw(*)
       `)
       .in('admin_id', branchAdminIds)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -71,10 +72,12 @@ export async function getUlokSubmissions() {
         ...(item.metode_saw || {})
       }
 
-      const docs = (item.documents || []).sort((a: any, b: any) => {
-        if (a.is_latest !== b.is_latest) return a.is_latest ? -1 : 1
-        return (b.version || 1) - (a.version || 1) || new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
-      })
+      const docs = (item.documents || [])
+        .filter((d: any) => d.deleted_at === null)
+        .sort((a: any, b: any) => {
+          if (a.is_latest !== b.is_latest) return a.is_latest ? -1 : 1
+          return (b.version || 1) - (a.version || 1) || new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+        })
 
       const checklistMasterIds = getChecklistMasterIds(flattenedSubmission, docs)
       const denominator = checklistMasterIds.length
@@ -357,6 +360,7 @@ export async function getUploadedDocuments(ulokId: string) {
       .from('documents')
       .select('*')
       .eq('ulok_id', ulokId)
+      .is('deleted_at', null)
       .order('is_latest', { ascending: false })
       .order('version', { ascending: false })
       .order('uploaded_at', { ascending: false })
