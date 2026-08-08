@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
 import { transitionDraftToInReview } from '@/actions/assessor'
 import { Download, FilePlus, Clock, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react'
+import { exportUlokSubmissionsCSV } from '@/actions/export'
 
 export default function PengelompokanDashboard() {
   const router = useRouter()
@@ -27,6 +28,7 @@ export default function PengelompokanDashboard() {
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const [selectedBadanHukum, setSelectedBadanHukum] = useState<string>('all')
   const [showFilterPopover, setShowFilterPopover] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
@@ -71,6 +73,31 @@ export default function PengelompokanDashboard() {
       alert("Gagal mengunduh berkas. Silakan coba lagi.")
     } finally {
       setDownloadingDocName(null)
+    }
+  }
+
+  const handleExportCSV = async () => {
+    setIsExporting(true)
+    try {
+      const res = await exportUlokSubmissionsCSV('assessor')
+      if (res.success && res.csvData && res.filename) {
+        const blob = new Blob([res.csvData], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", res.filename)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } else {
+        alert("Gagal mengekspor CSV: " + (res.error || 'Terjadi kesalahan'))
+      }
+    } catch (error: any) {
+      console.error("Gagal mengekspor CSV:", error)
+      alert("Gagal mengekspor CSV. Silakan coba lagi.")
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -316,6 +343,23 @@ export default function PengelompokanDashboard() {
                 </>
               )}
             </div>
+
+            <button
+              onClick={handleExportCSV}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition active:scale-95 cursor-pointer disabled:scale-100"
+              title="Ekspor Data ke CSV"
+            >
+              {isExporting ? (
+                <svg className="animate-spin h-4 w-4 text-slate-800 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <Download className="w-4 h-4 text-slate-650 dark:text-slate-400" />
+              )}
+              <span>Export Data CSV</span>
+            </button>
 
             <button
               onClick={fetchData}
