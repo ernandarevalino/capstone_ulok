@@ -44,6 +44,8 @@ export interface UlokGroupItem {
   first_in_review_at: string | null;
   approved_at: string | null;
   harga_sewa: number | null;
+  last_reviewed_at: string | null;
+  reviewer_name: string | null;
 
   // Relations/Flattened
   profiles: ProfileInfo | null;
@@ -140,6 +142,7 @@ export async function getPengelompokanData() {
             nama_cabang
           )
         ),
+        updated_by_profile:profiles!ulok_submissions_updated_by_fkey(full_name),
         documents (*),
         ulok_pemilik(*),
         ulok_sertifikat(*),
@@ -229,6 +232,8 @@ export async function getPengelompokanData() {
         first_in_review_at: rawItem.first_in_review_at,
         approved_at: rawItem.approved_at,
         harga_sewa: rawItem.harga_sewa,
+        last_reviewed_at: rawItem.last_reviewed_at,
+        reviewer_name: (rawItem as any).updated_by_profile?.full_name || null,
         profiles: rawItem.profiles,
         documents: docs,
         persentase,

@@ -291,9 +291,38 @@ export async function transitionDraftToInReview(id: string) {
 
       await calculateULOKSAW(id)
 
-      revalidatePath('/admin/assessor/pengelompokan')
-      revalidatePath('/admin/assessor/penilaian')
-    }
+    revalidatePath('/admin/assessor/pengelompokan')
+    revalidatePath('/admin/assessor/penilaian')
+  }
+
+  return { success: true }
+} catch (error: any) {
+  return { success: false, error: error.message }
+}
+}
+
+export async function recordAssessorReviewActivity(ulokId: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { error: updateError } = await supabase
+      .from('ulok_submissions')
+      .update({
+        updated_by: user.id,
+        last_reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ulokId)
+
+    if (updateError) throw updateError
+
+    revalidatePath('/admin/assessor/pengelompokan')
+    revalidatePath('/admin/assessor/penilaian')
+    revalidatePath('/admin/assessor/penilaian/ulok-badanhukum')
+    revalidatePath('/admin/assessor/penilaian/ulok-perorangan')
 
     return { success: true }
   } catch (error: any) {

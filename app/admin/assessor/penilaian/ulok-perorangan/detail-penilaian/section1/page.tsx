@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
 import { Check, Loader2, AlertCircle, Download, History } from 'lucide-react'
-import { toggleDocumentVerification, updateLastReviewedTimestamp } from '@/actions/assessor'
+import { toggleDocumentVerification, recordAssessorReviewActivity } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 import { getCurrentProfile } from '@/actions/auth'
 
@@ -160,10 +160,10 @@ export default function Section1PeroranganAssessorPage() {
     try {
       const profileRes = await getCurrentProfile()
       if (profileRes.success && profileRes.profile?.role === 'assessor') {
-        await updateLastReviewedTimestamp(ulokId)
+        await recordAssessorReviewActivity(ulokId)
       }
     } catch (e) {
-      console.error("Gagal memperbarui timestamp terakhir direview:", e)
+      console.error("Gagal memperbarui aktivitas review assessor:", e)
     }
     
     const resDetail = await getUlokDetail(ulokId)
@@ -547,9 +547,6 @@ export default function Section1PeroranganAssessorPage() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Pilihan Hubungan Status Kepemilikan:</label>
-            <p className="text-xs text-blue-900 dark:text-blue-400 font-bold mb-3">
-              {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
-            </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Perorangan', 'Kuasa', 'Waris', 'Hibah'].map((item) => (
                 <label key={item} className={`p-3 border rounded-xl flex items-center gap-2 cursor-not-allowed transition font-bold text-xs ${statusKepemilikan === item ? 'border-blue-950 bg-blue-50/50 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500'}`}>

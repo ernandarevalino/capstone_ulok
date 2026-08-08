@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
 import { Check, Loader2, Download, History } from 'lucide-react'
-import { toggleDocumentVerification, updateLastReviewedTimestamp } from '@/actions/assessor'
+import { toggleDocumentVerification, recordAssessorReviewActivity } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 import { getCurrentProfile } from '@/actions/auth'
 
@@ -153,10 +153,10 @@ export default function Section1BadanHukumAssessorPage() {
       try {
         const profileRes = await getCurrentProfile()
         if (profileRes.success && profileRes.profile?.role === 'assessor') {
-          await updateLastReviewedTimestamp(ulokId)
+          await recordAssessorReviewActivity(ulokId)
         }
       } catch (e) {
-        console.error("Gagal memperbarui timestamp terakhir direview:", e)
+        console.error("Gagal memperbarui aktivitas review assessor:", e)
       }
       
       const resDocs = await getUploadedDocuments(ulokId)
