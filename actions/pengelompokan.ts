@@ -97,10 +97,11 @@ export async function updateUlokProgressAndTimestamp(ulokId: string) {
 
     if (subError || !rawSubmission) {
       console.error("Error fetching submission for progress check:", subError)
-      return
+      return { success: false, persentase: 0 }
     }
 
-    const { numerator, denominator, persentase } = calculateProgress(rawSubmission, rawSubmission.documents || [])
+    const activeDocs = (rawSubmission.documents || []).filter((d: any) => d.deleted_at === null)
+    const { numerator, denominator, persentase } = calculateProgress(rawSubmission, activeDocs)
 
     const isCompleted = denominator > 0 && numerator === denominator
     const currentCompletedAt = rawSubmission.documents_completed_at
@@ -116,8 +117,11 @@ export async function updateUlokProgressAndTimestamp(ulokId: string) {
         .update({ documents_completed_at: null })
         .eq('id', ulokId)
     }
+
+    return { success: true, persentase }
   } catch (err) {
     console.error("Gagal update progres/timestamp berkas:", err)
+    return { success: false, persentase: 0 }
   }
 }
 

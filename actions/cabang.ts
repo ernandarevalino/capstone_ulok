@@ -376,6 +376,30 @@ export async function getUploadedDocuments(ulokId: string) {
 export async function updateUlokSubmission(id: string, payload: any) {
   try {
     const supabase = await createClient()
+
+    // Fetch old progress
+    let oldPersentase = 0
+    try {
+      const { data: oldSub } = await supabase
+        .from('ulok_submissions')
+        .select(`
+          *,
+          ulok_pemilik(*),
+          ulok_sertifikat(*),
+          ulok_legal(*),
+          ulok_jaminan(*),
+          documents (*)
+        `)
+        .eq('id', id)
+        .single()
+      if (oldSub) {
+        const docs = (oldSub.documents || []).filter((d: any) => d.deleted_at === null)
+        const oldProgress = calculateProgress(oldSub, docs)
+        oldPersentase = oldProgress.persentase
+      }
+    } catch (err) {
+      console.error('Error fetching old progress:', err)
+    }
     
     const { data: currentUlok } = await supabase
       .from('ulok_submissions')
@@ -548,8 +572,15 @@ export async function updateUlokSubmission(id: string, payload: any) {
       }
     }
 
-    await updateUlokProgressAndTimestamp(id)
+    const progressRes = await updateUlokProgressAndTimestamp(id)
     await calculateULOKSAW(id)
+
+    // Trigger notification check asynchronously
+    if (progressRes?.success) {
+      checkAndSendProgressNotification(id, oldPersentase, progressRes.persentase).catch(err => {
+        console.error("Gagal mengirim email progress:", err)
+      })
+    }
 
     revalidatePath('/admin/cabang/usulan-lokasi')
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan`)
@@ -572,6 +603,30 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // Fetch old progress
+    let oldPersentase = 0
+    try {
+      const { data: oldSub } = await supabase
+        .from('ulok_submissions')
+        .select(`
+          *,
+          ulok_pemilik(*),
+          ulok_sertifikat(*),
+          ulok_legal(*),
+          ulok_jaminan(*),
+          documents (*)
+        `)
+        .eq('id', ulokId)
+        .single()
+      if (oldSub) {
+        const docs = (oldSub.documents || []).filter((d: any) => d.deleted_at === null)
+        const oldProgress = calculateProgress(oldSub, docs)
+        oldPersentase = oldProgress.persentase
+      }
+    } catch (err) {
+      console.error('Error fetching old progress:', err)
+    }
 
     const file = formData.get('file') as File
     if (!file) throw new Error('Berkas data file fisik kosong.')
@@ -705,7 +760,14 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
       }
     }
 
-    await updateUlokProgressAndTimestamp(ulokId)
+    const progressRes = await updateUlokProgressAndTimestamp(ulokId)
+
+    // Trigger notification check asynchronously
+    if (progressRes?.success) {
+      checkAndSendProgressNotification(ulokId, oldPersentase, progressRes.persentase).catch(err => {
+        console.error("Gagal mengirim email progress:", err)
+      })
+    }
 
     revalidatePath('/admin/cabang/usulan-lokasi')
     revalidatePath(`/admin/cabang/usulan-lokasi/form/perorangan/section1`)
@@ -896,5 +958,66 @@ export async function getNotificationsAction(userId?: string | null) {
     return { success: true, data: data || [] }
   } catch (error: any) {
     return { success: false, error: error.message, data: [] }
+  }
+}
+
+// === HELPER ACTION: CHECK AND SEND PROGRESS EMAIL ===
+async function checkAndSendProgressNotification(ulokId: string, oldPersentase: number, newPersentase: number) {
+  try {
+    if (oldPersentase < 50 && newPersentase >= 50) {
+      const supabase = await createClient()
+
+      // Fetch all active Assessors
+      const { data: assessors } = await supabase
+        .from('profiles')
+        .select('nik, full_name')
+        .eq('role', 'assessor')
+
+      const recipientEmails = (assessors || [])
+        .filter(a => a.nik)
+        .map(a => `${a.nik}@mu.co.id`)
+
+      if (recipientEmails.length > 0) {
+        // Fetch submission details
+        const { data: currentSubmission } = await supabase
+          .from('ulok_submissions')
+          .select(`
+            nama_lokasi,
+            jenis_badan_hukum,
+            admin_id
+          `)
+          .eq('id', ulokId)
+          .single()
+
+        if (!currentSubmission) return
+
+        // Fetch branch details
+        let namaCabang = 'Cabang'
+        const { data: branchDetails } = await supabase
+          .from('profiles')
+          .select(`
+            branches:branch_id (
+              nama_cabang
+            )
+          `)
+          .eq('id', currentSubmission.admin_id)
+          .single()
+
+        if (branchDetails) {
+          namaCabang = (branchDetails.branches as any)?.nama_cabang || 'Cabang'
+        }
+
+        const { sendProgressNotificationToAssessors } = await import('@/utils/email')
+        await sendProgressNotificationToAssessors({
+          namaLokasi: currentSubmission.nama_lokasi,
+          namaCabang,
+          jenisBadanHukum: currentSubmission.jenis_badan_hukum || '-',
+          persentase: newPersentase,
+          recipientEmails
+        })
+      }
+    }
+  } catch (err) {
+    console.error('Error checking or sending progress notification:', err)
   }
 }
