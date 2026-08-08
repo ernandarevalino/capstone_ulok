@@ -137,19 +137,19 @@ export default function WelcomePage() {
             <div className="h-12 w-44 relative flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
               <div className="block dark:hidden relative w-full h-12">
                 <Image
-                  src="/images/PRISMA new.png"
+                  src="/images/prisma-black-landing.png"
                   alt="Logo PRISMA"
                   fill
-                  sizes="(max-w-300px) 200vw, 296px"
+                  sizes="(max-w-200px) 150vw, 150px"
                   className="object-contain"
                 />
               </div>
               <div className="hidden dark:block relative w-full h-11">
                 <Image
-                  src="/images/PRISMA new.png"
+                  src="/images/prisma-white-landing.png"
                   alt="Logo PRISMA"
                   fill
-                  sizes="(max-w-176px) 100vw, 176px"
+                  sizes="(max-w-200px) 150vw, 150px"
                   className="object-contain"
                 />
               </div>

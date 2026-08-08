@@ -47,10 +47,10 @@ export default function HeaderDesktop() {
     <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-4 shadow-md text-white">
       {/* === UTAMA: LOGO === */}
       <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
-        <img 
-          src="/images/logo-priolo-white.png" 
-          alt="Logo PRISMA" 
-          className="h-12 w-auto object-contain" 
+        <img
+          src="/images/prisma-white-navbar.png"
+          alt="Logo PRISMA"
+          className="h-6 w-auto object-contain"
         />
       </Link>
 

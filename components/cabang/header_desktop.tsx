@@ -52,9 +52,9 @@ export default function HeaderDesktop() {
       {/* === UTAMA: LOGO === */}
       <Link href="/admin/cabang" className="flex items-center hover:opacity-90 transition-opacity">
         <img
-          src="/images/logo-priolo-white.png"
+          src="/images/prisma-white-navbar.png"
           alt="Logo PRISMA"
-          className="h-5 ml-4 w-auto object-contain"
+          className="h-6 w-auto object-contain"
         />
       </Link>
 

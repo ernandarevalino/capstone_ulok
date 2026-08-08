@@ -64,18 +64,16 @@ export default function LoginPage() {
       <div className="w-full max-w-[800px] min-h-130 bg-white dark:bg-[#111C34] rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl border border-transparent dark:border-gray-800/40 transition-all duration-300">
 
         {/* === SEKTOR KIRI: BANNER BRAND === */}
-        <div className="flex-1 bg-[#142B4D] dark:bg-[#0B1329] flex flex-col items-center justify-center relative m-2.5 rounded-xl p-6 md:p-0 min-h-[240px] md:min-h-0 transition-colors duration-300">
-          <div className="w-full max-w-[280px] md:max-w-[340px] p-2 flex items-center justify-center">
-            <img
-              src="/images/logo-login.png"
-              alt="Logo PRISMA Login"
-              className="w-full h-auto max-h-72 object-contain transition-transform duration-500 hover:scale-[1.03] ease-out"
-            />
-          </div>
+        <div className="hidden md:flex md:flex-1 bg-[#142B4D] dark:bg-[#0B1329] relative m-2.5 rounded-xl overflow-hidden transition-colors duration-300">
+          <img
+            src="/images/prisma-side-login.png"
+            alt="Logo PRISMA Login"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.03] ease-out rounded-xl"
+          />
         </div>
 
         {/* === SEKTOR KANAN: FORM LOGIN === */}
-        <div className="flex-1 bg-[#f8f9fa] dark:bg-[#0E172F] px-6 py-10 sm:px-12 sm:py-14 flex flex-col justify-center transition-colors duration-300 relative">
+        <div className="w-full md:flex-1 bg-[#f8f9fa] dark:bg-[#0E172F] px-6 py-10 sm:px-12 sm:py-14 flex flex-col justify-center transition-colors duration-300 relative">
 
           {/* === TOMBOL KEMBALI === */}
           <Link
@@ -92,12 +90,12 @@ export default function LoginPage() {
           <div className="mb-8 flex flex-col items-center justify-center w-full">
             <div className="mb-2 flex justify-center transition-transform duration-300 hover:scale-102">
               <img
-                src="/images/logo-priolo.png"
+                src="/images/prisma-black-login.png"
                 alt="Logo PRISMA Alfamidi"
                 className="block dark:hidden h-10 w-auto object-contain"
               />
               <img
-                src="/images/logo-priolo-white.png"
+                src="/images/prisma-white-login.png"
                 alt="Logo PRISMA Alfamidi White"
                 className="hidden dark:block h-10 w-auto object-contain"
               />

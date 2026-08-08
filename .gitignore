@@ -41,5 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 # agent rules
+.clinerules/capstone-agent-rule.md
+.clinerules/workflows/task.md
+.clinerules/skills
 .agents/rules/capstone-agent-rule.md
-.agents/tasks/task_spec.md
+.agents/workflows/task.md
