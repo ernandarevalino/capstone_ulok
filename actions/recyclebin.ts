@@ -47,7 +47,7 @@ export async function getTrashItems(branchId: number) {
       return { success: true, data: [] }
     }
 
-    // 1. Fetch soft-deleted ULOK submissions
+    // 1. Fetch soft-deleted ULOK submissions (Level 1: purged_by_cabang_at IS NULL)
     const { data: rawUloks, error: ulokError } = await supabase
       .from('ulok_submissions')
       .select(`
@@ -59,10 +59,11 @@ export async function getTrashItems(branchId: number) {
       `)
       .in('admin_id', branchAdminIds)
       .not('deleted_at', 'is', null)
+      .is('purged_by_cabang_at', null)
 
     if (ulokError) throw ulokError
 
-    // 2. Fetch soft-deleted documents
+    // 2. Fetch soft-deleted documents (Level 1: purged_by_cabang_at IS NULL)
     const { data: rawDocs, error: docError } = await supabase
       .from('documents')
       .select(`
@@ -77,6 +78,7 @@ export async function getTrashItems(branchId: number) {
       `)
       .in('ulok_submissions.admin_id', branchAdminIds)
       .not('deleted_at', 'is', null)
+      .is('purged_by_cabang_at', null)
 
     if (docError) throw docError
 
@@ -500,7 +502,7 @@ export async function emptyTrash(branchId: number) {
     }
 
     const itemsToDelete = trashRes.data.map((item) => ({ id: item.id, type: item.type }))
-    const res = await bulkPermanentDeleteItems(itemsToDelete)
+    const res = await bulkPurgeFromCabangRecycleBin(itemsToDelete)
     if (!res.success) throw new Error(res.error)
 
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -508,6 +510,383 @@ export async function emptyTrash(branchId: number) {
     return { success: true }
   } catch (error: any) {
     console.error('emptyTrash error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// ====== LEVEL 2: RECYCLE BIN & BACKUP RECOVERY ACTIONS ======
+
+export interface BackupItem {
+  id: string
+  type: 'ulok' | 'document'
+  name: string
+  parentName: string
+  branchId: number
+  branchName: string
+  deletedAt: string
+  deletedBy: string
+  purgedByCabangAt: string
+  remainingDays: number
+  fileUrl: string | null
+}
+
+async function checkSuperAdmin(supabase: any, userId: string) {
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+
+  if (profileError || !profile || profile.role !== 'super_admin') {
+    throw new Error('Access denied: Hanya Super Admin yang diizinkan melakukan tindakan ini')
+  }
+}
+
+export async function purgeFromCabangRecycleBin(id: string, type: 'ulok' | 'document') {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const now = new Date().toISOString()
+
+    if (type === 'ulok') {
+      // Escalate ULOK submission to Level 2
+      const { error: ulokError } = await supabase
+        .from('ulok_submissions')
+        .update({ purged_by_cabang_at: now })
+        .eq('id', id)
+
+      if (ulokError) throw ulokError
+
+      // Escalate all soft-deleted child documents to Level 2
+      const { error: docError } = await supabase
+        .from('documents')
+        .update({ purged_by_cabang_at: now })
+        .eq('ulok_id', id)
+        .not('deleted_at', 'is', null)
+
+      if (docError) throw docError
+    } else {
+      // Escalate specific document to Level 2
+      const { error: docError } = await supabase
+        .from('documents')
+        .update({ purged_by_cabang_at: now })
+        .eq('id', id)
+
+      if (docError) throw docError
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('purgeFromCabangRecycleBin error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function bulkPurgeFromCabangRecycleBin(items: { id: string; type: 'ulok' | 'document' }[]) {
+  try {
+    for (const item of items) {
+      const res = await purgeFromCabangRecycleBin(item.id, item.type)
+      if (!res.success) throw new Error(res.error)
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('bulkPurgeFromCabangRecycleBin error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function getSuperAdminBackupItems(filters: { branchId?: string, type?: 'all' | 'ulok' | 'document', search?: string }) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // Validate Super Admin role
+    await checkSuperAdmin(supabase, user.id)
+
+    // Auto-clean expired items first
+    await autoCleanExpiredBackupItems()
+
+    let branchAdminIds: string[] = []
+    if (filters.branchId && filters.branchId !== 'all') {
+      const { data: profilesInBranch, error: pError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('branch_id', parseInt(filters.branchId))
+
+      if (pError) throw pError
+      branchAdminIds = (profilesInBranch || []).map((p: any) => p.id)
+
+      if (branchAdminIds.length === 0) {
+        return { success: true, data: [] }
+      }
+    }
+
+    const backupItems: BackupItem[] = []
+
+    // 1. Fetch ULOK submissions in Level 2
+    if (!filters.type || filters.type === 'all' || filters.type === 'ulok') {
+      let ulokQuery = supabase
+        .from('ulok_submissions')
+        .select(`
+          id,
+          nama_lokasi,
+          deleted_at,
+          deleted_by,
+          purged_by_cabang_at,
+          deleted_by_profile:profiles!ulok_submissions_deleted_by_fkey(full_name),
+          creator_profile:profiles!ulok_submissions_admin_id_fkey(
+            branch_id,
+            branches(id, nama_cabang)
+          )
+        `)
+        .not('deleted_at', 'is', null)
+        .not('purged_by_cabang_at', 'is', null)
+
+      if (branchAdminIds.length > 0) {
+        ulokQuery = ulokQuery.in('admin_id', branchAdminIds)
+      }
+
+      const { data: rawUloks, error: ulokError } = await ulokQuery
+      if (ulokError) throw ulokError
+
+      if (rawUloks) {
+        for (const item of rawUloks) {
+          const purgedAt = item.purged_by_cabang_at
+          const purgeDate = new Date(purgedAt)
+          const now = new Date()
+          const diffTime = now.getTime() - purgeDate.getTime()
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+          const remainingDays = Math.max(0, 30 - diffDays)
+
+          const branchInfo = (item.creator_profile as any)?.branches
+          
+          backupItems.push({
+            id: item.id,
+            type: 'ulok',
+            name: item.nama_lokasi || 'Tidak Diketahui',
+            parentName: '-',
+            branchId: (item.creator_profile as any)?.branch_id || 0,
+            branchName: branchInfo?.nama_cabang || 'Pusat / Tidak Diketahui',
+            deletedAt: item.deleted_at,
+            deletedBy: (item.deleted_by_profile as any)?.full_name || 'Sistem / Tidak Diketahui',
+            purgedByCabangAt: item.purged_by_cabang_at,
+            remainingDays,
+            fileUrl: null
+          })
+        }
+      }
+    }
+
+    // 2. Fetch documents in Level 2
+    if (!filters.type || filters.type === 'all' || filters.type === 'document') {
+      let docQuery = supabase
+        .from('documents')
+        .select(`
+          id,
+          file_url,
+          document_type,
+          deleted_at,
+          deleted_by,
+          purged_by_cabang_at,
+          deleted_by_profile:profiles!documents_deleted_by_fkey(full_name),
+          ulok_submissions!inner(
+            id,
+            nama_lokasi,
+            admin_id,
+            creator_profile:profiles!ulok_submissions_admin_id_fkey(
+              branch_id,
+              branches(id, nama_cabang)
+            )
+          ),
+          checklist_master(nama_dokumen)
+        `)
+        .not('deleted_at', 'is', null)
+        .not('purged_by_cabang_at', 'is', null)
+
+      if (branchAdminIds.length > 0) {
+        docQuery = docQuery.in('ulok_submissions.admin_id', branchAdminIds)
+      }
+
+      const { data: rawDocs, error: docError } = await docQuery
+      if (docError) throw docError
+
+      if (rawDocs) {
+        for (const item of rawDocs) {
+          const docName = (item.checklist_master as any)?.nama_dokumen || item.document_type || 'Dokumen'
+          const parentUlok = item.ulok_submissions as any
+          const branchInfo = parentUlok?.creator_profile?.branches
+
+          const purgedAt = item.purged_by_cabang_at
+          const purgeDate = new Date(purgedAt)
+          const now = new Date()
+          const diffTime = now.getTime() - purgeDate.getTime()
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+          const remainingDays = Math.max(0, 30 - diffDays)
+
+          backupItems.push({
+            id: item.id,
+            type: 'document',
+            name: docName,
+            parentName: parentUlok?.nama_lokasi || 'Tidak Diketahui',
+            branchId: parentUlok?.creator_profile?.branch_id || 0,
+            branchName: branchInfo?.nama_cabang || 'Pusat / Tidak Diketahui',
+            deletedAt: item.deleted_at,
+            deletedBy: (item.deleted_by_profile as any)?.full_name || 'Sistem / Tidak Diketahui',
+            purgedByCabangAt: item.purged_by_cabang_at,
+            remainingDays,
+            fileUrl: item.file_url
+          })
+        }
+      }
+    }
+
+    // Sort by latest purged_by_cabang_at date
+    let combined = backupItems.sort(
+      (a, b) => new Date(b.purgedByCabangAt).getTime() - new Date(a.purgedByCabangAt).getTime()
+    )
+
+    // Memory filter for Search query
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase()
+      combined = combined.filter(item => 
+        item.name.toLowerCase().includes(searchLower) ||
+        item.parentName.toLowerCase().includes(searchLower) ||
+        item.branchName.toLowerCase().includes(searchLower) ||
+        item.deletedBy.toLowerCase().includes(searchLower)
+      )
+    }
+
+    return { success: true, data: combined }
+  } catch (error: any) {
+    console.error('getSuperAdminBackupItems error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function restoreToCabangRecycleBin(id: string, type: 'ulok' | 'document') {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // Validate Super Admin role
+    await checkSuperAdmin(supabase, user.id)
+
+    if (type === 'ulok') {
+      // Restore ULOK submission back to Level 1
+      const { error: ulokError } = await supabase
+        .from('ulok_submissions')
+        .update({ purged_by_cabang_at: null })
+        .eq('id', id)
+
+      if (ulokError) throw ulokError
+
+      // Restore all child documents back to Level 1
+      const { error: docError } = await supabase
+        .from('documents')
+        .update({ purged_by_cabang_at: null })
+        .eq('ulok_id', id)
+        .not('deleted_at', 'is', null)
+
+      if (docError) throw docError
+    } else {
+      // Restore document back to Level 1
+      const { error: docError } = await supabase
+        .from('documents')
+        .update({ purged_by_cabang_at: null })
+        .eq('id', id)
+
+      if (docError) throw docError
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('restoreToCabangRecycleBin error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function hardDeleteSuperAdminItem(id: string, type: 'ulok' | 'document') {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // Validate Super Admin role
+    await checkSuperAdmin(supabase, user.id)
+
+    if (type === 'ulok') {
+      const res = await permanentDeleteUlok(id)
+      if (!res.success) throw new Error(res.error)
+    } else if (type === 'document') {
+      const res = await permanentDeleteDocument(id)
+      if (!res.success) throw new Error(res.error)
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('hardDeleteSuperAdminItem error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function autoCleanExpiredBackupItems() {
+  try {
+    const supabase = await createClient()
+    
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString()
+
+    // Find expired ULOKs in Level 2
+    const { data: expiredUloks } = await supabase
+      .from('ulok_submissions')
+      .select('id')
+      .not('purged_by_cabang_at', 'is', null)
+      .lt('purged_by_cabang_at', thirtyDaysAgoISO)
+
+    // Find expired documents in Level 2
+    const { data: expiredDocs } = await supabase
+      .from('documents')
+      .select('id')
+      .not('purged_by_cabang_at', 'is', null)
+      .lt('purged_by_cabang_at', thirtyDaysAgoISO)
+
+    if (expiredUloks && expiredUloks.length > 0) {
+      for (const ulok of expiredUloks) {
+        await permanentDeleteUlok(ulok.id)
+      }
+    }
+
+    if (expiredDocs && expiredDocs.length > 0) {
+      for (const doc of expiredDocs) {
+        await permanentDeleteDocument(doc.id)
+      }
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('autoCleanExpiredBackupItems error:', error)
     return { success: false, error: error.message }
   }
 }

@@ -118,6 +118,16 @@ export default function HeaderMobile() {
             Daftar Assessor
           </Link>
 
+          <Link 
+            href="/admin/super-admin/recyclebin" 
+            onClick={() => setIsOpen(false)} 
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/super-admin/recyclebin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Recycle Bin
+          </Link>
+
           <hr className="border-slate-700 my-2" />
 
           {/* === SEKTOR: AVATAR PROFIL === */}

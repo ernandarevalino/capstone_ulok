@@ -88,6 +88,17 @@ export default function HeaderDesktop() {
         >
           Assessor
         </Link>
+
+        <Link 
+          href="/admin/super-admin/recyclebin" 
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/super-admin/recyclebin') 
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
+        >
+          Recycle Bin
+        </Link>
       </nav>
 
       {/* === PANEL: INFORMASI PENGGUNA === */}

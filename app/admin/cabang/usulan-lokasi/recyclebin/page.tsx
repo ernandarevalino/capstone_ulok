@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Search, Filter, RotateCcw, Trash, Trash2, AlertTriangle, FileText, Folder, CheckSquare, Square, Loader2 } from 'lucide-react'
-import { getTrashItems, restoreUlok, restoreDocument, permanentDeleteUlok, permanentDeleteDocument, bulkRestoreItems, bulkPermanentDeleteItems, emptyTrash, TrashItem } from '@/actions/recyclebin'
+import { getTrashItems, restoreUlok, restoreDocument, purgeFromCabangRecycleBin, bulkRestoreItems, bulkPurgeFromCabangRecycleBin, emptyTrash, TrashItem } from '@/actions/recyclebin'
 import { getCurrentUserBranchId } from '@/actions/saw'
 
 export default function RecycleBinPage() {
@@ -211,11 +211,11 @@ export default function RecycleBinPage() {
       let res;
       if (confirmModal.actionType === 'delete_single' && confirmModal.targetItem) {
         const { id, type, name } = confirmModal.targetItem
-        res = type === 'ulok' ? await permanentDeleteUlok(id) : await permanentDeleteDocument(id)
+        res = await purgeFromCabangRecycleBin(id, type)
         if (res.success) {
           setSuccessModal({
             isOpen: true,
-            message: `Berhasil menghapus secara permanen "${name}"`
+            message: `Berhasil menghapus "${name}" dari Cabang`
           })
           setSelectedItems((prev) => prev.filter((x) => !(x.id === id && x.type === type)))
           loadTrashData()
@@ -224,11 +224,11 @@ export default function RecycleBinPage() {
           alert('Gagal menghapus item: ' + res.error)
         }
       } else if (confirmModal.actionType === 'delete_bulk') {
-        res = await bulkPermanentDeleteItems(selectedItems)
+        res = await bulkPurgeFromCabangRecycleBin(selectedItems)
         if (res.success) {
           setSuccessModal({
             isOpen: true,
-            message: `Berhasil menghapus secara permanen ${selectedItems.length} item`
+            message: `Berhasil menghapus ${selectedItems.length} item dari Cabang`
           })
           setSelectedItems([])
           loadTrashData()
