@@ -2,6 +2,11 @@ import React, { Suspense } from 'react';
 import HeaderDesktop from '@/components/assessor/header_desktop';
 import HeaderMobile from '@/components/assessor/header_mobile';
 import FooterGlobal from '@/components/footer_global';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Verifikasi Berkas Assessor',
+};
 
 export default function AssessorLayout({ children }: { children: React.ReactNode }) {
   return (

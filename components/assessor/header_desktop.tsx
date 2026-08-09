@@ -54,7 +54,7 @@ export default function HeaderDesktop() {
         <img
           src="/images/prisma-white-navbar.png"
           alt="Logo PRISMA"
-          className="h-6 w-auto object-contain"
+          className="h-5 w-auto object-contain"
         />
       </Link>
 
@@ -62,41 +62,44 @@ export default function HeaderDesktop() {
       <nav className="flex items-center space-x-8 text-sm font-semibold">
         <Link
           href="/admin/assessor"
-          className={`pb-1 transition-colors border-b-2 ${isActive('/admin/assessor')
-            ? 'text-white border-white'
-            : 'text-gray-400 border-transparent hover:text-white'
-            }`}
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/assessor')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
         >
           Dashboard
         </Link>
 
-
         <Link
           href="/admin/assessor/pengelompokan"
-          className={`pb-1 transition-colors border-b-2 ${isActive('/admin/assessor/pengelompokan')
-            ? 'text-white border-white'
-            : 'text-gray-400 border-transparent hover:text-white'
-            }`}
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/assessor/pengelompokan')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
         >
           Progres ULOK
         </Link>
 
         <Link
           href="/admin/assessor/histori"
-          className={`pb-1 transition-colors border-b-2 ${isActive('/admin/assessor/histori')
-            ? 'text-white border-white'
-            : 'text-gray-400 border-transparent hover:text-white'
-            }`}
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/assessor/histori')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
         >
           Histori
         </Link>
 
         <Link
           href="/admin/assessor/peringkat"
-          className={`pb-1 transition-colors border-b-2 ${isActive('/admin/assessor/peringkat')
-            ? 'text-white border-white'
-            : 'text-gray-400 border-transparent hover:text-white'
-            }`}
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/assessor/peringkat')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
         >
           Peringkat
         </Link>

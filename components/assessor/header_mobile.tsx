@@ -49,14 +49,14 @@ export default function HeaderMobile() {
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';
 
   return (
-    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
-      <div className="flex items-center justify-between p-4">
+    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50 h-16">
+      <div className="flex items-center justify-between px-4 h-full">
         {/* === UTAMA: LOGO & ROLE === */}
-        <Link href="/admin/assessor" className="flex items-center">
+        <Link href="/admin/assessor" className="flex items-center hover:opacity-90 transition-opacity">
           <img 
-            src="/images/logo-priolo-white.png" 
+            src="/images/prisma-white-navbar.png" 
             alt="Logo PRISMA" 
-            className="h-9 w-auto object-contain" 
+            className="h-4 w-auto object-contain" 
           />
           <span className="text-[9px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase">
             AS
@@ -67,7 +67,7 @@ export default function HeaderMobile() {
         <div className="flex items-center space-x-2 ml-auto mr-2">
           <Link 
             href="/admin/assessor/notification" 
-            className={`p-2 rounded-full relative ${isActive('/admin/assessor/notification') ? 'bg-slate-700' : ''}`}
+            className={`p-2 rounded-full relative flex items-center justify-center ${isActive('/admin/assessor/notification') ? 'bg-slate-700' : ''}`}
           >
             <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
             {/* === NOTIFIKASI: BADGE === */}
@@ -94,19 +94,18 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/assessor" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/assessor') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Dashboard
           </Link>
 
-
           <Link 
             href="/admin/assessor/pengelompokan" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/assessor/pengelompokan') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor/pengelompokan') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Progres ULOK
@@ -115,8 +114,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/assessor/histori" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/assessor/histori') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor/histori') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Histori
@@ -125,8 +124,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/assessor/peringkat" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/assessor/peringkat') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor/peringkat') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Peringkat
@@ -138,8 +137,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/assessor/profile"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center space-x-3 p-2 rounded-md ${
-              isActive('/admin/assessor/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${
+              isActive('/admin/assessor/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
             }`}
           >
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>

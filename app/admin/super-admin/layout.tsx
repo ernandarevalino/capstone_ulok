@@ -2,6 +2,11 @@ import React from 'react';
 import HeaderDesktop from '@/components/super-admin/header_desktop';
 import HeaderMobile from '@/components/super-admin/header_mobile';
 import FooterGlobal from '@/components/footer_global';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Manajemen Pengguna',
+};
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (

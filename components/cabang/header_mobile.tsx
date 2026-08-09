@@ -49,14 +49,14 @@ export default function HeaderMobile() {
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U';
 
   return (
-    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
-      <div className="flex items-center justify-between p-4">
+    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50 h-16">
+      <div className="flex items-center justify-between px-4 h-full">
         {/* === UTAMA: LOGO === */}
-        <Link href="/admin/cabang" className="flex items-center">
+        <Link href="/admin/cabang" className="flex items-center hover:opacity-90 transition-opacity">
           <img 
-            src="/images/logo-priolo-white.png" 
+            src="/images/prisma-white-navbar.png" 
             alt="Logo PRISMA" 
-            className="h-9 w-auto object-contain" 
+            className="h-4 w-auto object-contain" 
           />
         </Link>
 
@@ -64,7 +64,7 @@ export default function HeaderMobile() {
         <div className="flex items-center space-x-2 ml-auto mr-2">
           <Link 
             href="/admin/cabang/notification" 
-            className={`p-2 rounded-full relative ${isActive('/admin/cabang/notification') ? 'bg-slate-700' : ''}`}
+            className={`p-2 rounded-full relative flex items-center justify-center ${isActive('/admin/cabang/notification') ? 'bg-slate-700' : ''}`}
           >
             <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
             {/* === NOTIFIKASI: BADGE === */}
@@ -91,8 +91,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/cabang" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/cabang') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Dashboard
@@ -101,8 +101,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/cabang/usulan-lokasi" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/usulan-lokasi') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/cabang/usulan-lokasi') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Usulan Lokasi
@@ -111,8 +111,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/cabang/feedback" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/feedback') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/cabang/feedback') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Feedback
@@ -121,8 +121,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/cabang/peringkat" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/cabang/peringkat') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/cabang/peringkat') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Peringkat
@@ -134,8 +134,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/cabang/profile"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center space-x-3 p-2 rounded-md ${
-              isActive('/admin/cabang/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${
+              isActive('/admin/cabang/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
             }`}
           >
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>

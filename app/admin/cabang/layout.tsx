@@ -2,6 +2,11 @@ import React, { Suspense } from 'react';
 import HeaderDesktop from '@/components/cabang/header_desktop';
 import HeaderMobile from '@/components/cabang/header_mobile';
 import FooterGlobal from '@/components/footer_global';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Dashboard Cabang',
+};
 
 export default function CabangLayout({ children }: { children: React.ReactNode }) {
   return (

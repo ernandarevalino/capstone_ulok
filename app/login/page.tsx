@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { loginAction } from '@/actions/auth';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -63,19 +64,19 @@ export default function LoginPage() {
       {/* Ambient background lights (Desktop Light Mode Only) */}
       <div className="hidden md:block dark:hidden absolute inset-0 pointer-events-none overflow-hidden">
         {/* Blob 1: Biru (Atas Kiri) */}
-        <div className="absolute -top-28 -left-28 w-[450px] h-[450px] bg-[#3365A6]/40 rounded-full blur-[110px] animate-pulse" />
+        <div className="absolute -top-28 -left-28 w-[450px] h-[450px] bg-[#3365A6]/40 rounded-full blur-[110px] animate-pulse transform-gpu will-change-transform" />
         
         {/* Blob 2: Merah (Bawah Kanan) */}
-        <div className="absolute -bottom-28 -right-28 w-[450px] h-[450px] bg-[#D91E2E]/35 rounded-full blur-[110px] animate-pulse [animation-delay:1.5s]" />
+        <div className="absolute -bottom-28 -right-28 w-[450px] h-[450px] bg-[#D91E2E]/35 rounded-full blur-[110px] animate-pulse [animation-delay:1.5s] transform-gpu will-change-transform" />
         
         {/* Blob 3: Kuning (Tengah) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#F28705]/30 rounded-full blur-[100px] animate-pulse [animation-delay:3s]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#F28705]/30 rounded-full blur-[100px] animate-pulse [animation-delay:3s] transform-gpu will-change-transform" />
         
         {/* Blob 4: Biru Soft (Atas Kanan) */}
-        <div className="absolute -top-20 -right-20 w-[350px] h-[350px] bg-[#3365A6]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2s]" />
+        <div className="absolute -top-20 -right-20 w-[350px] h-[350px] bg-[#3365A6]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2s] transform-gpu will-change-transform" />
         
         {/* Blob 5: Merah Soft (Bawah Kiri) */}
-        <div className="absolute -bottom-20 -left-20 w-[350px] h-[350px] bg-[#D91E2E]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2.5s]" />
+        <div className="absolute -bottom-20 -left-20 w-[350px] h-[350px] bg-[#D91E2E]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2.5s] transform-gpu will-change-transform" />
       </div>
 
       {/* Form Container */}
@@ -83,10 +84,13 @@ export default function LoginPage() {
 
         {/* Left Side: Brand Banner */}
         <div className="hidden md:flex md:flex-1 bg-[#3365A6] dark:bg-[#0D0D0D] relative m-2.5 rounded-xl overflow-hidden transition-colors duration-300">
-          <img
+          <Image
             src="/images/prisma-side-login.png"
             alt="Logo PRISMA Login"
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.03] ease-out rounded-xl"
+            fill
+            sizes="(max-w-[380px]) 100vw, 380px"
+            className="object-cover transition-transform duration-500 hover:scale-[1.03] ease-out rounded-xl"
+            priority
           />
         </div>
 
@@ -95,7 +99,7 @@ export default function LoginPage() {
 
           <Link
             href="/"
-            className="absolute top-4 right-4 p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-gray-800/50 transition-all duration-300 hover:rotate-90 z-20"
+            className="absolute top-4 right-4 p-3 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-gray-800/50 duration-300 hover:rotate-90 z-20 active:scale-95 transition-transform"
             title="Kembali ke Beranda"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -106,15 +110,21 @@ export default function LoginPage() {
           {/* Logo Header */}
           <div className="mb-8 flex flex-col items-center justify-center w-full">
             <div className="mb-2 flex justify-center transition-transform duration-300 hover:scale-102">
-              <img
+              <Image
                 src="/images/prisma-black-login.png"
                 alt="Logo PRISMA Alfamidi"
+                width={147}
+                height={40}
                 className="block dark:hidden h-10 w-auto object-contain"
+                priority
               />
-              <img
+              <Image
                 src="/images/prisma-white-login.png"
                 alt="Logo PRISMA Alfamidi White"
+                width={147}
+                height={40}
                 className="hidden dark:block h-10 w-auto object-contain"
+                priority
               />
             </div>
           </div>
@@ -124,7 +134,7 @@ export default function LoginPage() {
 
             {errorMsg && (
               <div className="p-3 text-xs text-[#D91E2E] dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-[#D91E2E]/20 dark:border-red-900/40 rounded-lg font-semibold flex items-center gap-2 animate-shake">
-                <img src="/icons/icon-alert.svg" alt="Alert Icon" className="w-4 h-4 shrink-0" />
+                <img src="/icons/icon-alert.svg" alt="Alert Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -136,7 +146,7 @@ export default function LoginPage() {
               </label>
               <div className="relative group">
                 <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                  <img src="/icons/icon-email.svg" alt="Email Icon" className="w-4 h-4" />
+                  <img src="/icons/icon-email.svg" alt="Email Icon" width={16} height={16} className="w-4 h-4" />
                 </span>
                 <input
                   type="email"
@@ -157,7 +167,7 @@ export default function LoginPage() {
               </label>
               <div className="relative group">
                 <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                  <img src="/icons/icon-lock.svg" alt="Lock Icon" className="w-4 h-4" />
+                  <img src="/icons/icon-lock.svg" alt="Lock Icon" width={16} height={16} className="w-4 h-4" />
                 </span>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -182,7 +192,7 @@ export default function LoginPage() {
             <div className="text-right -mt-1">
               <Link
                 href="login/lupasandi"
-                className="text-xs text-[#D91E2E] dark:text-red-400 font-bold hover:opacity-75 transition-opacity duration-200"
+                className="text-xs text-[#D91E2E] dark:text-red-400 font-bold hover:opacity-75 transition-all duration-200 active:scale-95 inline-block py-1.5 px-1"
               >
                 Lupa Kata Sandi Anda?
               </Link>
@@ -211,7 +221,7 @@ export default function LoginPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-[#111C34] rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800/60 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <img src="/icons/icon-check.svg" alt="Success" width={64} height={64} className="w-16 h-16 mx-auto mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
               {successMessage}
             </p>

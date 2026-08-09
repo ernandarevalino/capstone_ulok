@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LupaSandiPage() {
   const [email, setEmail] = useState('');
@@ -40,19 +41,19 @@ export default function LupaSandiPage() {
       {/* Ambient background lights (Desktop Light Mode Only) */}
       <div className="hidden md:block dark:hidden absolute inset-0 pointer-events-none overflow-hidden">
         {/* Blob 1: Biru PRISMA (Top-Left) */}
-        <div className="absolute -top-28 -left-28 w-[500px] h-[500px] bg-[#3365A6]/40 rounded-full blur-[110px] animate-pulse" />
+        <div className="absolute -top-28 -left-28 w-[500px] h-[500px] bg-[#3365A6]/40 rounded-full blur-[110px] animate-pulse transform-gpu will-change-transform" />
 
         {/* Blob 2: Merah PRISMA (Bottom-Right) */}
-        <div className="absolute -bottom-28 -right-28 w-[500px] h-[500px] bg-[#D91E2E]/35 rounded-full blur-[110px] animate-pulse [animation-delay:1.5s]" />
+        <div className="absolute -bottom-28 -right-28 w-[500px] h-[500px] bg-[#D91E2E]/35 rounded-full blur-[110px] animate-pulse [animation-delay:1.5s] transform-gpu will-change-transform" />
 
         {/* Blob 3: Kuning PRISMA (Center Accent) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-[#F28705]/30 rounded-full blur-[100px] animate-pulse [animation-delay:3s]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-[#F28705]/30 rounded-full blur-[100px] animate-pulse [animation-delay:3s] transform-gpu will-change-transform" />
 
         {/* Blob 4: Biru PRISMA (Top-Right) */}
-        <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-[#3365A6]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2s]" />
+        <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-[#3365A6]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2s] transform-gpu will-change-transform" />
 
         {/* Blob 5: Merah PRISMA (Bottom-Left) */}
-        <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-[#D91E2E]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2.5s]" />
+        <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-[#D91E2E]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2.5s] transform-gpu will-change-transform" />
       </div>
 
       {/* === PASSWORD RECOVERY CONTAINER === */}
@@ -61,15 +62,21 @@ export default function LupaSandiPage() {
         {/* === LOGO & TITLE HEADER === */}
         <div className="flex flex-col items-center justify-center w-full mb-8">
           <div className="mb-4 flex justify-center transition-transform duration-300 hover:scale-102">
-            <img
+            <Image
               src="/images/prisma-black-login.png"
               alt="Logo PRISMA Alfamidi"
+              width={147}
+              height={40}
               className="block dark:hidden h-10 w-auto object-contain"
+              priority
             />
-            <img
+            <Image
               src="/images/prisma-white-login.png"
               alt="Logo PRISMA Alfamidi White"
+              width={147}
+              height={40}
               className="hidden dark:block h-10 w-auto object-contain"
+              priority
             />
           </div>
           <p className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
@@ -83,7 +90,7 @@ export default function LupaSandiPage() {
           {/* === ERROR FEEDBACK === */}
           {errorMsg && (
             <div className="p-3 text-xs text-[#D91E2E] dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-[#D91E2E]/20 dark:border-red-900/40 rounded-lg font-semibold flex items-center gap-2 animate-shake">
-              <img src="/icons/icon-alert.svg" alt="Alert Icon" className="w-4 h-4 shrink-0" />
+              <img src="/icons/icon-alert.svg" alt="Alert Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -91,7 +98,7 @@ export default function LupaSandiPage() {
           {/* === SUCCESS FEEDBACK === */}
           {successMsg && (
             <div className="p-3 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-lg font-semibold flex items-center gap-2">
-              <img src="/icons/icon-check.svg" alt="Success Icon" className="w-4 h-4 shrink-0" />
+              <img src="/icons/icon-check.svg" alt="Success Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -103,7 +110,7 @@ export default function LupaSandiPage() {
             </label>
             <div className="relative group">
               <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                <img src="/icons/icon-email.svg" alt="Email Icon" className="w-4 h-4" />
+                <img src="/icons/icon-email.svg" alt="Email Icon" width={16} height={16} className="w-4 h-4" />
               </span>
               <input
                 id="email-address"
@@ -144,7 +151,7 @@ export default function LupaSandiPage() {
         <div className="text-center mt-6">
           <Link
             href="/login"
-            className="text-xs sm:text-sm font-bold text-[#3365A6] dark:text-blue-400 hover:opacity-75 transition-opacity duration-200"
+            className="text-xs sm:text-sm font-bold text-[#3365A6] dark:text-blue-400 hover:opacity-75 transition-all duration-200 active:scale-95 inline-block py-2 px-3 rounded-lg hover:bg-slate-200/40 dark:hover:bg-slate-800/40"
           >
             Kembali ke Halaman Login
           </Link>

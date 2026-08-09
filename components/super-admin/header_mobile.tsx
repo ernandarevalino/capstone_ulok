@@ -45,14 +45,14 @@ export default function HeaderMobile() {
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
   return (
-    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50">
-      <div className="flex items-center justify-between p-4">
+    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50 h-16">
+      <div className="flex items-center justify-between px-4 h-full">
         {/* === UTAMA: LOGO & ROLE === */}
-        <Link href="/admin/super-admin" className="flex items-center">
+        <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
           <img 
-            src="/images/logo-priolo-white.png" 
+            src="/images/prisma-white-navbar.png" 
             alt="Logo PRISMA" 
-            className="h-9 w-auto object-contain" 
+            className="h-4 w-auto object-contain" 
           />
           <span className="text-[9px] bg-blue-600 font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase">
             SA
@@ -91,8 +91,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/super-admin" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isActive('/admin/super-admin') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/super-admin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Dashboard
@@ -101,8 +101,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/super-admin/daftaruser/admincabang" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isDaftarUserActive('admincabang') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isDaftarUserActive('admincabang') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Daftar Admin Cabang
@@ -111,8 +111,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/super-admin/daftaruser/assessor" 
             onClick={() => setIsOpen(false)} 
-            className={`p-2 rounded-md transition-colors ${
-              isDaftarUserActive('assessor') ? 'bg-slate-700 text-white font-bold' : 'text-gray-300 hover:bg-slate-800'
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isDaftarUserActive('assessor') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             Daftar Assessor
@@ -124,8 +124,8 @@ export default function HeaderMobile() {
           <Link 
             href="/admin/super-admin/profile"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center space-x-3 p-2 rounded-md ${
-              isActive('/admin/super-admin/profile') ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${
+              isActive('/admin/super-admin/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
             }`}
           >
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
