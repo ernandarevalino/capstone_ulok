@@ -1,6 +1,39 @@
-import { Resend } from 'resend'
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Initialize Gmail SMTP Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
+
+export interface SendEmailOptions {
+  to: string | string[];
+  subject: string;
+  html: string;
+}
+
+/**
+ * Core Nodemailer Email Dispatcher
+ */
+export async function sendEmail({ to, subject, html }: SendEmailOptions) {
+  try {
+    const info = await transporter.sendMail({
+      from: `"PRISMA Alfamidi" <${process.env.GMAIL_USER}>`,
+      to: Array.isArray(to) ? to.join(", ") : to,
+      subject: subject,
+      html: html,
+    });
+
+    console.log("[Gmail SMTP] Email successfully sent:", info.messageId);
+    return { success: true, data: info };
+  } catch (error: any) {
+    console.error("[Gmail SMTP] Failed to send email:", error);
+    return { success: false, error: error.message || "Gagal mengirim email." };
+  }
+}
 
 interface ProgressEmailPayload {
   namaLokasi: string
@@ -47,7 +80,7 @@ export async function sendProgressNotificationToAssessors(payload: ProgressEmail
           <div style="padding: 32px 24px;">
             <h2 style="margin-top: 0; margin-bottom: 8px; font-size: 18px; font-weight: 700; color: #0f172a;">Usulan Lokasi Siap Ditinjau</h2>
             <p style="font-size: 14px; line-height: 24px; color: #475569; margin-bottom: 24px;">
-              Usulan lokasi ini telah memenuhi batas kelengkapan dokumen (>= 50%) dan siap untuk diverifikasi.
+              Usulan lokasi ini telah memenuhi batas kelengkapan dokumen (>= 50%) and siap untuk diverifikasi.
             </p>
             
             <!-- Card -->
@@ -95,23 +128,50 @@ export async function sendProgressNotificationToAssessors(payload: ProgressEmail
     </html>
   `
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'PRISMA System <onboarding@resend.dev>',
-      to: finalRecipients,
-      subject: subject,
-      html: html,
-    })
+  return await sendEmail({
+    to: finalRecipients,
+    subject: subject,
+    html: html,
+  });
+}
 
-    if (error) {
-      console.error('Error sending progress email to Resend:', error)
-      return { success: false, error }
-    }
-    return { success: true, data }
-  } catch (err: any) {
-    console.error('Error sending progress email:', err)
-    return { success: false, error: err }
-  }
+export async function sendResetPasswordEmail({
+  to,
+  resetLink,
+  userName,
+}: {
+  to: string;
+  resetLink: string;
+  userName?: string;
+}) {
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+      <div style="background-color: #3365A6; padding: 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 20px;">PRISMA Alfamidi</h1>
+        <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 13px;">Sistem Pemrosesan Dokumen Usulan Lokasi</p>
+      </div>
+      <div style="padding: 32px; background-color: #ffffff; color: #334155;">
+        <h2 style="color: #1e293b; margin-top: 0;">Permintaan Atur Ulang Kata Sandi</h2>
+        <p>Halo <strong>${userName || "Pengguna PRISMA"}</strong>,</p>
+        <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun PRISMA Anda. Klik tombol di bawah ini untuk membuat kata sandi baru:</p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetLink}" style="background-color: #3365A6; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; display: inline-block;">Atur Ulang Kata Sandi</a>
+        </div>
+        
+        <p style="font-size: 13px; color: #64748b;">Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini.</p>
+      </div>
+      <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+        &copy; ${new Date().getFullYear()} PRISMA Alfamidi. All rights reserved.
+      </div>
+    </div>
+  `;
+
+  return await sendEmail({
+    to,
+    subject: "Atur Ulang Kata Sandi - PRISMA Alfamidi",
+    html: htmlContent,
+  });
 }
 
 export async function sendStatusChangeNotificationToAdmin(payload: StatusEmailPayload) {
@@ -202,21 +262,9 @@ export async function sendStatusChangeNotificationToAdmin(payload: StatusEmailPa
     </html>
   `
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'PRISMA System <onboarding@resend.dev>',
-      to: finalRecipients,
-      subject: subject,
-      html: html,
-    })
-
-    if (error) {
-      console.error('Error sending status change email to Resend:', error)
-      return { success: false, error }
-    }
-    return { success: true, data }
-  } catch (err: any) {
-    console.error('Error sending status change email:', err)
-    return { success: false, error: err }
-  }
+  return await sendEmail({
+    to: finalRecipients,
+    subject: subject,
+    html: html,
+  });
 }

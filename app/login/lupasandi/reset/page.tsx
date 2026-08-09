@@ -1,36 +1,50 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { requestPasswordResetAction } from '@/actions/auth';
+import Link from 'next/link';
+import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { updatePasswordAction } from '@/actions/auth';
 
-export default function LupaSandiPage() {
-  const [email, setEmail] = useState('');
+export default function ResetSandiPage() {
+  const router = useRouter();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-    setSuccessMsg('');
 
-    if (!email) {
-      setErrorMsg('Alamat email wajib diisi.');
+    if (password.length < 6) {
+      setErrorMsg('Kata sandi baru minimal harus 6 karakter.');
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg('Konfirmasi kata sandi tidak cocok.');
       setLoading(false);
       return;
     }
 
     try {
-      const res = await requestPasswordResetAction(email);
+      const res = await updatePasswordAction(password);
       if (res.success) {
-        setSuccessMsg(res.message || 'Tautan pemulihan kata sandi berhasil dikirim ke email Anda.');
-        setEmail('');
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       } else {
-        setErrorMsg(res.error || 'Terjadi kesalahan saat memproses permintaan Anda.');
+        setErrorMsg(res.error || 'Gagal mengatur ulang kata sandi.');
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Terjadi kesalahan saat memproses permintaan Anda.');
@@ -60,7 +74,7 @@ export default function LupaSandiPage() {
         <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-[#D91E2E]/25 rounded-full blur-[100px] animate-pulse [animation-delay:2.5s] transform-gpu will-change-transform" />
       </div>
 
-      {/* === PASSWORD RECOVERY CONTAINER === */}
+      {/* === PASSWORD RESET CONTAINER === */}
       <div className="relative z-10 backdrop-blur-md bg-white/90 dark:bg-[#161616] w-full max-w-md rounded-2xl p-5 sm:p-10 shadow-2xl border border-transparent dark:border-gray-800/40 transition-all duration-300">
         
         {/* === LOGO & TITLE HEADER === */}
@@ -83,8 +97,11 @@ export default function LupaSandiPage() {
               priority
             />
           </div>
-          <p className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
-            Masukkan alamat email terdaftar Anda untuk menerima tautan pemulihan kata sandi.
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-tight text-center">
+            Buat Kata Sandi Baru
+          </h2>
+          <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
+            Silakan masukkan kata sandi baru untuk mengamankan akun PRISMA Anda.
           </p>
         </div>
 
@@ -99,34 +116,61 @@ export default function LupaSandiPage() {
             </div>
           )}
 
-          {/* === SUCCESS FEEDBACK === */}
-          {successMsg && (
-            <div className="p-3 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-lg font-semibold flex items-center gap-2">
-              <img src="/icons/icon-check.svg" alt="Success Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          {/* === FIELDSET: EMAIL === */}
+          {/* === FIELDSET: PASSWORD BARU === */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="email-address" className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 tracking-wide">
-              Alamat Email
+            <label htmlFor="new-password" className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 tracking-wide">
+              Kata Sandi Baru
             </label>
             <div className="relative group">
               <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                <img src="/icons/icon-email.svg" alt="Email Icon" width={16} height={16} className="w-4 h-4" />
+                <img src="/icons/icon-password.svg" alt="Password Icon" width={16} height={16} className="w-4 h-4" />
               </span>
               <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="new-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                placeholder="NIK@mu.co.id"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-[#161616] outline-none hover:border-[#3365A6] dark:hover:border-[#F28705] focus:border-[#F28705] dark:focus:border-[#F28705] focus:ring-4 focus:ring-[#F28705]/10 dark:focus:ring-[#F28705]/20 transition-all duration-200 font-medium placeholder-gray-400 dark:placeholder-gray-500"
+                placeholder="Minimal 6 karakter"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-11 pl-10 pr-10 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-[#161616] outline-none hover:border-[#3365A6] dark:hover:border-[#F28705] focus:border-[#F28705] dark:focus:border-[#F28705] focus:ring-4 focus:ring-[#F28705]/10 dark:focus:ring-[#F28705]/20 transition-all duration-200 font-medium placeholder-gray-400 dark:placeholder-gray-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+              </button>
+            </div>
+          </div>
+
+          {/* === FIELDSET: KONFIRMASI PASSWORD === */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="confirm-password" className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 tracking-wide">
+              Konfirmasi Kata Sandi Baru
+            </label>
+            <div className="relative group">
+              <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
+                <img src="/icons/icon-password.svg" alt="Password Icon" width={16} height={16} className="w-4 h-4" />
+              </span>
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type={showConfirmPassword ? 'text' : 'password'}
+                required
+                placeholder="Ulangi kata sandi baru"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full h-11 pl-10 pr-10 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-[#161616] outline-none hover:border-[#3365A6] dark:hover:border-[#F28705] focus:border-[#F28705] dark:focus:border-[#F28705] focus:ring-4 focus:ring-[#F28705]/10 dark:focus:ring-[#F28705]/20 transition-all duration-200 font-medium placeholder-gray-400 dark:placeholder-gray-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+              </button>
             </div>
           </div>
 
@@ -143,10 +187,10 @@ export default function LupaSandiPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <span>Memproses...</span>
+                <span>Menyimpan...</span>
               </>
             ) : (
-              'Kirim Link Pemulihan'
+              'Simpan Kata Sandi Baru'
             )}
           </button>
         </form>
@@ -161,6 +205,19 @@ export default function LupaSandiPage() {
           </Link>
         </div>
       </div>
+
+      {/* === SUCCESS MODAL === */}
+      {success && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-[#161616] rounded-2xl p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-800/50 w-full max-w-sm text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Selesai!</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              Kata sandi berhasil diperbarui! Anda akan diarahkan ke halaman login.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

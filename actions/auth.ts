@@ -1,6 +1,9 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { sendResetPasswordEmail } from '@/utils/email'
+import { headers } from 'next/headers'
 
 // === ACTIONS: LOGIN ===
 export async function loginAction(formData: FormData) {
@@ -144,6 +147,112 @@ export async function updateProfileNameAction(fullName: string) {
       .eq('id', user.id)
 
     if (updateError) throw updateError
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+// === ACTIONS: REQUEST PASSWORD RESET ===
+export async function requestPasswordResetAction(email: string) {
+  if (!email || email.trim() === '') {
+    return { success: false, error: 'Email wajib diisi.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    // 1. Check if email exists in profiles table using RPC get_profile_by_email
+    const { data: profileList, error: rpcError } = await supabase.rpc('get_profile_by_email', {
+      email_to_check: email.trim(),
+    })
+
+    if (rpcError) {
+      console.error('[Reset Password] RPC Error:', rpcError)
+      throw new Error(`Gagal memverifikasi email: ${rpcError.message}`)
+    }
+
+    if (!profileList || profileList.length === 0) {
+      return { success: false, error: 'Email tidak terdaftar dalam sistem PRISMA!' }
+    }
+
+    const profile = profileList[0]
+
+    // 2. Initialize Supabase Admin Client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!serviceKey || serviceKey.trim() === '') {
+      throw new Error('Kritikal: SUPABASE_SERVICE_ROLE_KEY tidak tersedia di Server!')
+    }
+
+    const supabaseAdmin = createAdminClient(supabaseUrl!, serviceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    })
+
+    // 3. Construct dynamic origin
+    const host = (await headers()).get('host') || 'localhost:3000'
+    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https'
+    const origin = `${protocol}://${host}`
+
+    // 4. Generate recovery link using admin API
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: email.trim(),
+      options: {
+        redirectTo: `${origin}/login/lupasandi/reset`,
+      },
+    })
+
+    if (linkError) {
+      console.error('[Reset Password] Link Generation Error:', linkError)
+      throw new Error(`Gagal membuat tautan pemulihan: ${linkError.message}`)
+    }
+
+    if (!linkData || !linkData.properties || !linkData.properties.action_link) {
+      throw new Error('Gagal menghasilkan tautan pemulihan dari auth provider.')
+    }
+
+    const resetLink = linkData.properties.action_link
+
+    // 5. Send Email via Gmail SMTP Nodemailer
+    const emailRes = await sendResetPasswordEmail({
+      to: email.trim(),
+      resetLink,
+      userName: profile.full_name,
+    })
+
+    if (!emailRes.success) {
+      throw new Error(emailRes.error || 'Gagal mengirimkan email pemulihan.')
+    }
+
+    return {
+      success: true,
+      message: 'Instruksi atur ulang kata sandi telah dikirim ke email Anda.',
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+// === ACTIONS: UPDATE PASSWORD ===
+export async function updatePasswordAction(newPassword: string) {
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: 'Kata sandi baru minimal harus 6 karakter.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (error) throw error
 
     return { success: true }
   } catch (error: any) {
