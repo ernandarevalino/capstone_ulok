@@ -1,0 +1,21 @@
+import { createClient } from "@/utils/supabase/server";
+import { NextResponse } from "next/server";
+
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/login/lupasandi/reset";
+
+  if (code) {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+    console.error("Exchange code error:", error);
+  }
+
+  return NextResponse.redirect(
+    `${origin}/login?error=Link+reset+password+kadaluwarsa+atau+tidak+valid`,
+  );
+}

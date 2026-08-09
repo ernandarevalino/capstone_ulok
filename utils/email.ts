@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 
-// Initialize Gmail SMTP Transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -16,13 +15,51 @@ export interface SendEmailOptions {
 }
 
 /**
- * Core Nodemailer Email Dispatcher
+ * Core Nodemailer Email Dispatcher with Quota Optimization
  */
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
+  // Normalize string[] to string for uniform processing
+  const recipient = Array.isArray(to) ? to.join(", ") : to;
+
+  // 1. Validate Email Format & Existence
+  if (!recipient || typeof recipient !== "string" || !recipient.includes("@")) {
+    console.log(
+      "[Gmail SMTP] Skipped: Invalid or empty recipient email address.",
+    );
+    return { success: false, error: "Alamat email tidak valid." };
+  }
+
+  // 2. Filter Dummy Domains (e.g. @mu.co.id, @bsi.ac.id) to preserve quota during dev/testing
+  if (process.env.NODE_ENV !== "production") {
+    const isDummyEmail = (email: string) => email.endsWith("@mu.co.id") || email.endsWith("@bsi.ac.id");
+    const emails = recipient.split(",").map(e => e.trim()).filter(Boolean);
+    const nonDummyEmails = emails.filter(email => !isDummyEmail(email));
+
+    if (nonDummyEmails.length === 0) {
+      console.log(
+        `[Gmail SMTP - OPTIMIZED] Skipped dummy email (${recipient}) to preserve daily quota.`,
+      );
+      return {
+        success: true,
+        data: { message: "Dummy email skipped successfully" },
+      };
+    }
+
+    if (nonDummyEmails.length < emails.length) {
+      console.log(
+        `[Gmail SMTP - OPTIMIZED] Filtered out dummy emails. Original: ${recipient}, Sent to: ${nonDummyEmails.join(", ")}`,
+      );
+    }
+
+    to = nonDummyEmails.join(", ");
+  } else {
+    to = recipient;
+  }
+
   try {
     const info = await transporter.sendMail({
       from: `"PRISMA Alfamidi" <${process.env.GMAIL_USER}>`,
-      to: Array.isArray(to) ? to.join(", ") : to,
+      to: to,
       subject: subject,
       html: html,
     });

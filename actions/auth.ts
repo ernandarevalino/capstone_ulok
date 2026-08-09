@@ -195,9 +195,12 @@ export async function requestPasswordResetAction(email: string) {
     })
 
     // 3. Construct dynamic origin
-    const host = (await headers()).get('host') || 'localhost:3000'
-    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https'
-    const origin = `${protocol}://${host}`
+    const headersList = await headers();
+    const host = headersList.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+
+    // Automatically uses Vercel URL, NEXT_PUBLIC_APP_URL, or current host header
+    const origin = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
 
     // 4. Generate recovery link using admin API
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
