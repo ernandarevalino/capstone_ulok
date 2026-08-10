@@ -110,90 +110,30 @@ export async function updateUlokStatus(id: string, newStatus: string) {
       // Trigger status change email notification to Admin Cabang asynchronously
       if (['Approved', 'Revisi'].includes(newStatus)) {
         try {
-          const { data: adminProfile } = await supabase
-            .from('profiles')
-            .select('nik, full_name, branch_id')
-            .eq('id', ulok.admin_id)
-            .single()
+          let reviewerNote = ''
+          try {
+            const { data: lastComment } = await supabase
+              .from('comments')
+              .select('message')
+              .eq('ulok_id', id)
+              .order('created_at', { ascending: false })
+              .limit(1)
 
-          if (adminProfile && adminProfile.branch_id) {
-            const proposalBranchId = adminProfile.branch_id
-
-            // Query all active users where role = 'admin_cabang' AND branch_id = proposalBranchId
-            const { data: branchAdmins } = await supabase
-              .from('profiles')
-              .select('nik, full_name')
-              .eq('role', 'admin_cabang')
-              .eq('branch_id', proposalBranchId)
-
-            if (branchAdmins && branchAdmins.length > 0) {
-              let reviewNotes = ''
-              
-              try {
-                const { data: lastComment } = await supabase
-                  .from('comments')
-                  .select('message')
-                  .eq('ulok_id', id)
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-
-                if (lastComment && lastComment.length > 0) {
-                  reviewNotes = lastComment[0].message
-                }
-              } catch (commentErr) {
-                console.error('Gagal mengambil catatan review:', commentErr)
-              }
-
-              let namaCabang = 'Cabang'
-              let jenisBadanHukum = '-'
-              try {
-                const { data: branchDetails } = await supabase
-                  .from('ulok_submissions')
-                  .select(`
-                    jenis_badan_hukum,
-                    profiles:admin_id (
-                      branches:branch_id (
-                        nama_cabang
-                      )
-                    )
-                  `)
-                  .eq('id', id)
-                  .single()
-
-                if (branchDetails) {
-                  jenisBadanHukum = branchDetails.jenis_badan_hukum || '-'
-                  namaCabang = (branchDetails.profiles as any)?.branches?.nama_cabang || 'Cabang'
-                }
-              } catch (detailsErr) {
-                console.error('Gagal mengambil detil cabang untuk email:', detailsErr)
-              }
-
-              const reviewTimestamp = new Date().toLocaleString('id-ID', {
-                timeZone: 'Asia/Jakarta',
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })
-
-              const { sendStatusChangeNotificationToAdmin } = await import('@/utils/email')
-
-              for (const admin of branchAdmins) {
-                if (admin.nik) {
-                  const recipientEmail = `${admin.nik}@mu.co.id`
-                  sendStatusChangeNotificationToAdmin({
-                    namaLokasi: ulok.nama_lokasi,
-                    namaCabang,
-                    jenisBadanHukum,
-                    status: newStatus,
-                    reviewTimestamp,
-                    reviewNotes,
-                    recipientEmail
-                  }).catch(emailErr => {
-                    console.error(`Gagal mengirim email status perubahan ke ${recipientEmail}:`, emailErr)
-                  })
-                }
-              }
+            if (lastComment && lastComment.length > 0) {
+              reviewerNote = lastComment[0].message
             }
+          } catch (commentErr) {
+            console.error('Gagal mengambil catatan review:', commentErr)
           }
+
+          const { sendStatusChangeNotificationToAdmin } = await import('@/utils/email')
+
+          await sendStatusChangeNotificationToAdmin({
+            ulokId: id,
+            namaLokasi: ulok.nama_lokasi,
+            newStatus: newStatus as 'Approved' | 'Revisi' | 'Rejected' | 'In Review',
+            reviewerNote: reviewerNote || undefined,
+          })
         } catch (emailTriggerErr) {
           console.error('Gagal memicu alur pengiriman email status:', emailTriggerErr)
         }
