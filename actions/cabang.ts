@@ -575,11 +575,9 @@ export async function updateUlokSubmission(id: string, payload: any) {
     const progressRes = await updateUlokProgressAndTimestamp(id)
     await calculateULOKSAW(id)
 
-    // Trigger notification check asynchronously
+    // Trigger notification check and await it
     if (progressRes?.success) {
-      checkAndSendProgressNotification(id, oldPersentase, progressRes.persentase).catch(err => {
-        console.error("Gagal mengirim email progress:", err)
-      })
+      await checkAndSendProgressNotification(id, oldPersentase, progressRes.persentase)
     }
 
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -762,11 +760,9 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
 
     const progressRes = await updateUlokProgressAndTimestamp(ulokId)
 
-    // Trigger notification check asynchronously
+    // Trigger notification check and await it
     if (progressRes?.success) {
-      checkAndSendProgressNotification(ulokId, oldPersentase, progressRes.persentase).catch(err => {
-        console.error("Gagal mengirim email progress:", err)
-      })
+      await checkAndSendProgressNotification(ulokId, oldPersentase, progressRes.persentase)
     }
 
     revalidatePath('/admin/cabang/usulan-lokasi')
@@ -967,55 +963,41 @@ async function checkAndSendProgressNotification(ulokId: string, oldPersentase: n
     if (oldPersentase < 50 && newPersentase >= 50) {
       const supabase = await createClient()
 
-      // Fetch all active Assessors
-      const { data: assessors } = await supabase
+      // Fetch submission details
+      const { data: currentSubmission } = await supabase
+        .from('ulok_submissions')
+        .select(`
+          nama_lokasi,
+          admin_id
+        `)
+        .eq('id', ulokId)
+        .single()
+
+      if (!currentSubmission) return
+
+      // Fetch branch details
+      let namaCabang = 'Cabang'
+      const { data: branchDetails } = await supabase
         .from('profiles')
-        .select('nik, full_name')
-        .eq('role', 'assessor')
+        .select(`
+          branches:branch_id (
+            nama_cabang
+          )
+        `)
+        .eq('id', currentSubmission.admin_id)
+        .single()
 
-      const recipientEmails = (assessors || [])
-        .filter(a => a.nik)
-        .map(a => `${a.nik}@mu.co.id`)
-
-      if (recipientEmails.length > 0) {
-        // Fetch submission details
-        const { data: currentSubmission } = await supabase
-          .from('ulok_submissions')
-          .select(`
-            nama_lokasi,
-            jenis_badan_hukum,
-            admin_id
-          `)
-          .eq('id', ulokId)
-          .single()
-
-        if (!currentSubmission) return
-
-        // Fetch branch details
-        let namaCabang = 'Cabang'
-        const { data: branchDetails } = await supabase
-          .from('profiles')
-          .select(`
-            branches:branch_id (
-              nama_cabang
-            )
-          `)
-          .eq('id', currentSubmission.admin_id)
-          .single()
-
-        if (branchDetails) {
-          namaCabang = (branchDetails.branches as any)?.nama_cabang || 'Cabang'
-        }
-
-        const { sendProgressNotificationToAssessors } = await import('@/utils/email')
-        await sendProgressNotificationToAssessors({
-          namaLokasi: currentSubmission.nama_lokasi,
-          namaCabang,
-          jenisBadanHukum: currentSubmission.jenis_badan_hukum || '-',
-          persentase: newPersentase,
-          recipientEmails
-        })
+      if (branchDetails) {
+        namaCabang = (branchDetails.branches as any)?.nama_cabang || 'Cabang'
       }
+
+      const { sendProgressNotificationToAssessors } = await import('@/utils/email')
+      await sendProgressNotificationToAssessors({
+        ulokId,
+        namaLokasi: currentSubmission.nama_lokasi,
+        progressPercentage: newPersentase,
+        namaCabang,
+      })
     }
   } catch (err) {
     console.error('Error checking or sending progress notification:', err)
