@@ -276,14 +276,14 @@ export default function UnifiedClusteringPeringkatPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-amber-400 dark:bg-amber-500 text-blue-950 font-black px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                <Sparkles className="w-3 h-3 fill-current" /> Clustering 2x2 & SPK SAW
+                <Sparkles className="w-3 h-3 fill-current" /> Clustering & SPK SAW
               </span>
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               Dashboard Clustering & Peringkat ULOK
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-3xl">
-              Matriks evaluasi $2 \times 2$ (Kelengkapan Dokumen vs Durasi Pengumpulan) dan Leaderboard SPK SAW Nasional.
+              Matriks evaluasi (Kelengkapan Dokumen vs Durasi Pengumpulan) dan Leaderboard SPK SAW Nasional.
             </p>
           </div>
 
@@ -416,7 +416,7 @@ export default function UnifiedClusteringPeringkatPage() {
             {[
               {
                 id: 'c3',
-                label: 'C3 - Fast-Track',
+                label: 'Cluster 1',
                 subtitle: 'Lengkap & Cepat (≥80%, ≤7 Hari)',
                 badgeText: 'Ideal',
                 count: tabCounts.c3,
@@ -426,7 +426,7 @@ export default function UnifiedClusteringPeringkatPage() {
               },
               {
                 id: 'c2',
-                label: 'C2 - Progress Aktif',
+                label: 'Cluster 2',
                 subtitle: 'Belum Lengkap & Cepat (<80%, ≤7 Hari)',
                 badgeText: 'Aktif',
                 count: tabCounts.c2,
@@ -436,7 +436,7 @@ export default function UnifiedClusteringPeringkatPage() {
               },
               {
                 id: 'c1',
-                label: 'C1 - Perlu Review Segera',
+                label: 'Cluster 3',
                 subtitle: 'Lengkap & Lama (≥80%, >7 Hari)',
                 badgeText: 'Prioritas Review',
                 count: tabCounts.c1,
@@ -446,7 +446,7 @@ export default function UnifiedClusteringPeringkatPage() {
               },
               {
                 id: 'c4',
-                label: 'C4 - Bottleneck / Stagnan',
+                label: 'Cluster 4',
                 subtitle: 'Belum Lengkap & Lama (<80%, >7 Hari)',
                 badgeText: 'Stagnan',
                 count: tabCounts.c4,
