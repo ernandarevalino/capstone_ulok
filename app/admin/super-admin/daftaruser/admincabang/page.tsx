@@ -38,11 +38,12 @@ export default function DaftarAdminCabangPage() {
     id: string;
     fullName: string;
     nik: string;
+    email: string;
     branchId: string;
     deleteAvatar: boolean;
     password?: string;
     avatarUrl?: string | null; 
-  }>({ id: '', fullName: '', nik: '', branchId: '', deleteAvatar: false, password: '', avatarUrl: null });
+  }>({ id: '', fullName: '', nik: '', email: '', branchId: '', deleteAvatar: false, password: '', avatarUrl: null });
 
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
@@ -117,7 +118,8 @@ export default function DaftarAdminCabangPage() {
         nik: parseInt(editData.nik, 10), 
         deleteAvatar: editData.deleteAvatar, 
         branchId: editData.branchId ? parseInt(editData.branchId) : null, 
-        password: editData.password || undefined 
+        password: editData.password || undefined,
+        email: editData.email
       });
       
       if (res.success) {
@@ -289,7 +291,7 @@ export default function DaftarAdminCabangPage() {
                     <td className="p-4 font-semibold text-gray-700 dark:text-gray-200 text-sm">{user.full_name}</td>
                     <td className="p-4 text-sm">
                       <div className="font-mono font-bold text-gray-800 dark:text-gray-300">{user.nik}</div>
-                      <div className="text-[11px] text-gray-400 font-mono">{user.nik}@mu.co.id</div>
+                      <div className="text-[11px] text-gray-400 font-mono">{user.email || `${user.nik}@mu.co.id`}</div>
                     </td>
                     <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
                       {user.branches ? (
@@ -317,6 +319,7 @@ export default function DaftarAdminCabangPage() {
                               id: user.id, 
                               fullName: user.full_name, 
                               nik: user.nik, 
+                              email: user.email || `${user.nik}@mu.co.id`,
                               branchId: user.branch_id ? user.branch_id.toString() : (user.branches?.id ? user.branches.id.toString() : ''), 
                               deleteAvatar: false, 
                               password: '',
@@ -505,6 +508,14 @@ export default function DaftarAdminCabangPage() {
                   <input 
                     type="text" required value={editData.nik} onChange={e => setEditData({...editData, nik: e.target.value})}
                     className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-mono font-bold focus:outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">EMAIL PENGGUNA</label>
+                  <input 
+                    type="email" required value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})}
+                    placeholder="Contoh: user@gmail.com"
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-mono focus:outline-none" 
                   />
                 </div>
                 <div>

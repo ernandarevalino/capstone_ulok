@@ -169,9 +169,26 @@ export async function getUsersByRoleAction({ role, search = '', page = 1, limit 
 
     if (error) throw error
 
+    // Fetch auth users to map emails
+    let usersWithEmail = data || []
+    try {
+      const { data: authData, error: authListError } = await supabaseAdmin.auth.admin.listUsers({
+        perPage: 1000
+      });
+      if (!authListError && authData?.users) {
+        const emailMap = new Map(authData.users.map(u => [u.id, u.email]));
+        usersWithEmail = (data || []).map(profile => ({
+          ...profile,
+          email: emailMap.get(profile.id) || `${profile.nik}@mu.co.id`
+        }));
+      }
+    } catch (e) {
+      console.error('[getUsersByRoleAction] Failed to list auth users:', e);
+    }
+
     return {
       success: true,
-      data: data || [],
+      data: usersWithEmail,
       totalCount: count || 0,
       totalPages: Math.ceil((count || 0) / limit)
     }
@@ -304,10 +321,11 @@ interface UpdateUserParams {
   deleteAvatar: boolean
   branchId?: number | null
   password?: string
+  email?: string
 }
 
 // === ACTIONS: UPDATE USER DATA ===
-export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password }: UpdateUserParams) {
+export async function updateUserAction({ id, fullName, nik, deleteAvatar, branchId, password, email }: UpdateUserParams) {
   try {
     const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const supabase = await createServerClient();
@@ -334,8 +352,8 @@ export async function updateUserAction({ id, fullName, nik, deleteAvatar, branch
 
     const authUpdatePayload: any = {}
 
-    if (nik !== existingUser.nik) {
-      authUpdatePayload.email = `${nik}@mu.co.id`
+    if (email && email.trim() !== '') {
+      authUpdatePayload.email = email.trim()
     }
     if (password && password.trim() !== '') {
       authUpdatePayload.password = password.trim()

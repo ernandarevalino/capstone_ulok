@@ -33,9 +33,10 @@ export default function DaftarAssessorPage() {
     id: string;
     fullName: string;
     nik: string;
+    email: string;
     deleteAvatar: boolean;
     password?: string;
-  }>({ id: '', fullName: '', nik: '', deleteAvatar: false, password: '' });
+  }>({ id: '', fullName: '', nik: '', email: '', deleteAvatar: false, password: '' });
 
   // Client-side UI Sorting Cycle State
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -97,7 +98,8 @@ export default function DaftarAssessorPage() {
         fullName: editData.fullName,
         nik: parseInt(editData.nik, 10), 
         deleteAvatar: editData.deleteAvatar,
-        password: editData.password || undefined 
+        password: editData.password || undefined,
+        email: editData.email
       });
       
       if (res.success) {
@@ -255,7 +257,7 @@ export default function DaftarAssessorPage() {
                     <td className="p-4 font-semibold text-gray-700 dark:text-gray-200 text-sm">{user.full_name}</td>
                     <td className="p-4 text-sm">
                       <div className="font-mono font-bold text-gray-800 dark:text-gray-300">{user.nik}</div>
-                      <div className="text-[11px] text-gray-400 font-mono">{user.nik}@mu.co.id</div>
+                      <div className="text-[11px] text-gray-400 font-mono">{user.email || `${user.nik}@mu.co.id`}</div>
                     </td>
                     <td className="p-4 text-gray-600 dark:text-gray-400 text-sm font-medium">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
@@ -269,6 +271,7 @@ export default function DaftarAssessorPage() {
                               id: user.id,
                               fullName: user.full_name, 
                               nik: user.nik, 
+                              email: user.email || `${user.nik}@mu.co.id`,
                               deleteAvatar: false,
                               password: '' 
                             });
@@ -444,7 +447,14 @@ export default function DaftarAssessorPage() {
                     type="text" required value={editData.nik} onChange={e => setEditData({...editData, nik: e.target.value})}
                     className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-mono font-bold focus:outline-none" 
                   />
-                  <p className="text-[10px] text-amber-700 dark:text-amber-500 mt-1 italic">Mengubah NIK otomatis mengubah email login.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">EMAIL PENGGUNA</label>
+                  <input 
+                    type="email" required value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})}
+                    placeholder="Contoh: user@gmail.com"
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-mono focus:outline-none" 
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">NAMA LENGKAP</label>
