@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export interface SendEmailOptions {
-  to: string | string[];
+  to: string;
   subject: string;
   html: string;
 }
@@ -20,44 +20,39 @@ export interface SendEmailOptions {
  * Core Nodemailer Email Dispatcher with Quota Optimization
  */
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
-  // Normalize string[] to string for uniform processing
-  const recipient = Array.isArray(to) ? to.join(", ") : to;
+  // 1. SAFEGUARD: Check if Email is disabled in .env
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.log(
+      `[Mock Email] Sistem email dimatikan via .env. Pura-pura mengirim ke: ${to}`,
+    );
+    console.log(`[Mock Email] Subject: ${subject}`);
+    return {
+      success: true,
+      data: { message: "Sistem email dimatikan sementara" },
+    };
+  }
 
-  // 1. Validate Email Format & Existence
-  if (!recipient || typeof recipient !== "string" || !recipient.includes("@")) {
+  // 2. Validate Email Format & Existence
+  if (!to || typeof to !== "string" || !to.includes("@")) {
     console.log(
       "[Gmail SMTP] Skipped: Invalid or empty recipient email address.",
     );
     return { success: false, error: "Alamat email tidak valid." };
   }
 
-  // 2. Filter Dummy Domains (e.g. @mu.co.id, @bsi.ac.id) to preserve quota during dev/testing
-  if (process.env.NODE_ENV !== "production") {
-    const isDummyEmail = (email: string) => email.endsWith("@mu.co.id") || email.endsWith("@bsi.ac.id");
-    const emails = recipient.split(",").map(e => e.trim()).filter(Boolean);
-    const nonDummyEmails = emails.filter(email => !isDummyEmail(email));
-
-    if (nonDummyEmails.length === 0) {
-      console.log(
-        `[Gmail SMTP - OPTIMIZED] Skipped dummy email (${recipient}) to preserve daily quota.`,
-      );
-      return {
-        success: true,
-        data: { message: "Dummy email skipped successfully" },
-      };
-    }
-
-    if (nonDummyEmails.length < emails.length) {
-      console.log(
-        `[Gmail SMTP - OPTIMIZED] Filtered out dummy emails. Original: ${recipient}, Sent to: ${nonDummyEmails.join(", ")}`,
-      );
-    }
-
-    to = nonDummyEmails.join(", ");
-  } else {
-    to = recipient;
+  // 3. Filter Dummy Domains (e.g. @mu.co.id)
+  const isDummyDomain = to.endsWith("@mu.co.id") || to.endsWith("@bsi.ac.id");
+  if (isDummyDomain && process.env.NODE_ENV !== "production") {
+    console.log(
+      `[Gmail SMTP - OPTIMIZED] Skipped dummy email (${to}) to preserve daily quota.`,
+    );
+    return {
+      success: true,
+      data: { message: "Dummy email skipped successfully" },
+    };
   }
 
+  // 4. Send Email
   try {
     const info = await transporter.sendMail({
       from: `"PRISMA Alfamidi" <${process.env.GMAIL_USER}>`,

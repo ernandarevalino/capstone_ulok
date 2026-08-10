@@ -79,7 +79,7 @@ export default function Section2PeroranganPage() {
       setNoAjbLainnya(d.no_ajb_lainnya || '')
       setLuasAjbLainnya(d.luas_ajb || '')
 
-      bentukObjek ? setBentukObjek(d.bentuk_objek || '') : setBentukObjek(d.bentuk_objek || '')
+      setBentukObjek(d.bentuk_objek || '')
       setHargaSewa(d.harga_sewa ? d.harga_sewa.toString() : '')
       setIsJaminan(d.dokumen_jaminan ? 'Ya' : 'Tidak')
       setNamaBank(d.nama_jaminan || '')
@@ -128,7 +128,11 @@ export default function Section2PeroranganPage() {
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
-        alert(`Gagal mengunggah: ` + res.error)
+        setSuccessModalText(`Gagal mengunggah: ` + res.error)
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 2000)
       }
     })
   }
@@ -157,7 +161,11 @@ export default function Section2PeroranganPage() {
           setShowSuccessModal(false)
         }, 1500)
       } else {
-        alert(`Gagal mengunggah berkas: ` + errorMessage)
+        setSuccessModalText(`Gagal mengunggah berkas: ` + errorMessage)
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 2000)
       }
 
       const resDocs = await getUploadedDocuments(ulokId)
@@ -181,38 +189,49 @@ export default function Section2PeroranganPage() {
         const resDocs = await getUploadedDocuments(ulokId)
         if (resDocs.success && resDocs.data) setUploadedDocs(resDocs.data)
       } else {
-        alert("Gagal memindahkan berkas ke tempat sampah: " + res.error)
+        setSuccessModalText("Gagal memindahkan berkas ke tempat sampah: " + res.error)
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 2000)
         setDeleteTarget(null)
       }
     })
   }
 
-  const handleFinalSave = async (targetPath: string, showSuccessAlert = false) => {
+  const handleFinalSave = (targetPath: string, showSuccessAlert = false) => {
     if (!ulokId) return
     startTransition(async () => {
-      const payload: any = {
-        jenis_alas_hak: jenisAlasHak,
-        no_sertifikat_alas_hak: noSertifikat,
-        nama_sertifikat: namaSertifikat,
-        luas_sertifikat: luasSertifikat || null,
-        masa_berlaku: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null),
-        
-        nama_ajb: isLainnya ? namaAjbLainnya : '',
-        no_ajb_lainnya: isLainnya ? noAjbLainnya : '',
-        luas_ajb: isLainnya ? luasAjbLainnya : '',
-        tanggal_proses: isProsesSertifikat ? new Date().toISOString().split('T')[0] : null,
+      try {
+        const payload: any = {
+          jenis_alas_hak: jenisAlasHak,
+          no_sertifikat_alas_hak: noSertifikat,
+          nama_sertifikat: namaSertifikat,
+          luas_sertifikat: luasSertifikat || null,
+          masa_berlaku: jenisAlasHak === 'Hak Milik' ? null : (masaBerlakuSertifikat || null),
+          
+          nama_ajb: isLainnya ? namaAjbLainnya : '',
+          no_ajb_lainnya: isLainnya ? noAjbLainnya : '',
+          luas_ajb: isLainnya ? luasAjbLainnya : '',
+          tanggal_proses: isProsesSertifikat ? new Date().toISOString().split('T')[0] : null,
 
-        bentuk_objek: bentukObjek,
-        harga_sewa: hargaSewa ? parseFloat(hargaSewa) : null,
-        dokumen_jaminan: isJaminan === 'Ya',
-        nama_jaminan: isJaminan === 'Ya' ? namaBank : '',
-        no_surat_jaminan: isJaminan === 'Ya' ? noSuratJaminan : '',
-        tanggal_jaminan: isJaminan === 'Ya' ? (tanggalSuratJaminan || null) : null,
-        data_pribadi_lainnya: catatanLainnya
-      }
+          bentuk_objek: bentukObjek,
+          harga_sewa: hargaSewa ? parseFloat(hargaSewa) : null,
+          dokumen_jaminan: isJaminan === 'Ya',
+          nama_jaminan: isJaminan === 'Ya' ? namaBank : '',
+          no_surat_jaminan: isJaminan === 'Ya' ? noSuratJaminan : '',
+          tanggal_jaminan: isJaminan === 'Ya' ? (tanggalSuratJaminan || null) : null,
+          data_pribadi_lainnya: catatanLainnya
+        }
 
-      const res = await updateUlokSubmission(ulokId, payload)
-      if (res.success) {
+        const res = await updateUlokSubmission(ulokId, payload)
+        if (!res.success) {
+          setSuccessModalText("Gagal menyimpan data Section 2: " + (res.error || "Terjadi kesalahan."))
+          setShowSuccessModal(true)
+          setTimeout(() => setShowSuccessModal(false), 2000)
+          return
+        }
+
         if (showSuccessAlert) {
           setSuccessModalText('Data Telah Disimpan, Silakan Masuk Kembali Ke Form Saat Mengubahnya!..')
           setShowSuccessModal(true)
@@ -223,8 +242,11 @@ export default function Section2PeroranganPage() {
         } else {
           router.push(targetPath)
         }
-      } else {
-        alert("Gagal menyimpan data Section 2: " + res.error)
+      } catch (error: any) {
+        console.error("Error saving section 2 before navigation:", error)
+        setSuccessModalText("Terjadi kesalahan saat menyimpan data.")
+        setShowSuccessModal(true)
+        setTimeout(() => setShowSuccessModal(false), 2000)
       }
     })
   }
@@ -258,7 +280,7 @@ export default function Section2PeroranganPage() {
                     <button 
                       type="button" 
                       onClick={() => setDeleteTarget({ id: file.id, url: file.file_url })} 
-                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-655 hover:bg-red-50 dark:hover:bg-red-955/30 hover:border-red-300 transition-all"
+                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
                       title="Delete File"
                     >
                       <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
@@ -327,7 +349,7 @@ export default function Section2PeroranganPage() {
                 <button 
                   type="button" 
                   onClick={() => setDeleteTarget({ id: latestFile.id, url: latestFile.file_url })} 
-                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-655 hover:bg-red-55/35 dark:hover:bg-red-955/30 hover:border-red-300 transition-all"
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
                   title="Delete File"
                 >
                   <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
@@ -357,7 +379,7 @@ export default function Section2PeroranganPage() {
                       <div key={file.id} className="flex items-center justify-between gap-2 bg-gray-100/50 dark:bg-gray-800/30 p-1.5 rounded-lg border border-gray-200/40 dark:border-gray-700/20 w-full">
                         <div className="flex flex-col min-w-0">
                           <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-0.5">
-                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-455 px-1 py-0.2 rounded text-[7px]">
+                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1 py-0.2 rounded text-[7px]">
                               v{file.version || 1}
                             </span>
                             Versi Lama
@@ -371,15 +393,15 @@ export default function Section2PeroranganPage() {
                             href={file.file_url} 
                             target="_blank" 
                             rel="noreferrer" 
-                            className="p-0.5 rounded bg-white dark:bg-gray-755 border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-300 transition-all"
+                            className="p-0.5 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-300 transition-all"
                             title="View File"
                           >
-                            <img src="/icons/icon-view.svg" alt="View" className="w-3/3 object-contain dark:invert" />
+                            <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
                           </a>
                           <button 
                             type="button" 
                             onClick={() => setDeleteTarget({ id: file.id, url: file.file_url })} 
-                            className="p-0.5 rounded bg-white dark:bg-gray-755 border border-gray-200 dark:border-gray-700 text-red-655 hover:bg-red-50 dark:hover:bg-red-955/10 hover:border-red-300 transition-all"
+                            className="p-0.5 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-700 text-red-650 hover:bg-red-50 dark:hover:bg-red-950/10 hover:border-red-300 transition-all"
                             title="Delete"
                           >
                             <img src="/icons/icon-remove.svg" alt="Delete" className="w-3 h-3 object-contain" />
@@ -401,7 +423,7 @@ export default function Section2PeroranganPage() {
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
                 }}
-                className="text-[9px] file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[8px] file:font-bold file:bg-blue-50 dark:file:bg-blue-950/20 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/30 file:cursor-pointer w-full text-gray-455 dark:text-gray-500" 
+                className="text-[9px] file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[8px] file:font-bold file:bg-blue-50 dark:file:bg-blue-950/20 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/30 file:cursor-pointer w-full text-gray-400 dark:text-gray-500" 
               />
             </div>
           </div>
@@ -436,22 +458,22 @@ export default function Section2PeroranganPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
-            className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
+            onClick={() => !isPending && handleFinalSave('/admin/cabang/usulan-lokasi', false)} 
+            className={`cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Usulan Lokasi
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`)} 
-            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
+            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`, false)} 
+            className={`cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Form Perorangan
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
-            className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
+            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
+            className={`cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Section 1: Identitas
           </span>

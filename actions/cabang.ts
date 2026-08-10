@@ -497,19 +497,13 @@ export async function updateUlokSubmission(id: string, payload: any) {
       let allowedIds: number[] = []
       
       if (newJbh === 'PT') {
-        allowedIds = Array.from({ length: 11 }, (_, i) => 1 + i)
+        allowedIds = Array.from({ length: 16 }, (_, i) => 1 + i)
       } else if (newJbh === 'Yayasan') {
-        allowedIds = Array.from({ length: 9 }, (_, i) => 12 + i)
+        allowedIds = Array.from({ length: 14 }, (_, i) => 17 + i)
       } else if (newJbh === 'Koperasi') {
-        allowedIds = Array.from({ length: 9 }, (_, i) => 21 + i)
-      } else if (newJbh === 'Perorangan') {
-        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i)
-      } else if (newJbh === 'Kuasa') {
-        allowedIds = Array.from({ length: 11 }, (_, i) => 30 + i)
-      } else if (newJbh === 'Waris') {
-        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i).concat([41, 42, 43, 44])
-      } else if (newJbh === 'Hibah') {
-        allowedIds = Array.from({ length: 9 }, (_, i) => 30 + i).concat([45])
+        allowedIds = Array.from({ length: 14 }, (_, i) => 31 + i)
+      } else if (['Perorangan', 'Kuasa', 'Waris', 'Hibah'].includes(newJbh)) {
+        allowedIds = Array.from({ length: 21 }, (_, i) => 45 + i)
       }
 
       if (allowedIds.length > 0) {
