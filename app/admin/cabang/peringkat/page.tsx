@@ -79,6 +79,34 @@ export default function PeringkatCabangPage() {
 
   const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at
 
+  const renderFormattedText = (text: string) => {
+    if (!text) return null
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+    return parts.map((part, idx) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={idx} className="font-bold text-gray-900 dark:text-white">{part.slice(2, -2)}</strong>
+      }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <em key={idx}>{part.slice(1, -1)}</em>
+      }
+      return <React.Fragment key={idx}>{part}</React.Fragment>
+    })
+  }
+
+  const renderAnalysisNotes = (notes: string, fallback: string) => {
+    const text = notes || fallback
+    const paragraphs = text.split('\n\n')
+    return paragraphs.map((para, idx) => (
+      <p
+        key={idx}
+        className={`whitespace-pre-line leading-relaxed ${idx === 0 ? 'text-xs font-medium' : 'text-[11px] italic text-gray-500 dark:text-gray-400 mt-2'
+          }`}
+      >
+        {renderFormattedText(para)}
+      </p>
+    ))
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -115,10 +143,10 @@ export default function PeringkatCabangPage() {
           <>
             {/* === PODIUM: TOP 3 === */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end pt-4">
-              
+
               {/* === PODIUM: REKOMENDASI 2 === */}
               {top3Data[1] && (
-                <div 
+                <div
                   onClick={() => toggleCard(top3Data[1].id)}
                   className={`order-2 md:order-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openCardId === top3Data[1].id ? 'ring-2 ring-blue-500/40' : ''}`}
                 >
@@ -150,7 +178,7 @@ export default function PeringkatCabangPage() {
 
               {/* === PODIUM: REKOMENDASI 1 === */}
               {top3Data[0] && (
-                <div 
+                <div
                   onClick={() => toggleCard(top3Data[0].id)}
                   className={`order-1 md:order-2 bg-linear-to-b from-amber-50/40 to-white dark:from-amber-950/20 dark:to-gray-900 border-2 border-amber-400 dark:border-amber-500/60 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-60 md:-translate-y-2 ${openCardId === top3Data[0].id ? 'ring-4 ring-amber-400/20' : ''}`}
                 >
@@ -184,7 +212,7 @@ export default function PeringkatCabangPage() {
 
               {/* === PODIUM: REKOMENDASI 3 === */}
               {top3Data[2] && (
-                <div 
+                <div
                   onClick={() => toggleCard(top3Data[2].id)}
                   className={`order-3 md:order-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openCardId === top3Data[2].id ? 'ring-2 ring-blue-500/40' : ''}`}
                 >
@@ -251,9 +279,7 @@ export default function PeringkatCabangPage() {
                       <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                         <AlertCircle className="w-4 h-4" /> Hasil Analisis Keputusan SPK:
                       </h4>
-                      <p className="text-xs font-medium leading-relaxed italic">
-                        "{item.saw_analysis_notes || 'Belum ada catatan analisis tersemat untuk lokasi ini.'}"
-                      </p>
+                      <div>{renderAnalysisNotes(item.saw_analysis_notes, 'Belum ada catatan analisis tersemat untuk lokasi ini.')}</div>
                     </div>
                   </div>
                 </div>
@@ -283,11 +309,11 @@ export default function PeringkatCabangPage() {
                   const isIncomplete = checkIncomplete(item)
 
                   return (
-                    <div 
+                    <div
                       key={item.id}
                       className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800/80 shadow-xs overflow-hidden transition-all duration-200"
                     >
-                      <div 
+                      <div
                         onClick={() => toggleCard(item.id)}
                         className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer select-none hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-all"
                       >
@@ -347,10 +373,10 @@ export default function PeringkatCabangPage() {
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className={`p-3.5 rounded-xl border text-xs ${isIncomplete ? 'bg-amber-50/40 border-amber-100 dark:bg-amber-950/10 dark:border-amber-900/60 text-amber-900 dark:text-amber-400' : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300'}`}>
                             <p className="font-bold uppercase text-[9px] tracking-wider text-gray-400 mb-0.5">Analisis Pengambilan Keputusan:</p>
-                            <p className="font-medium italic leading-relaxed">"{item.saw_analysis_notes || 'Belum ada catatan khusus.'}"</p>
+                            <div>{renderAnalysisNotes(item.saw_analysis_notes, 'Belum ada catatan khusus.')}</div>
                           </div>
                         </div>
                       )}
@@ -370,7 +396,7 @@ export default function PeringkatCabangPage() {
                 >
                   Prev
                 </button>
-                
+
                 <div className="hidden sm:flex items-center gap-1.5">
                   {Array.from({ length: totalPages }, (_, idx) => {
                     const pageNum = idx + 1
@@ -378,11 +404,10 @@ export default function PeringkatCabangPage() {
                       <button
                         key={`page-btn-${pageNum}`}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all ${
-                          currentPage === pageNum
-                            ? 'bg-blue-950 text-white dark:bg-slate-800 dark:text-blue-300 border border-blue-950 dark:border-slate-700 shadow-xs'
-                            : 'border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
+                        className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all ${currentPage === pageNum
+                          ? 'bg-blue-950 text-white dark:bg-slate-800 dark:text-blue-300 border border-blue-950 dark:border-slate-700 shadow-xs'
+                          : 'border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
                       >
                         {pageNum}
                       </button>

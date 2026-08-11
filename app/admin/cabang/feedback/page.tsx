@@ -9,7 +9,7 @@ export default function FeedbackPage() {
   const [isPending, startTransition] = useTransition()
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState<any[]>([])
-  
+
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -132,10 +132,23 @@ export default function FeedbackPage() {
     )
   }
 
+  const parseFeedbackMessage = (message: string) => {
+    if (!message) return { tag: null, text: '' }
+
+    const match = message.match(/\[([\s\S]*?)\]:\s*([\s\S]*)$/)
+    if (match) {
+      return {
+        tag: match[1], // "Catatan Assessor - Dokumen: File Scan E-KTP"
+        text: match[2].trim()
+      }
+    }
+    return { tag: null, text: message }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-6">
-        
+
         {/* === HEADER: FEEDBACK === */}
         <div className="max-w-255 mx-auto mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -148,11 +161,11 @@ export default function FeedbackPage() {
 
         {/* === KONTEN: TABEL FEEDBACK === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
-          
+
           {/* === TABEL: HEADER === */}
           <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2">
-              <img src="/icons/icon-comment.svg" alt="Comment Icon" className="w-5 h-5 object-contain brightness-0 invert" /> 
+              <img src="/icons/icon-comment.svg" alt="Comment Icon" className="w-5 h-5 object-contain brightness-0 invert" />
               Kolom Feedback & Catatan Revisi
             </h3>
             <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold">
@@ -211,8 +224,8 @@ export default function FeedbackPage() {
                             {getStatusBadge(item.status)}
                           </td>
                           <td className="p-4 text-center font-extrabold text-blue-950 dark:text-blue-400">
-                            {item.final_score !== null && item.final_score !== undefined 
-                              ? item.final_score.toFixed(2) 
+                            {item.final_score !== null && item.final_score !== undefined
+                              ? item.final_score.toFixed(2)
                               : '0.00'}
                           </td>
                           <td className="p-4 text-center">
@@ -231,9 +244,9 @@ export default function FeedbackPage() {
                         <tr>
                           <td colSpan={5} className="bg-gray-50/40 dark:bg-gray-950/20 p-5 pl-6 pr-6 md:pl-10 border-b border-gray-100 dark:border-gray-800/60">
                             <div className="relative bg-white dark:bg-gray-900 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-3 transition-all duration-300 hover:shadow-md dark:hover:border-gray-700">
-                              
+
                               <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-900 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
-                              
+
                               <div className="flex items-center justify-between text-[11px] border-b border-gray-200 dark:border-gray-800 pb-2 relative z-10">
                                 <div className="flex items-center gap-2">
                                   <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
@@ -253,9 +266,21 @@ export default function FeedbackPage() {
                                 </div>
                               </div>
 
-                              <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed italic pl-1 relative z-10">
-                                "{currentComment?.message}"
-                              </p>
+                              {(() => {
+                                const { tag, text } = parseFeedbackMessage(currentComment?.message)
+                                return (
+                                  <div className="pl-1 relative z-10 space-y-1">
+                                    {tag && (
+                                      <p className="text-xs md:text-sm font-bold text-gray-900 dark:text-gray-100">
+                                        {tag.replace(/^Catatan Assessor\s*-\s*(.+?):\s*(.+)$/i, 'Catatan Assessor - $1 ($2):')}
+                                      </p>
+                                    )}
+                                    <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed">
+                                      "{text}"
+                                    </p>
+                                  </div>
+                                )
+                              })()}
 
                               {assessorComments.length > 1 && (
                                 <div className="flex justify-end pt-1 relative z-10">

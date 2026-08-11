@@ -58,18 +58,18 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
 
     if (jbh === 'PT' || jbh === 'Yayasan' || jbh === 'Koperasi') {
       const isDikuasakan = !!submission.is_dikuasakan || (documents ? documents.some(doc => doc.document_type === 'akta_kuasa') : false)
-      
+
       if (jbh === 'PT') {
         checklistMasterIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15]
-        
+
         if (isDikuasakan) {
           checklistMasterIds.push(10)
         }
-        
+
         if (documents && documents.some(doc => doc.checklist_id === 11 || doc.document_type === 'rups_persetujuan')) {
           checklistMasterIds.push(11)
         }
-        
+
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 12 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 13 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -79,17 +79,17 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
         } else {
           checklistMasterIds.push(12)
         }
-        
+
         if (documents && documents.some(doc => doc.checklist_id === 16 || doc.document_type === 'slf')) {
           checklistMasterIds.push(16)
         }
       } else if (jbh === 'Yayasan') {
         checklistMasterIds = [17, 18, 19, 20, 21, 22, 23, 24, 28, 29]
-        
+
         if (isDikuasakan) {
           checklistMasterIds.push(25)
         }
-        
+
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 26 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 27 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -99,17 +99,17 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
         } else {
           checklistMasterIds.push(26)
         }
-        
+
         if (documents && documents.some(doc => doc.checklist_id === 30 || doc.document_type === 'slf')) {
           checklistMasterIds.push(30)
         }
       } else if (jbh === 'Koperasi') {
         checklistMasterIds = [31, 32, 33, 34, 35, 36, 37, 38, 42, 43]
-        
+
         if (isDikuasakan) {
           checklistMasterIds.push(39)
         }
-        
+
         const hasSertifikat = documents && documents.some(doc => doc.checklist_id === 40 || doc.document_type === 'sertifikat_tanah')
         const hasAjb = documents && documents.some(doc => doc.checklist_id === 41 || doc.document_type === 'ajb_girik')
         if (hasSertifikat) {
@@ -119,14 +119,14 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
         } else {
           checklistMasterIds.push(40)
         }
-        
+
         if (documents && documents.some(doc => doc.checklist_id === 44 || doc.document_type === 'slf')) {
           checklistMasterIds.push(44)
         }
       }
     } else if (['Perorangan', 'Kuasa', 'Waris', 'Hibah'].includes(jbh)) {
       checklistMasterIds = [47, 48, 49, 56, 57]
-      
+
       const hasKitasDoc = documents && documents.some(doc => doc.document_type === 'kitas_kitap' || doc.checklist_id === 46)
       const isWNA = !!submission.nama_kitas || hasKitasDoc || submission.jenis_identitas === 'KITAS' || submission.jenis_identitas === 'KITAP' || submission.jenis_identitas === 'WNA'
       if (isWNA) {
@@ -134,7 +134,7 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
       } else {
         checklistMasterIds.push(45)
       }
-      
+
       const hasBukuNikah = !!submission.no_buku_nikah || (documents && documents.some(doc => doc.document_type === 'buku_nikah' || doc.checklist_id === 50))
       const hasCerai = documents && documents.some(doc => doc.document_type === 'akta_cerai' || doc.checklist_id === 53)
       if (hasBukuNikah) {
@@ -142,11 +142,11 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
       } else if (hasCerai) {
         checklistMasterIds.push(53)
       }
-      
+
       if (submission.nama_sebelum_ganti || submission.nama_sesudah_ganti) {
         checklistMasterIds.push(52)
       }
-      
+
       if (jbh === 'Kuasa') {
         checklistMasterIds.push(59, 60)
       } else if (jbh === 'Waris') {
@@ -155,7 +155,7 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
       } else if (jbh === 'Hibah') {
         checklistMasterIds.push(65)
       }
-      
+
       const hasSertifikatPerorangan = documents && documents.some(doc => doc.checklist_id === 54 || doc.document_type === 'sertifikat_tanah')
       const hasAjbPerorangan = documents && documents.some(doc => doc.checklist_id === 55 || doc.document_type === 'ajb_girik')
       if (hasSertifikatPerorangan) {
@@ -165,7 +165,7 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
       } else {
         checklistMasterIds.push(54)
       }
-      
+
       if (documents && documents.some(doc => doc.checklist_id === 58 || doc.document_type === 'slf')) {
         checklistMasterIds.push(58)
       }
@@ -177,7 +177,7 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
       if (doc.checklist_id !== null && doc.checklist_id !== undefined) {
         return doc.checklist_id
       }
-      
+
       const type = doc.document_type
       if (!type) return null
 
@@ -280,10 +280,10 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
 
     const numerator = documents
       ? documents.filter((doc) => {
-          if (doc.is_verified !== true) return false
-          const effectiveId = getEffectiveChecklistId(doc, jbh)
-          return effectiveId !== null && checklistMasterIds.includes(effectiveId)
-        }).length
+        if (doc.is_verified !== true) return false
+        const effectiveId = getEffectiveChecklistId(doc, jbh)
+        return effectiveId !== null && checklistMasterIds.includes(effectiveId)
+      }).length
       : 0
 
     const pct = denominator > 0 ? (numerator / denominator) * 100 : 0
@@ -373,26 +373,26 @@ export async function calculateULOKSAW(ulokId: string, verifiedUser?: any) {
     // === ANALISIS OTOMATIS ===
     let base_notes = ''
     if (submission.status === 'Draft') {
-      base_notes = '⚠️ Berkas belum diajukan oleh Cabang.'
+      base_notes = '**(Status: Draft)**\nBerkas belum diajukan oleh Admin Cabang.'
     } else if (submission.status === 'In Review') {
-      base_notes = '⏳ **Menunggu Review.** Skor saat ini belum dapat ditentukan karena proses review legal belum dimulai oleh Assessor.'
+      base_notes = '**(Menunggu Review)**\nSkor saat ini belum dapat ditentukan karena proses review legal belum dimulai oleh Assessor.'
     } else if (final_score >= 0.75) {
       const maxScore = Math.max(c1_score, c2_score, c3_score)
       if (c1_score === maxScore) {
-        base_notes = '🔥 **Rekomendasi Utama!** Nilai kelayakan tinggi didominasi oleh aspek kelengkapan dokumen berdasarkan checklist assessor yang aman dan bersih. Lokasi ini sangat minim risiko hukum di masa depan.'
+        base_notes = '**Rekomendasi Utama!**\nNilai kelayakan tinggi didominasi oleh aspek kelengkapan dokumen berdasarkan checklist assessor yang aman dan bersih. Lokasi ini sangat minim risiko hukum di masa depan.'
       } else if (c2_score === maxScore) {
-        base_notes = '🔥 **Sangat Layak Eksekusi!** Lokasi ini unggul karena durasi review legal yang sangat cepat dan efisien, menunjukkan kesiapan proses administrasi yang optimal.'
+        base_notes = '**Sangat Layak Eksekusi!**\nLokasi ini unggul karena durasi review legal yang sangat cepat dan efisien, menunjukkan kesiapan proses administrasi yang optimal.'
       } else {
-        base_notes = '🔥 **Peluang Investasi Tinggi!** Keunggulan utama lokasi ini ada pada efisiensi biaya. Total biaya sewa masa 5 tahun berada jauh di bawah rata-rata pasar, menjamin Payback Period yang lebih cepat.'
+        base_notes = '**Peluang Investasi Tinggi!**\nKeunggulan utama lokasi ini ada pada efisiensi biaya. Total biaya sewa masa 5 tahun berada jauh di bawah rata-rata pasar, menjamin Payback Period yang lebih cepat.'
       }
     } else {
       const minScore = Math.min(c1_score, c2_score, c3_score)
       if (c1_score === minScore) {
-        base_notes = '⚠️ **Penundaan Direkomendasikan.** Skor akhir rendah akibat kelengkapan dokumen wajib berdasarkan verifikasi checklist assessor masih minim. Segera lengkapi berkas.'
+        base_notes = '**Penundaan Direkomendasikan.**\nSkor akhir rendah akibat kelengkapan dokumen wajib berdasarkan verifikasi checklist assessor masih minim. Segera lengkapi berkas.'
       } else if (c2_score === minScore) {
-        base_notes = '⚠️ **Evaluasi Operasional.** Durasi review legal yang lambat menunjukkan hambatan administrasi. Risiko momentum pembukaan gerai terlewat.'
+        base_notes = '**Evaluasi Operasional.**\nDurasi review legal yang lambat menunjukkan hambatan administrasi. Risiko momentum pembukaan gerai terlewat.'
       } else {
-        base_notes = '⚠️ **Risiko Finansial Tinggi!** Total biaya sewa masa 5 tahun tergolong sangat mahal. Beban pengeluaran finansial berisiko menekan profitabilitas gerai.'
+        base_notes = '**Risiko Finansial Tinggi!**\nTotal biaya sewa masa 5 tahun tergolong sangat mahal. Beban pengeluaran finansial berisiko menekan profitabilitas gerai.'
       }
     }
 
