@@ -312,11 +312,6 @@ export default function ClusteringDashboardPage() {
         {/* === DASHBOARD TITLE & ACTIONS === */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-[#3365A6] text-white font-black px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                <Layers className="w-3 h-3" /> Clustering
-              </span>
-            </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               Dashboard Clustering ULOK
             </h1>

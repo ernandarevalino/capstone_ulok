@@ -5,7 +5,7 @@ import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import { 
   Trophy, Medal, AlertCircle, MapPin, ChevronDown, ChevronUp, 
-  Star, Award, Sparkles, Download, RefreshCw
+  Star, Award, Download, RefreshCw
 } from 'lucide-react'
 
 const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at;
@@ -129,11 +129,6 @@ export default function PeringkatPage() {
         {/* === TITLE & ACTIONS === */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-[#F28705] text-white font-black px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                <Sparkles className="w-3 h-3 fill-current" /> SPK SAW Nasional
-              </span>
-            </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               Peringkat Usulan Lokasi (ULOK)
             </h1>
@@ -177,11 +172,6 @@ export default function PeringkatPage() {
               <Award className="w-48 h-48" />
             </div>
             <div className="space-y-2.5 z-10">
-              <div className="flex items-center gap-2">
-                <span className="bg-[#F28705] text-white font-black px-3 py-1 rounded-full text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                  <Sparkles className="w-3 h-3 fill-current" /> SPK SAW
-                </span>
-              </div>
               <h1 className="text-xl md:text-2xl font-black tracking-tight">Leaderboard Nasional Kelayakan Usulan Lokasi</h1>
               <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
                 Hasil analisis komparatif seluruh cabang Usulan Lokasi di Indonesia berdasarkan pembobotan *Simple Additive Weighting*. Kriteria utama penilaian mencakup Persentase Kelengkapan Dokumen (45%), Durasi Review Legal (35%), dan Harga Sewa per 5 Tahun (20%).
