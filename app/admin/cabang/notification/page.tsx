@@ -14,6 +14,7 @@ export default function NotificationPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
     initPage();
@@ -34,6 +35,7 @@ export default function NotificationPage() {
     const res = await getNotificationsAction();
     if (res.success) {
       setNotifications(res.data);
+      setVisibleCount(5); // reset ke 5 tiap fetch baru
     }
     setLoading(false);
   }
@@ -64,10 +66,10 @@ export default function NotificationPage() {
       await Promise.all(notifications.map(notif => deleteNotificationAction(notif.id)));
       setNotifications([]);
       setShowDeleteAllConfirm(false);
-      
+
       setSuccessMessage('Semua notifikasi berhasil dibersihkan! 🎉');
       setShowSuccessModal(true);
-      
+
       setTimeout(() => {
         setShowSuccessModal(false);
       }, 1500);
@@ -84,7 +86,7 @@ export default function NotificationPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
-        
+
         {/* === HEADER: NOTIFIKASI === */}
         <div className="max-w-255 mx-auto mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -97,18 +99,18 @@ export default function NotificationPage() {
 
         {/* === KONTEN: DAFTAR NOTIFIKASI === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
-          
+
           {/* === TABEL: HEADER === */}
           <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
             <h3 className="text-white font-bold text-base flex items-center gap-2.5">
-              <img 
-                src="/icons/icon-notification.svg" 
-                alt="Notification Icon" 
-                className="w-5 h-5 object-contain brightness-0 invert" 
-              /> 
+              <img
+                src="/icons/icon-notification.svg"
+                alt="Notification Icon"
+                className="w-5 h-5 object-contain brightness-0 invert"
+              />
               Aktivitas
             </h3>
-            
+
             <div className="flex items-center gap-2.5 self-end sm:self-auto">
               <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold">
                 {notifications.length} Notifications
@@ -143,9 +145,9 @@ export default function NotificationPage() {
                 </p>
               </div>
             ) : (
-              notifications.map((notif) => (
-                <div 
-                  key={notif.id} 
+              notifications.slice(0, visibleCount).map((notif) => (
+                <div
+                  key={notif.id}
                   className="p-5 pl-6 pr-6 hover:bg-blue-50/20 dark:hover:bg-gray-800/40 transition-all duration-300 ease-in-out flex justify-between items-start gap-4"
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
@@ -155,20 +157,20 @@ export default function NotificationPage() {
                         {notif.title}
                       </h4>
                     </div>
-                    
+
                     <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 pl-4 leading-relaxed font-medium">
                       {notif.message}
                     </p>
-                    
+
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold pl-4 uppercase tracking-wider">
-                      {new Date(notif.created_at).toLocaleString('id-ID', { 
-                        dateStyle: 'medium', 
-                        timeStyle: 'short' 
+                      {new Date(notif.created_at).toLocaleString('id-ID', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
                       })}
                     </p>
                   </div>
-                  
-                  <button 
+
+                  <button
                     onClick={() => handleDelete(notif.id)}
                     className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                     title="Hapus notifikasi"
@@ -179,6 +181,18 @@ export default function NotificationPage() {
               ))
             )}
           </div>
+
+          {/* === LOAD MORE BUTTON === */}
+          {!loading && visibleCount < notifications.length && (
+            <div className="p-4 flex justify-center border-t border-gray-100 dark:border-gray-800/60">
+              <button
+                onClick={() => setVisibleCount(prev => prev + 5)}
+                className="px-5 py-2 text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer"
+              >
+                Muat Lebih Banyak ({notifications.length - visibleCount} lagi)
+              </button>
+            </div>
+          )}
 
         </div>
 

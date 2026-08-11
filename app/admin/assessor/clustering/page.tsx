@@ -723,7 +723,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cluster 1 (Ideal)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cluster 1</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">{data.c3.length} ({totalUsulan === 0 ? 0 : Math.round(data.c3.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -740,7 +740,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Cluster 2 (Aktif)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Cluster 2</span>
                         <span className="text-blue-600 dark:text-blue-400 font-bold">{data.c2.length} ({totalUsulan === 0 ? 0 : Math.round(data.c2.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -757,7 +757,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cluster 3 (Review)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cluster 3</span>
                         <span className="text-amber-600 dark:text-amber-400 font-bold">{data.c1.length} ({totalUsulan === 0 ? 0 : Math.round(data.c1.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -774,7 +774,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Cluster 4 (Stagnan)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Cluster 4</span>
                         <span className="text-rose-600 dark:text-rose-400 font-bold">{data.c4.length} ({totalUsulan === 0 ? 0 : Math.round(data.c4.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
