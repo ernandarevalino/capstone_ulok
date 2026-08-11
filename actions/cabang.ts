@@ -753,6 +753,7 @@ export async function uploadUlokFile(ulokId: string, docType: string, formData: 
     }
 
     const progressRes = await updateUlokProgressAndTimestamp(ulokId)
+    await calculateULOKSAW(ulokId)
 
     // Trigger notification check and await it
     if (progressRes?.success) {

@@ -40,6 +40,11 @@ export default function Section2BadanHukumPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
+
+  const toggleAccordion = (docType: string) => {
+    setOpenAccordions(prev => ({ ...prev, [docType]: !prev[docType] }))
+  }
 
   const formatWaktu = (uploadedAt: string | null | undefined) => {
     if (!uploadedAt) return ''

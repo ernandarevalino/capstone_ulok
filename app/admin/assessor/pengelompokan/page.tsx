@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
-import { transitionDraftToInReview } from '@/actions/assessor'
 import { Download, FilePlus, Clock, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 
@@ -119,22 +118,13 @@ export default function PengelompokanDashboard() {
   }
 
   // Helper routing function
-  const handleViewDetail = (id: string, jenisBadanHukum: string, status: string) => {
+  const handleViewDetail = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     const route = kelompokPerorangan.includes(jenisBadanHukum)
       ? '/admin/assessor/penilaian/ulok-perorangan'
       : '/admin/assessor/penilaian/ulok-badanhukum'
 
-    startTransition(async () => {
-      if (status === 'Draft') {
-        const res = await transitionDraftToInReview(id)
-        if (!res.success) {
-          alert(res.error || 'Gagal memperbarui status usulan')
-          return
-        }
-      }
-      router.push(`${route}?id=${id}`)
-    })
+    router.push(`${route}?id=${id}`)
   }
 
   const queryLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery])
@@ -675,7 +665,7 @@ export default function PengelompokanDashboard() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleViewDetail(item.id, item.jenis_badan_hukum, item.status)
+                                handleViewDetail(item.id, item.jenis_badan_hukum)
                               }}
                               disabled={isPending}
                               className="p-2 hover:scale-110 active:scale-95 disabled:opacity-50 transition inline-flex items-center justify-center"
