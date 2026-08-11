@@ -3,12 +3,40 @@
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
-import { 
-  Trophy, Medal, AlertCircle, MapPin, ChevronDown, ChevronUp, 
+import {
+  Trophy, Medal, AlertCircle, MapPin, ChevronDown, ChevronUp,
   Star, Award, Download, RefreshCw
 } from 'lucide-react'
 
 const checkIncomplete = (item: any) => !item.harga_sewa || item.c1_score <= 1 || !item.first_in_review_at;
+
+const renderFormattedText = (text: string) => {
+  if (!text) return null
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={idx} className="font-bold text-gray-900 dark:text-white">{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={idx}>{part.slice(1, -1)}</em>
+    }
+    return <React.Fragment key={idx}>{part}</React.Fragment>
+  })
+}
+
+const renderAnalysisNotes = (notes: string, fallback: string) => {
+  const text = notes || fallback
+  const paragraphs = text.split('\n\n')
+  return paragraphs.map((para, idx) => (
+    <p
+      key={idx}
+      className={`whitespace-pre-line leading-relaxed ${idx === 0 ? 'text-xs font-medium' : 'text-[11px] italic text-gray-500 dark:text-gray-400 mt-2'
+        }`}
+    >
+      {renderFormattedText(para)}
+    </p>
+  ))
+}
 
 export default function PeringkatPage() {
   const [isPending, startTransition] = useTransition()
@@ -81,7 +109,7 @@ export default function PeringkatPage() {
   const top3Data = useMemo(() => data.leaderboard.slice(0, 3), [data.leaderboard])
   const remainingData = useMemo(() => data.leaderboard.slice(3), [data.leaderboard])
   const totalPeringkatPages = Math.ceil(remainingData.length / itemsPerPage) || 1
-  
+
   const displayedRemainingData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
     return remainingData.slice(start, start + itemsPerPage)
@@ -111,8 +139,8 @@ export default function PeringkatPage() {
           <AlertCircle className="w-10 h-10 text-[#D91E2E] mx-auto" />
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-150">Gagal Memuat Data Leaderboard</h3>
           <p className="text-xs text-gray-505 text-gray-500 dark:text-gray-400">{error}</p>
-          <button 
-            onClick={loadData} 
+          <button
+            onClick={loadData}
             className="w-full bg-[#3365A6] hover:bg-[#3365A6]/90 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95 cursor-pointer"
           >
             Coba Lagi
@@ -195,7 +223,7 @@ export default function PeringkatPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end pt-4">
                 {/* JUARA 2 */}
                 {top3Data[1] && (
-                  <div 
+                  <div
                     onClick={() => togglePodiumCard(top3Data[1].id)}
                     className={`order-2 md:order-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openPodiumCardId === top3Data[1].id ? 'ring-2 ring-[#3365A6]/40' : ''}`}
                   >
@@ -227,7 +255,7 @@ export default function PeringkatPage() {
 
                 {/* JUARA 1 */}
                 {top3Data[0] && (
-                  <div 
+                  <div
                     onClick={() => togglePodiumCard(top3Data[0].id)}
                     className={`order-1 md:order-2 bg-gradient-to-b from-amber-50/40 to-white dark:from-amber-950/10 dark:to-zinc-900 border-2 border-[#F28705] dark:border-[#F28705]/60 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-60 md:-translate-y-2 ${openPodiumCardId === top3Data[0].id ? 'ring-4 ring-[#F28705]/20' : ''}`}
                   >
@@ -261,7 +289,7 @@ export default function PeringkatPage() {
 
                 {/* JUARA 3 */}
                 {top3Data[2] && (
-                  <div 
+                  <div
                     onClick={() => togglePodiumCard(top3Data[2].id)}
                     className={`order-3 md:order-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative flex flex-col justify-between group h-52.5 ${openPodiumCardId === top3Data[2].id ? 'ring-2 ring-[#3365A6]/40' : ''}`}
                   >
@@ -328,9 +356,7 @@ export default function PeringkatPage() {
                         <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                           <AlertCircle className="w-4 h-4" /> Hasil Analisis Keputusan SPK:
                         </h4>
-                        <p className="text-xs font-medium leading-relaxed italic">
-                          "{item.saw_analysis_notes || 'Belum ada catatan analisis tersemat untuk lokasi ini.'}"
-                        </p>
+                        <div>{renderAnalysisNotes(item.saw_analysis_notes, 'Belum ada catatan analisis tersemat untuk lokasi ini.')}</div>
                       </div>
                     </div>
                   </div>
@@ -359,11 +385,11 @@ export default function PeringkatPage() {
                     const isIncomplete = checkIncomplete(item)
 
                     return (
-                      <div 
+                      <div
                         key={item.id}
                         className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs overflow-hidden transition-all duration-200"
                       >
-                        <div 
+                        <div
                           onClick={() => togglePodiumCard(item.id)}
                           className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer select-none hover:bg-gray-50/60 dark:hover:bg-zinc-850/50 transition-all"
                         >
@@ -371,7 +397,7 @@ export default function PeringkatPage() {
                             <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-gray-500 dark:text-gray-400 shrink-0">
                               {actualRank}
                             </div>
-                            
+
                             <div className="space-y-0.5 min-w-0">
                               <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate flex items-center gap-2">
                                 {item.nama_lokasi}
@@ -381,7 +407,7 @@ export default function PeringkatPage() {
                                   </span>
                                 )}
                               </h3>
-                              
+
                               <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 font-medium">
                                 <span className="flex items-center gap-1 font-bold text-[#3365A6] dark:text-blue-450">
                                   <MapPin className="w-3 h-3" /> {item.profiles?.branches?.nama_cabang || 'Cabang'}
@@ -427,10 +453,10 @@ export default function PeringkatPage() {
                                 </span>
                               </div>
                             </div>
-                            
+
                             <div className={`p-3.5 rounded-xl border text-xs ${isIncomplete ? 'bg-amber-50/40 border-amber-100 dark:bg-amber-950/10 dark:border-amber-900/60 text-amber-900 dark:text-amber-400' : 'bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300'}`}>
                               <p className="font-bold uppercase text-[9px] tracking-wider text-gray-400 mb-0.5">Analisis Pengambilan Keputusan:</p>
-                              <p className="font-medium italic leading-relaxed">"{item.saw_analysis_notes || 'Belum ada catatan khusus.'}"</p>
+                              <div>{renderAnalysisNotes(item.saw_analysis_notes, 'Belum ada catatan khusus.')}</div>
                             </div>
                           </div>
                         )}
@@ -450,7 +476,7 @@ export default function PeringkatPage() {
                   >
                     Prev
                   </button>
-                  
+
                   <div className="hidden sm:flex items-center gap-1.5">
                     {Array.from({ length: totalPeringkatPages }, (_, idx) => {
                       const pageNum = idx + 1
@@ -458,11 +484,10 @@ export default function PeringkatPage() {
                         <button
                           key={`peringkat-page-${pageNum}`}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                            currentPage === pageNum
-                              ? 'bg-[#3365A6] text-white dark:bg-[#3365A6] dark:text-blue-100 border border-[#3365A6] dark:border-zinc-700 shadow-xs font-black'
-                              : 'border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-450 hover:bg-gray-50 dark:hover:bg-zinc-850'
-                          }`}
+                          className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${currentPage === pageNum
+                            ? 'bg-[#3365A6] text-white dark:bg-[#3365A6] dark:text-blue-100 border border-[#3365A6] dark:border-zinc-700 shadow-xs font-black'
+                            : 'border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-450 hover:bg-gray-50 dark:hover:bg-zinc-850'
+                            }`}
                         >
                           {pageNum}
                         </button>

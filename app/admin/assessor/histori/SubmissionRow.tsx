@@ -10,6 +10,19 @@ interface SubmissionRowProps {
   getStatusBadge: (status: string) => React.ReactNode
 }
 
+const parseFeedbackMessage = (message: string) => {
+  if (!message) return { tag: null, text: '' }
+
+  const match = message.match(/\[([\s\S]*?)\]:\s*([\s\S]*)$/)
+  if (match) {
+    return {
+      tag: match[1], // "Catatan Assessor - Dokumen: File Scan E-KTP"
+      text: match[2].trim()
+    }
+  }
+  return { tag: null, text: message }
+}
+
 const SubmissionRow: React.FC<SubmissionRowProps> = ({
   item,
   isPending,
@@ -54,8 +67,8 @@ const SubmissionRow: React.FC<SubmissionRowProps> = ({
           {getStatusBadge(item.status)}
         </td>
         <td className="p-4 text-center font-extrabold text-blue-950 dark:text-blue-400">
-          {item.final_score !== null && item.final_score !== undefined 
-            ? item.final_score.toFixed(2) 
+          {item.final_score !== null && item.final_score !== undefined
+            ? item.final_score.toFixed(2)
             : '0.00'}
         </td>
         <td className="p-4 text-center">
@@ -74,11 +87,9 @@ const SubmissionRow: React.FC<SubmissionRowProps> = ({
       <tr>
         <td colSpan={7} className="bg-gray-50/40 dark:bg-gray-950/20 p-5 pl-6 pr-6 md:pl-12 border-b border-gray-100 dark:border-gray-800/60">
           <div className="relative bg-white dark:bg-gray-900 border border-blue-100/80 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-3 transition-all duration-300 hover:shadow-md dark:hover:border-gray-700">
-            
-            {/* === CHAT BALLOON POINTER === */}
+
             <div className="absolute -top-2.5 left-8 w-5 h-5 bg-white dark:bg-gray-900 border-t border-l border-blue-100/80 dark:border-gray-800 rotate-45 rounded-tl"></div>
-            
-            {/* === COMMENT HEADER === */}
+
             <div className="flex items-center justify-between text-[11px] border-b border-gray-200 dark:border-gray-800 pb-2 relative z-10">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-blue-950 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
@@ -98,12 +109,22 @@ const SubmissionRow: React.FC<SubmissionRowProps> = ({
               </div>
             </div>
 
-            {/* === COMMENT BODY === */}
-            <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed italic pl-1 relative z-10">
-              "{currentComment?.message}"
-            </p>
+            {(() => {
+              const { tag, text } = parseFeedbackMessage(currentComment?.message)
+              return (
+                <div className="pl-1 relative z-10 space-y-1">
+                  {tag && (
+                    <p className="text-xs md:text-sm font-bold text-gray-900 dark:text-gray-100">
+                      {tag.replace(/^Catatan Assessor\s*-\s*(.+?):\s*(.+)$/i, 'Catatan Assessor - $1 ($2):')}
+                    </p>
+                  )}
+                  <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-pre-line leading-relaxed">
+                    "{text}"
+                  </p>
+                </div>
+              )
+            })()}
 
-            {/* === CHAT NAVIGATION === */}
             {assessorComments.length > 1 && (
               <div className="flex justify-end pt-1 relative z-10">
                 <button
