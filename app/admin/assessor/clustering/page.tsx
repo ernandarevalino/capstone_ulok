@@ -554,21 +554,21 @@ export default function ClusteringDashboardPage() {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Scatter Plot Chart */}
-              <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-2xl border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-2xl border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col">
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-[#3365A6]" />
+                  <h3 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
+                    <BarChart3 className="w-7 h-7 text-[#3365A6]" />
                     Kelompok Dokumen Berdasarkan Kelengkapan & Durasi
                   </h3>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                     Visualisasi sebaran usulan lokasi nasional di dalam matriks 4 kuadran. Hover dot usulan untuk detail.
                   </p>
                 </div>
 
-                <div className="w-full mt-6 relative" ref={chartContainerRef}>
+                <div className="w-full mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
                   {isMounted ? (
                     <ResponsiveContainer width="100%" height={380}>
-                      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -10 }}>
+                      <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
                         <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" className="hidden dark:block" />
 
@@ -581,6 +581,7 @@ export default function ClusteringDashboardPage() {
                           stroke="#94A3B8"
                           fontSize={11}
                           fontWeight={600}
+                          label={{ value: 'Durasi Pengumpulan (Hari)', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
                         />
                         <YAxis
                           type="number"
@@ -591,6 +592,7 @@ export default function ClusteringDashboardPage() {
                           stroke="#94A3B8"
                           fontSize={11}
                           fontWeight={600}
+                          label={{ value: 'Kelengkapan Dokumen (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' }, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
                         />
 
                         {/* Shading Areas for Quadrants */}
