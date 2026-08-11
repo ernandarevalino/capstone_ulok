@@ -554,21 +554,21 @@ export default function ClusteringDashboardPage() {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Scatter Plot Chart */}
-              <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-2xl border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-2xl border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col">
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-[#3365A6]" />
+                  <h3 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
+                    <BarChart3 className="w-7 h-7 text-[#3365A6]" />
                     Kelompok Dokumen Berdasarkan Kelengkapan & Durasi
                   </h3>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                     Visualisasi sebaran usulan lokasi nasional di dalam matriks 4 kuadran. Hover dot usulan untuk detail.
                   </p>
                 </div>
 
-                <div className="w-full mt-6 relative" ref={chartContainerRef}>
+                <div className="w-full mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
                   {isMounted ? (
                     <ResponsiveContainer width="100%" height={380}>
-                      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -10 }}>
+                      <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
                         <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" className="hidden dark:block" />
 
@@ -581,6 +581,7 @@ export default function ClusteringDashboardPage() {
                           stroke="#94A3B8"
                           fontSize={11}
                           fontWeight={600}
+                          label={{ value: 'Durasi Pengumpulan (Hari)', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
                         />
                         <YAxis
                           type="number"
@@ -591,6 +592,7 @@ export default function ClusteringDashboardPage() {
                           stroke="#94A3B8"
                           fontSize={11}
                           fontWeight={600}
+                          label={{ value: 'Kelengkapan Dokumen (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' }, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
                         />
 
                         {/* Shading Areas for Quadrants */}
@@ -721,7 +723,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cluster 1 (Ideal)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cluster 1</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">{data.c3.length} ({totalUsulan === 0 ? 0 : Math.round(data.c3.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -738,7 +740,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Cluster 2 (Aktif)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Cluster 2</span>
                         <span className="text-blue-600 dark:text-blue-400 font-bold">{data.c2.length} ({totalUsulan === 0 ? 0 : Math.round(data.c2.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -755,7 +757,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cluster 3 (Review)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cluster 3</span>
                         <span className="text-amber-600 dark:text-amber-400 font-bold">{data.c1.length} ({totalUsulan === 0 ? 0 : Math.round(data.c1.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -772,7 +774,7 @@ export default function ClusteringDashboardPage() {
                       className="space-y-1.5 cursor-pointer group"
                     >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Cluster 4 (Stagnan)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Cluster 4</span>
                         <span className="text-rose-600 dark:text-rose-400 font-bold">{data.c4.length} ({totalUsulan === 0 ? 0 : Math.round(data.c4.length / totalUsulan * 100)}%)</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">

@@ -2,26 +2,26 @@
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  ArrowLeft, 
-  Search, 
-  Filter, 
-  RotateCcw, 
-  Trash2, 
-  AlertTriangle, 
-  FileText, 
-  Folder, 
-  Building, 
-  Loader2, 
-  Clock, 
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  RotateCcw,
+  Trash2,
+  AlertTriangle,
+  FileText,
+  Folder,
+  Building,
+  Loader2,
+  Clock,
   Database,
   RefreshCw
 } from 'lucide-react'
-import { 
-  getSuperAdminBackupItems, 
-  restoreToCabangRecycleBin, 
-  hardDeleteSuperAdminItem, 
-  BackupItem 
+import {
+  getSuperAdminBackupItems,
+  restoreToCabangRecycleBin,
+  hardDeleteSuperAdminItem,
+  BackupItem
 } from '@/actions/recyclebin'
 import { getAllBranchesAction } from '@/actions/superadmin'
 
@@ -120,13 +120,13 @@ export default function SuperAdminRecycleBinPage() {
       if (isNaN(date.getTime())) return '-'
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
       const pad = (num: number) => String(num).padStart(2, '0')
-      
+
       const day = date.getDate()
       const month = months[date.getMonth()]
       const year = date.getFullYear()
       const hours = pad(date.getHours())
       const minutes = pad(date.getMinutes())
-      
+
       return `${day} ${month} ${year}, ${hours}:${minutes} WIB`
     } catch {
       return '-'
@@ -160,7 +160,7 @@ export default function SuperAdminRecycleBinPage() {
     if (!targetItem) return
 
     setConfirmModal((prev) => ({ ...prev, isOpen: false }))
-    
+
     startTransition(async () => {
       if (actionType === 'restore') {
         const res = await restoreToCabangRecycleBin(targetItem.id, targetItem.type)
@@ -219,7 +219,7 @@ export default function SuperAdminRecycleBinPage() {
   return (
     <div className="min-h-screen bg-[#F2F2F2] dark:bg-[#0D0D0D] p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-6">
-        
+
         {/* BACK LINK */}
         <button
           onClick={() => router.push('/admin/super-admin')}
@@ -240,14 +240,14 @@ export default function SuperAdminRecycleBinPage() {
               Global Backup Recovery System. Halaman ini menyimpan seluruh berkas usulan lokasi dan dokumen yang telah dihapus permanen oleh Admin Cabang. Anda dapat memulihkannya kembali ke Cabang atau menghapusnya secara fisik selamanya.
             </p>
           </div>
-          
+
           <button
             onClick={() => loadInitialData()}
             disabled={loading || isPending}
             className="self-start md:self-auto bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-850 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Segarkan Data
+            Refresh
           </button>
         </div>
 
@@ -255,13 +255,13 @@ export default function SuperAdminRecycleBinPage() {
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/30 rounded-2xl p-4 flex gap-3">
           <AlertTriangle className="w-5 h-5 text-[#F28705] shrink-0 mt-0.5" />
           <div className="text-xs md:text-sm text-amber-800 dark:text-amber-400 leading-relaxed font-semibold">
-            Perhatian: Seluruh item di dalam Level 2 Backup Recycle Bin ini akan dibersihkan secara otomatis selamanya oleh sistem setelah sisa hari countdown habis (30 hari sejak dieskalasi oleh cabang).
+            Perhatian: Seluruh item di dalam Level 2 Backup Recycle Bin ini akan dibersihkan secara otomatis selamanya oleh sistem setelah sisa hari countdown habis (30 hari sejak dihapus oleh cabang).
           </div>
         </div>
 
         {/* FILTERS */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 p-4 flex flex-col lg:flex-row items-center gap-4">
-          
+
           {/* Search */}
           <div className="relative flex items-center w-full lg:flex-1">
             <Search className="absolute left-3 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
@@ -315,7 +315,7 @@ export default function SuperAdminRecycleBinPage() {
 
         {/* TABLE CONTAINER */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
-          
+
           {loading ? (
             <div className="p-16 text-center text-gray-500 flex flex-col items-center justify-center gap-4">
               <Loader2 className="w-8 h-8 text-[#3365A6] dark:text-blue-500 animate-spin" />
@@ -344,12 +344,12 @@ export default function SuperAdminRecycleBinPage() {
                     <th className="p-4">Dihapus Oleh</th>
                     <th className="p-4">Tanggal Masuk Backup</th>
                     <th className="p-4">Sisa Waktu Auto-Purge</th>
-                    <th className="p-4 text-center pr-6 w-36">Aksi</th>
+                    <th className="p-4 text-center pr-6 w-36">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
                   {items.map((item) => (
-                    <tr 
+                    <tr
                       key={`${item.type}-${item.id}`}
                       className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-all select-none"
                     >
@@ -447,11 +447,10 @@ export default function SuperAdminRecycleBinPage() {
       {confirmModal.isOpen && confirmModal.targetItem && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-850 w-full max-w-md text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
-              confirmModal.actionType === 'restore' 
-                ? 'bg-blue-50 dark:bg-blue-950/20 text-[#3365A6] dark:text-blue-500' 
-                : 'bg-red-50 dark:bg-red-950/20 text-[#D91E2E] dark:text-red-500'
-            }`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${confirmModal.actionType === 'restore'
+              ? 'bg-blue-50 dark:bg-blue-950/20 text-[#3365A6] dark:text-blue-500'
+              : 'bg-red-50 dark:bg-red-950/20 text-[#D91E2E] dark:text-red-500'
+              }`}>
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
@@ -470,11 +469,10 @@ export default function SuperAdminRecycleBinPage() {
               <button
                 onClick={executeConfirmAction}
                 disabled={isPending}
-                className={`flex-1 text-white py-2.5 rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer ${
-                  confirmModal.actionType === 'restore' 
-                    ? 'bg-[#3365A6] hover:bg-blue-700' 
-                    : 'bg-[#D91E2E] hover:bg-red-750'
-                }`}
+                className={`flex-1 text-white py-2.5 rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer ${confirmModal.actionType === 'restore'
+                  ? 'bg-[#3365A6] hover:bg-blue-700'
+                  : 'bg-[#D91E2E] hover:bg-red-750'
+                  }`}
               >
                 {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 Ya, Lanjutkan
