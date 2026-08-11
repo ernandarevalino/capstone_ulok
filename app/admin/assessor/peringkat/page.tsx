@@ -420,7 +420,6 @@ export default function UnifiedClusteringPeringkatPage() {
                 subtitle: 'Lengkap & Cepat (≥80%, ≤7 Hari)',
                 badgeText: 'Ideal',
                 count: tabCounts.c3,
-                icon: <Zap className="w-4 h-4" />,
                 activeColor: 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-500',
                 countBadgeBg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/60'
               },
@@ -430,7 +429,6 @@ export default function UnifiedClusteringPeringkatPage() {
                 subtitle: 'Belum Lengkap & Cepat (<80%, ≤7 Hari)',
                 badgeText: 'Aktif',
                 count: tabCounts.c2,
-                icon: <Clock className="w-4 h-4" />,
                 activeColor: 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500',
                 countBadgeBg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60'
               },
@@ -440,7 +438,6 @@ export default function UnifiedClusteringPeringkatPage() {
                 subtitle: 'Lengkap & Lama (≥80%, >7 Hari)',
                 badgeText: 'Prioritas Review',
                 count: tabCounts.c1,
-                icon: <AlertCircle className="w-4 h-4" />,
                 activeColor: 'border-amber-600 text-amber-600 dark:text-amber-400 dark:border-amber-500',
                 countBadgeBg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/60'
               },
@@ -450,7 +447,6 @@ export default function UnifiedClusteringPeringkatPage() {
                 subtitle: 'Belum Lengkap & Lama (<80%, >7 Hari)',
                 badgeText: 'Stagnan',
                 count: tabCounts.c4,
-                icon: <AlertTriangle className="w-4 h-4" />,
                 activeColor: 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-500',
                 countBadgeBg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900/60'
               },
@@ -485,7 +481,7 @@ export default function UnifiedClusteringPeringkatPage() {
                       {tab.count}
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 font-normal line-clamp-1">{tab.subtitle}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 font-normal line-clamp-1">{tab.subtitle}</p>
                 </button>
               )
             })}
@@ -632,11 +628,11 @@ export default function UnifiedClusteringPeringkatPage() {
                               <td className="p-4 text-center">
                                 {durasiDays <= 7 ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60">
-                                    ⚡ Cepat ({durasiDays} Hari)
+                                    Cepat ({durasiDays} Hari)
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
-                                    ⏳ Lama ({durasiDays} Hari)
+                                    Lama ({durasiDays} Hari)
                                   </span>
                                 )}
                               </td>

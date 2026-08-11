@@ -220,6 +220,10 @@ export async function toggleDocumentVerification(documentId: string, currentStat
     if (data && data.ulok_id) {
       await updateUlokProgressAndTimestamp(data.ulok_id)
       await calculateULOKSAW(data.ulok_id)
+      revalidatePath('/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1')
+      revalidatePath('/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section2')
+      revalidatePath('/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1')
+      revalidatePath('/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2')
     }
 
     return { success: true, data }
@@ -355,6 +359,10 @@ export async function recordAssessorReviewActivity(ulokId: string) {
     revalidatePath('/admin/assessor/penilaian')
     revalidatePath('/admin/assessor/penilaian/ulok-badanhukum')
     revalidatePath('/admin/assessor/penilaian/ulok-perorangan')
+    revalidatePath('/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1')
+    revalidatePath('/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section2')
+    revalidatePath('/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1')
+    revalidatePath('/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2')
 
     return { success: true }
   } catch (error: any) {
