@@ -4,6 +4,9 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
 import { softDeleteDocument } from '@/actions/recyclebin'
+import UploadSlot from '@/components/shared/UploadSlot'
+import SuccessModal from '@/components/shared/SuccessModal'
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal'
 
 export default function Section2BadanHukumPage() {
   const router = useRouter()
@@ -37,11 +40,6 @@ export default function Section2BadanHukumPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
-
-  const toggleAccordion = (docType: string) => {
-    setOpenAccordions(prev => ({ ...prev, [docType]: !prev[docType] }))
-  }
 
   const formatWaktu = (uploadedAt: string | null | undefined) => {
     if (!uploadedAt) return ''
@@ -513,7 +511,7 @@ export default function Section2BadanHukumPage() {
               ) : <div />}
 
               <div className="md:col-span-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-1">
-                {renderUploadSlot("sertifikat_tanah", `Dokumen Scan Buku Sertifikat (${jenisAlasHak})`, "Unggah berkas halaman penuh buku sertifikat")}
+                <UploadSlot docType="sertifikat_tanah" label={`Dokumen Scan Buku Sertifikat (${jenisAlasHak})`} subLabel="Unggah berkas halaman penuh buku sertifikat" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
               </div>
             </div>
           )}
@@ -535,14 +533,14 @@ export default function Section2BadanHukumPage() {
                     <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">No. & Luas Objek AJB</label>
                     <input type="text" value={noAjbLainnya} onChange={(e) => setNoAjbLainnya(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="No. Dokumen & Luas Objek" />
                   </div>
-                  {renderUploadSlot("ajb_girik", "Dokumen Berkas AJB", "Format PDF scan lengkap")}
+                  <UploadSlot docType="ajb_girik" label="Dokumen Berkas AJB" subLabel="Format PDF scan lengkap" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {renderUploadSlot("surat_tidak_sengketa", "Surat Keterangan Tidak Sengketa TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("surat_riwayat_tanah", "Surat Keterangan Riwayat Tanah TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("surat_penguasaan_fisik", "Surat Penguasaan Fisik Bidang Tanah TTD Lurah & Camat", "Format PDF")}
-                  {renderUploadSlot("berita_acara_pengukuran", "Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat", "Format PDF")}
+                  <UploadSlot docType="surat_tidak_sengketa" label="Surat Keterangan Tidak Sengketa TTD Lurah & Camat" subLabel="Format PDF" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                  <UploadSlot docType="surat_riwayat_tanah" label="Surat Keterangan Riwayat Tanah TTD Lurah & Camat" subLabel="Format PDF" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                  <UploadSlot docType="surat_penguasaan_fisik" label="Surat Penguasaan Fisik Bidang Tanah TTD Lurah & Camat" subLabel="Format PDF" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                  <UploadSlot docType="berita_acara_pengukuran" label="Berita Acara Pengukuran & Gambar Ukur TTD Lurah & Camat" subLabel="Format PDF" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-[#111827] space-y-3 shadow-sm">
@@ -552,10 +550,10 @@ export default function Section2BadanHukumPage() {
                   </label>
                   {isProsesSertifikat && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1 pl-4 border-l-2 border-red-200 dark:border-red-900/40 animate-fadeIn">
-                      {renderUploadSlot("covernote_notaris", "Covernote Notaris", "Kondisional proses")}
-                      {renderUploadSlot("tanda_terima_bpn", "Tanda Terima BPN", "Kondisional proses")}
-                      {renderUploadSlot("surat_perintah_setor", "Surat Perintah Setor", "Kondisional proses")}
-                      {renderUploadSlot("bukti_pembayaran", "Bukti Pembayaran SPS", "Kondisional proses")}
+                      <UploadSlot docType="covernote_notaris" label="Covernote Notaris" subLabel="Kondisional proses" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                      <UploadSlot docType="tanda_terima_bpn" label="Tanda Terima BPN" subLabel="Kondisional proses" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                      <UploadSlot docType="surat_perintah_setor" label="Surat Perintah Setor" subLabel="Kondisional proses" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                      <UploadSlot docType="bukti_pembayaran" label="Bukti Pembayaran SPS" subLabel="Kondisional proses" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
                     </div>
                   )}
                 </div>
@@ -594,12 +592,12 @@ export default function Section2BadanHukumPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-            {renderUploadSlot("sppt_pbb", "SPPT PBB Terbaru", "Scan lembar pajak tahunan")}
-            {renderUploadSlot("stts_pbb", "STTS PBB (Bukti Bayar)", "Tanda terima bayar pajak")}
-            {renderUploadSlot("imb_pbg", "Dokumen IMB / PBG", "Surat izin mendirikan bangunan")}
-            {renderUploadSlot("slf", "SLF (Sertifikat Laik Fungsi)", "Surat kelayakan gedung")}
-            {renderUploadSlot("izin_tetangga", "Izin Lingkungan / Tetangga", "Format PDF / TTD warga")}
-            {renderUploadSlot("persetujuan_developer", "Surat Persetujuan Developer", "Wajib jika di kawasan Perumahan")}
+            <UploadSlot docType="sppt_pbb" label="SPPT PBB Terbaru" subLabel="Scan lembar pajak tahunan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="stts_pbb" label="STTS PBB (Bukti Bayar)" subLabel="Tanda terima bayar pajak" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="imb_pbg" label="Dokumen IMB / PBG" subLabel="Surat izin mendirikan bangunan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="slf" label="SLF (Sertifikat Laik Fungsi)" subLabel="Surat kelayakan gedung" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="izin_tetangga" label="Izin Lingkungan / Tetangga" subLabel="Format PDF / TTD warga" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="persetujuan_developer" label="Surat Persetujuan Developer" subLabel="Wajib jika di kawasan Perumahan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
           </div>
         </div>
 
@@ -635,7 +633,7 @@ export default function Section2BadanHukumPage() {
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Tanggal Surat Jaminan</label>
                 <input type="date" value={tanggalSuratJaminan} onChange={(e) => setTanggalSuratJaminan(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:outline-blue-950" />
               </div>
-              {renderUploadSlot("surat_persetujuan_bank", "Surat Persetujuan Resmi Bank", "Scan dokumen persetujuan agunan bank")}
+              <UploadSlot docType="surat_persetujuan_bank" label="Surat Persetujuan Resmi Bank" subLabel="Scan dokumen persetujuan agunan bank" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
             </div>
           )}
         </div>
@@ -651,7 +649,7 @@ export default function Section2BadanHukumPage() {
             <textarea rows={3} value={catatanLainnya} onChange={(e) => setCatatanLainnya(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 text-xs rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-blue-950 font-medium" placeholder="Tambahkan informasi pelengkap opsional di sini..." />
           </div>
           <div className="pt-2">
-            {renderUploadSlot("dokumen_tambahan", "Dokumen Berkas Pendukung Tambahan Lainnya", "Format berkas bebas gabungan")}
+            <UploadSlot docType="dokumen_tambahan" label="Dokumen Berkas Pendukung Tambahan Lainnya" subLabel="Format berkas bebas gabungan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} handleMultipleFileUpload={handleMultipleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
           </div>
         </div>
 
@@ -679,53 +677,15 @@ export default function Section2BadanHukumPage() {
       </div>
 
       {/* === MODAL: SUKSES === */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm leading-relaxed">
-              {successModalText}
-            </p>
-          </div>
-        </div>
-      )}
+      <SuccessModal isOpen={showSuccessModal} message={successModalText} />
 
       {/* === MODAL: KONFIRMASI HAPUS === */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-hand.svg" alt="Confirm" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Apakah Anda yakin ingin menghapus berkas ini?
-            </p>
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
-              >
-                No
-              </button>
-              <button
-                onClick={executeDelete}
-                disabled={isPending}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
-              >
-                {isPending ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading...
-                  </span>
-                ) : (
-                  'Yes'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isPending={isPending}
+      />
     </div>
   )
 }

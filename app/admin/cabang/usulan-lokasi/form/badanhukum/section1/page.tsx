@@ -4,6 +4,9 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
 import { softDeleteDocument } from '@/actions/recyclebin'
+import UploadSlot from '@/components/shared/UploadSlot'
+import SuccessModal from '@/components/shared/SuccessModal'
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal'
 
 export default function Section1BadanHukumPage() {
   const router = useRouter()
@@ -19,11 +22,6 @@ export default function Section1BadanHukumPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
-
-  const toggleAccordion = (docType: string) => {
-    setOpenAccordions(prev => ({ ...prev, [docType]: !prev[docType] }))
-  }
 
   const formatWaktu = (uploadedAt: string | null | undefined) => {
     if (!uploadedAt) return ''
@@ -379,11 +377,11 @@ export default function Section1BadanHukumPage() {
             Dokumen Utama & Legalitas Dasar
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {renderUploadSlot("ektp_mewakili", "E-KTP (Yang Mewakili / Menandatangani)", "Scan KTP asli perwakilan bertanda tangan")}
-            {renderUploadSlot("akta_pendirian", "Akta Pendirian & SK Menteri", "Scan Akta Pendirian awal lengkap beserta SK Kemenkumham")}
-            {renderUploadSlot("anggaran_dasar", "Anggaran Dasar Terbaru & SK Menteri", "Scan salinan AD perusahaan terakhir & SK Persetujuan")}
-            {renderUploadSlot("nib_oss", "NIB OSS RBA", "Nomor Induk Berusaha berbasis risiko terbaru")}
-            {renderUploadSlot("npwp_badan", "NPWP Badan Usaha", "Scan kartu NPWP atas nama perusahaan/instansi resmi")}
+            <UploadSlot docType="ektp_mewakili" label="E-KTP (Yang Mewakili / Menandatangani)" subLabel="Scan KTP asli perwakilan bertanda tangan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="akta_pendirian" label="Akta Pendirian & SK Menteri" subLabel="Scan Akta Pendirian awal lengkap beserta SK Kemenkumham" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="anggaran_dasar" label="Anggaran Dasar Terbaru & SK Menteri" subLabel="Scan salinan AD perusahaan terakhir & SK Persetujuan" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="nib_oss" label="NIB OSS RBA" subLabel="Nomor Induk Berusaha berbasis risiko terbaru" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="npwp_badan" label="NPWP Badan Usaha" subLabel="Scan kartu NPWP atas nama perusahaan/instansi resmi" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
           </div>
         </div>
 
@@ -406,8 +404,8 @@ export default function Section1BadanHukumPage() {
             </div>
             <div className="pt-3 border-t border-gray-200 dark:border-gray-800 mt-2">
               {statusPajak === 'PKP' 
-                ? renderUploadSlot("sppkp", "Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)", "Format PDF scan resmi")
-                : renderUploadSlot("surat_pernyataan_nonpkp", "Surat Pernyataan Non-PKP", "Surat pernyataan resmi bermeterai")
+                ? <UploadSlot docType="sppkp" label="Surat Pengukuhan Pengusaha Kena Pajak (SPPKP)" subLabel="Format PDF scan resmi" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+                : <UploadSlot docType="surat_pernyataan_nonpkp" label="Surat Pernyataan Non-PKP" subLabel="Surat pernyataan resmi bermeterai" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
               }
             </div>
           </div>
@@ -419,7 +417,7 @@ export default function Section1BadanHukumPage() {
             </label>
             {isDikuasakan && (
               <div className="pt-2 pl-6 border-l-2 border-blue-950/30 dark:border-gray-700">
-                {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi (Jika Dikuasakan)", "Berkas Surat Kuasa resmi")}
+                <UploadSlot docType="akta_kuasa" label="Akta Kuasa Notariil / Legalisasi (Jika Dikuasakan)" subLabel="Berkas Surat Kuasa resmi" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
               </div>
             )}
           </div>
@@ -432,11 +430,11 @@ export default function Section1BadanHukumPage() {
             Dokumen Susunan Pengurus & Direksi
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {renderUploadSlot("akta_penyesuaian", "Akta Penyesuaian dengan UU No. 40 Tahun 2007 & SK Menteri", "Scan dokumen penyesuaian PT")}
-            {renderUploadSlot("akta_direksi_komisaris", "Akta Susunan Direksi & Komisaris Terakhir & SK Menteri", "Salinan perubahan direksi/komisaris terbaru")}
-            {renderUploadSlot("akta_pengurus", "Akta Susunan Pengurus Terakhir & SK Menteri", "Wajib untuk Yayasan / Koperasi / Lembaga")}
-            {renderUploadSlot("ektp_direksi", "E-KTP Direksi / Pengurus", "Scan lembar identitas jajaran pengurus")}
-            {renderUploadSlot("rups_persetujuan", "Surat Persetujuan Dewan Komisaris / RUPS (PT)", "Format scan surat keputusan keputusan sewa")}
+            <UploadSlot docType="akta_penyesuaian" label="Akta Penyesuaian dengan UU No. 40 Tahun 2007 & SK Menteri" subLabel="Scan dokumen penyesuaian PT" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="akta_direksi_komisaris" label="Akta Susunan Direksi & Komisaris Terakhir & SK Menteri" subLabel="Salinan perubahan direksi/komisaris terbaru" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="akta_pengurus" label="Akta Susunan Pengurus Terakhir & SK Menteri" subLabel="Wajib untuk Yayasan / Koperasi / Lembaga" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="ektp_direksi" label="E-KTP Direksi / Pengurus" subLabel="Scan lembar identitas jajaran pengurus" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
+            <UploadSlot docType="rups_persetujuan" label="Surat Persetujuan Dewan Komisaris / RUPS (PT)" subLabel="Format scan surat keputusan keputusan sewa" uploadedDocs={uploadedDocs} isPending={isPending} handleFileUpload={handleFileUpload} setDeleteTarget={setDeleteTarget} formatWaktu={formatWaktu} />
           </div>
         </div>
 
@@ -463,53 +461,15 @@ export default function Section1BadanHukumPage() {
       </div>
 
       {/* === MODAL: SUKSES === */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              {successModalText}
-            </p>
-          </div>
-        </div>
-      )}
+      <SuccessModal isOpen={showSuccessModal} message={successModalText} />
 
       {/* === MODAL: KONFIRMASI HAPUS === */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-hand.svg" alt="Confirm" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Apakah Anda yakin ingin menghapus berkas ini?
-            </p>
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
-              >
-                No
-              </button>
-              <button
-                onClick={executeDelete}
-                disabled={isPending}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
-              >
-                {isPending ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading...
-                  </span>
-                ) : (
-                  'Yes'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isPending={isPending}
+      />
 
     </div>
   )
