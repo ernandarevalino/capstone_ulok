@@ -4,6 +4,9 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
 import { softDeleteDocument } from '@/actions/recyclebin'
+import UploadSlot from '@/components/shared/UploadSlot'
+import SuccessModal from '@/components/shared/SuccessModal'
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal'
 
 export default function Section1PeroranganPage() {
   const router = useRouter()
@@ -30,11 +33,6 @@ export default function Section1PeroranganPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successModalText, setSuccessModalText] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; url: string } | null>(null)
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
-
-  const toggleAccordion = (docType: string) => {
-    setOpenAccordions(prev => ({ ...prev, [docType]: !prev[docType] }))
-  }
 
   const formatWaktu = (uploadedAt: string | null | undefined) => {
     if (!uploadedAt) return ''
@@ -177,193 +175,6 @@ export default function Section1PeroranganPage() {
     })
   }
 
-  const renderUploadSlot = (docType: string, label: string, subLabel: string) => {
-    if (docType === 'dokumen_tambahan') {
-      const existingFiles = uploadedDocs.filter(doc => doc.document_type === docType)
-      return (
-        <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
-          <div>
-            <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">{subLabel}</p>
-          </div>
-          {existingFiles.length > 0 && (
-            <div className="space-y-1.5 mb-2">
-              {existingFiles.map((file) => (
-                <div key={file.id} className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-1.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-none">
-                    📄 Tersimpan{formatWaktu(file.uploaded_at)}
-                  </span>
-                  <div className="flex gap-1.5 items-center">
-                    <a 
-                      href={file.file_url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
-                      title="View File"
-                    >
-                      <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
-                    </a>
-                    <button 
-                      type="button" 
-                      onClick={() => setDeleteTarget({ id: file.id, url: file.file_url })} 
-                      className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
-                      title="Delete File"
-                    >
-                      <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <input 
-            type="file" 
-            multiple
-            accept=".pdf, .jpg, .jpeg, .png"
-            disabled={isPending}
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                if (e.target.files[0]) {
-                  handleFileUpload(docType, e.target.files[0])
-                }
-              }
-            }}
-            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
-          />
-        </div>
-      )
-    }
-
-    const allFiles = uploadedDocs.filter(doc => doc.document_type === docType)
-    const latestFile = allFiles.find(doc => doc.is_latest) || allFiles[0]
-    const historyFiles = latestFile ? allFiles.filter(doc => doc.id !== latestFile.id) : []
-
-    return (
-      <div className="bg-gray-50 dark:bg-gray-800/25 p-3 rounded-2xl flex flex-col justify-between gap-2.5 transition hover:bg-gray-100 dark:hover:bg-gray-800/40">
-        <div>
-          <span className="font-bold text-gray-700 dark:text-gray-300 text-[11px] block">{label}</span>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{subLabel}</p>
-        </div>
-
-        {latestFile ? (
-          <div className="space-y-2 w-full">
-            <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-200 dark:border-emerald-900/40 w-full">
-              <div className="flex flex-col min-w-0">
-                <span className="text-[9px] text-emerald-800 dark:text-emerald-400 font-extrabold flex items-center gap-1">
-                  <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 px-1 py-0.2 rounded text-[8px] uppercase tracking-wide">
-                    v{latestFile.version || 1}
-                  </span>
-                  Terbaru
-                </span>
-                <span className="text-[8px] text-gray-500 dark:text-gray-400 italic">
-                  Tersimpan{formatWaktu(latestFile.uploaded_at)}
-                </span>
-              </div>
-              <div className="flex gap-1.5 items-center shrink-0">
-                <a 
-                  href={latestFile.file_url} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all"
-                  title="View File"
-                >
-                  <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
-                </a>
-                <button 
-                  type="button" 
-                  onClick={() => setDeleteTarget({ id: latestFile.id, url: latestFile.file_url })} 
-                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 transition-all"
-                  title="Delete File"
-                >
-                  <img src="/icons/icon-remove.svg" alt="Delete" className="w-3.5 h-3.5 object-contain" />
-                </button>
-              </div>
-            </div>
-
-            {historyFiles.length > 0 && (
-              <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-2 w-full">
-                <button
-                  type="button"
-                  onClick={() => toggleAccordion(docType)}
-                  className="w-full flex items-center justify-between text-[9px] font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors py-0.5"
-                >
-                  <span className="flex items-center gap-1 text-[9px]">
-                    📜 Riwayat File Lama ({historyFiles.length})
-                  </span>
-                  <span className={`transform transition-transform duration-200 ${openAccordions[docType] ? 'rotate-180' : ''}`}>
-                    ▼
-                  </span>
-                </button>
-                
-                {openAccordions[docType] && (
-                  <div className="mt-1.5 space-y-1 pl-0.5 max-h-36 overflow-y-auto w-full">
-                    {historyFiles.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between gap-2 bg-gray-100/50 dark:bg-gray-800/30 p-1.5 rounded-lg border border-gray-200/40 dark:border-gray-700/20 w-full">
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-0.5">
-                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1 py-0.2 rounded text-[7px]">
-                              v{file.version || 1}
-                            </span>
-                            Versi Lama
-                          </span>
-                          <span className="text-[7px] text-gray-400 dark:text-gray-500 italic">
-                            Unggah{formatWaktu(file.uploaded_at)}
-                          </span>
-                        </div>
-                        <div className="flex gap-1 items-center shrink-0">
-                          <a 
-                            href={file.file_url} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="p-0.5 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-300 transition-all"
-                            title="View File"
-                          >
-                            <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
-                          </a>
-                          <button 
-                            type="button" 
-                            onClick={() => setDeleteTarget({ id: file.id, url: file.file_url })} 
-                            className="p-0.5 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-700 text-red-650 hover:bg-red-50 dark:hover:bg-red-950/10 hover:border-red-300 transition-all"
-                            title="Delete"
-                          >
-                            <img src="/icons/icon-remove.svg" alt="Delete" className="w-3 h-3 object-contain" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-2 w-full">
-              <span className="text-[8px] font-bold text-gray-400 dark:text-gray-500 block mb-1">Unggah Versi Baru:</span>
-              <input 
-                type="file" 
-                accept=".pdf, .jpg, .jpeg, .png"
-                disabled={isPending}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
-                }}
-                className="text-[9px] file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[8px] file:font-bold file:bg-blue-50 dark:file:bg-blue-950/20 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/30 file:cursor-pointer w-full text-gray-400 dark:text-gray-500" 
-              />
-            </div>
-          </div>
-        ) : (
-          <input 
-            type="file" 
-            accept=".pdf, .jpg, .jpeg, .png"
-            disabled={isPending}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) handleFileUpload(docType, e.target.files[0])
-            }}
-            className="text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-gray-200 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-300 dark:hover:file:bg-gray-600 file:cursor-pointer w-full text-gray-400 dark:text-gray-500 animate-fadeIn" 
-          />
-        )}
-      </div>
-    )
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 text-gray-400 dark:text-gray-500 italic text-sm font-medium transition-colors duration-300">
@@ -426,7 +237,16 @@ export default function Section1PeroranganPage() {
                     <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">NIK Pemilik (16 Digit)</label>
                     <input type="text" maxLength={16} value={nik} onChange={(e) => setNik(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Masukkan NIK" />
                   </div>
-                  {renderUploadSlot("ktp_pemilik", "File Scan E-KTP", "Format PDF/JPG, Maksimal 2MB")}
+                  <UploadSlot
+                    docType="ktp_pemilik"
+                    label="File Scan E-KTP"
+                    subLabel="Format PDF/JPG, Maksimal 2MB"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
                 </div>
               )}
             </div>
@@ -442,16 +262,52 @@ export default function Section1PeroranganPage() {
                     <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Sesuai Paspor / KITAS</label>
                     <input type="text" value={namaKitas} onChange={(e) => setNamaKitas(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Sesuai Paspor" />
                   </div>
-                  {renderUploadSlot("kitas_kitap", "File Scan KITAS / KITAP", "Format PDF, Maksimal 2MB")}
+                  <UploadSlot
+                    docType="kitas_kitap"
+                    label="File Scan KITAS / KITAP"
+                    subLabel="Format PDF, Maksimal 2MB"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
                 </div>
               )}
             </div>
 
             {/* === FORM: DOKUMEN PAJAK === */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              {renderUploadSlot("npwp", "Scan NPWP Asli", "Format PDF/PNG")}
-              {renderUploadSlot("pkp_sppkp", "Scan PKP / SPPKP", "Format PDF")}
-              {renderUploadSlot("non_pkp", "Scan Non PKP / Surat Pernyataan", "Format PDF")}
+              <UploadSlot
+                docType="npwp"
+                label="Scan NPWP Asli"
+                subLabel="Format PDF/PNG"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
+              <UploadSlot
+                docType="pkp_sppkp"
+                label="Scan PKP / SPPKP"
+                subLabel="Format PDF"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
+              <UploadSlot
+                docType="non_pkp"
+                label="Scan Non PKP / Surat Pernyataan"
+                subLabel="Format PDF"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
             </div>
           </div>
 
@@ -466,18 +322,54 @@ export default function Section1PeroranganPage() {
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">No. Kartu Keluarga (KK)</label>
                 <input type="text" value={noKK} onChange={(e) => setNoKK(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor KK 16 Digit" />
               </div>
-              {renderUploadSlot("kartu_keluarga", "File Scan Kartu Keluarga", "Format PDF")}
+              <UploadSlot
+                docType="kartu_keluarga"
+                label="File Scan Kartu Keluarga"
+                subLabel="Format PDF"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
               
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">No. Buku Nikah / Akta Perkawinan</label>
                 <input type="text" value={noBukuNikah} onChange={(e) => setNoBukuNikah(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor Buku Nikah" />
               </div>
-              {renderUploadSlot("buku_nikah", "File Scan Buku Nikah", "Format PDF")}
+              <UploadSlot
+                docType="buku_nikah"
+                label="File Scan Buku Nikah"
+                subLabel="Format PDF"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {renderUploadSlot("persetujuan_pasangan", "Surat Persetujuan Suami / Istri", "Wajib di-ttd pasangan")}
-              {renderUploadSlot("akta_cerai", "Akta Cerai (Apabila Cerai)", "Format PDF resmi")}
+              <UploadSlot
+                docType="persetujuan_pasangan"
+                label="Surat Persetujuan Suami / Istri"
+                subLabel="Wajib di-ttd pasangan"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
+              <UploadSlot
+                docType="akta_cerai"
+                label="Akta Cerai (Apabila Cerai)"
+                subLabel="Format PDF resmi"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
             </div>
           </div>
 
@@ -496,7 +388,16 @@ export default function Section1PeroranganPage() {
                 <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Sesudah Ganti</label>
                 <input type="text" value={namaSesudahGanti} onChange={(e) => setNamaSesudahGanti(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nama Baru" />
               </div>
-              {renderUploadSlot("dokumen_ganti_nama", "Dokumen Penetapan Resmi", "Format PDF")}
+              <UploadSlot
+                docType="dokumen_ganti_nama"
+                label="Dokumen Penetapan Resmi"
+                subLabel="Format PDF"
+                uploadedDocs={uploadedDocs}
+                isPending={isPending}
+                handleFileUpload={handleFileUpload}
+                setDeleteTarget={setDeleteTarget}
+                formatWaktu={formatWaktu}
+              />
             </div>
           </div>
 
@@ -520,8 +421,26 @@ export default function Section1PeroranganPage() {
 
             {statusKepemilikan === 'Kuasa' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/40 dark:bg-amber-950/10 p-4 rounded-xl border border-amber-200 dark:border-amber-900/40 animate-fadeIn">
-                {renderUploadSlot("akta_kuasa", "Akta Kuasa Notariil / Legalisasi", "Scan dokumen kuasa resmi")}
-                {renderUploadSlot("ktp_kuasa", "KTP Penerima Kuasa", "Scan identitas penerima kuasa")}
+                <UploadSlot
+                  docType="akta_kuasa"
+                  label="Akta Kuasa Notariil / Legalisasi"
+                  subLabel="Scan dokumen kuasa resmi"
+                  uploadedDocs={uploadedDocs}
+                  isPending={isPending}
+                  handleFileUpload={handleFileUpload}
+                  setDeleteTarget={setDeleteTarget}
+                  formatWaktu={formatWaktu}
+                />
+                <UploadSlot
+                  docType="ktp_kuasa"
+                  label="KTP Penerima Kuasa"
+                  subLabel="Scan identitas penerima kuasa"
+                  uploadedDocs={uploadedDocs}
+                  isPending={isPending}
+                  handleFileUpload={handleFileUpload}
+                  setDeleteTarget={setDeleteTarget}
+                  formatWaktu={formatWaktu}
+                />
               </div>
             )}
 
@@ -529,23 +448,68 @@ export default function Section1PeroranganPage() {
               <div className="bg-red-50/30 dark:bg-red-950/10 p-4 rounded-xl border border-red-100 dark:border-red-900/40 space-y-4 animate-fadeIn">
                 <p className="text-xs font-bold text-red-800 dark:text-red-400 uppercase tracking-wider">⚠️ Berkas Tambahan Khusus Ahli Waris:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {renderUploadSlot("akta_waris", "Akta Waris / SK Waris Resmi", "Scan seluruh lembar ket. waris")}
-                  {renderUploadSlot("ktp_ahli_waris", "KTP Ahli Waris", "Format PDF/JPG")}
-                  {renderUploadSlot("kk_ahli_waris", "KK Ahli Waris", "Format PDF")}
+                  <UploadSlot
+                    docType="akta_waris"
+                    label="Akta Waris / SK Waris Resmi"
+                    subLabel="Scan seluruh lembar ket. waris"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
+                  <UploadSlot
+                    docType="ktp_ahli_waris"
+                    label="KTP Ahli Waris"
+                    subLabel="Format PDF/JPG"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
+                  <UploadSlot
+                    docType="kk_ahli_waris"
+                    label="KK Ahli Waris"
+                    subLabel="Format PDF"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">No. Surat Keterangan Kematian</label>
                     <input type="text" value={noSuratKematian} onChange={(e) => setNoSuratKematian(e.target.value)} className="w-full border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-blue-950" placeholder="Nomor Surat Kematian" />
                   </div>
-                  {renderUploadSlot("surat_kematian", "Scan Berkas Surat Kematian Asli", "Format PDF")}
+                  <UploadSlot
+                    docType="surat_kematian"
+                    label="Scan Berkas Surat Kematian Asli"
+                    subLabel="Format PDF"
+                    uploadedDocs={uploadedDocs}
+                    isPending={isPending}
+                    handleFileUpload={handleFileUpload}
+                    setDeleteTarget={setDeleteTarget}
+                    formatWaktu={formatWaktu}
+                  />
                 </div>
               </div>
             )}
 
             {statusKepemilikan === 'Hibah' && (
               <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-4 rounded-3xl animate-fadeIn">
-                {renderUploadSlot("akta_hibah", "Akta Hibah Resmi", "Scan berkas akta hibah notariil/PPAT")}
+                <UploadSlot
+                  docType="akta_hibah"
+                  label="Akta Hibah Resmi"
+                  subLabel="Scan berkas akta hibah notariil/PPAT"
+                  uploadedDocs={uploadedDocs}
+                  isPending={isPending}
+                  handleFileUpload={handleFileUpload}
+                  setDeleteTarget={setDeleteTarget}
+                  formatWaktu={formatWaktu}
+                />
               </div>
             )}
           </div>
@@ -573,53 +537,15 @@ export default function Section1PeroranganPage() {
       </div>
 
       {/* === MODAL: SUKSES === */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              {successModalText}
-            </p>
-          </div>
-        </div>
-      )}
+      <SuccessModal isOpen={showSuccessModal} message={successModalText} />
 
       {/* === MODAL: KONFIRMASI HAPUS === */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-hand.svg" alt="Confirm" className="w-16 h-16 mx-auto mb-2" />
-            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
-              Apakah Anda yakin ingin menghapus berkas ini?
-            </p>
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
-              >
-                No
-              </button>
-              <button
-                onClick={executeDelete}
-                disabled={isPending}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
-              >
-                {isPending ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading...
-                  </span>
-                ) : (
-                  'Yes'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isPending={isPending}
+      />
     </div>
   )
 }
