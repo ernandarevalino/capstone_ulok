@@ -122,7 +122,7 @@ export async function sendProgressNotificationToAssessors({
     );
 
     console.log(
-      `[Email Trigger] Found ${targetAssessors.length} Assessor email(s) for >50% progress notification.`,
+      `[Email Trigger] Found ${targetAssessors.length} Assessor email(s) for >=80% progress notification.`,
     );
 
     // 5. Dispatch Emails to all Assessors
@@ -137,9 +137,9 @@ export async function sendProgressNotificationToAssessors({
             <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 13px;">Notifikasi Kelengkapan Berkas Usulan Lokasi</p>
           </div>
           <div style="padding: 32px; background-color: #ffffff; color: #334155;">
-            <h2 style="color: #1e293b; margin-top: 0;">Berkas Siad Dievaluasi (>50%)</h2>
+            <h2 style="color: #1e293b; margin-top: 0;">Berkas Siap Dievaluasi (>=80%)</h2>
             <p>Halo <strong>${profile?.full_name || "Assessor PRISMA"}</strong>,</p>
-            <p>Usulan lokasi <strong>${namaLokasi}</strong>${namaCabang ? ` dari cabang <strong>${namaCabang}</strong>` : ""} telah memenuhi kelengkapan dokumen di atas 50% (Progres: <strong>${progressPercentage}%</strong>).</p>
+            <p>Usulan lokasi <strong>${namaLokasi}</strong>${namaCabang ? ` dari cabang <strong>${namaCabang}</strong>` : ""} telah memenuhi kelengkapan dokumen di atas atau sama dengan 80% (Progres: <strong>${progressPercentage}%</strong>).</p>
             
             <div style="text-align: center; margin: 24px 0;">
               <span style="background-color: #3365A6; color: #ffffff; padding: 10px 24px; border-radius: 20px; font-weight: bold; font-size: 14px;">

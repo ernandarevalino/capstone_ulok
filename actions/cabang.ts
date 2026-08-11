@@ -954,7 +954,7 @@ export async function getNotificationsAction(userId?: string | null) {
 // === HELPER ACTION: CHECK AND SEND PROGRESS EMAIL ===
 async function checkAndSendProgressNotification(ulokId: string, oldPersentase: number, newPersentase: number) {
   try {
-    if (oldPersentase < 50 && newPersentase >= 50) {
+    if (oldPersentase < 80 && newPersentase >= 80) {
       const supabase = await createClient()
 
       // Fetch submission details
