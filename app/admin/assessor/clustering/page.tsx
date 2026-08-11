@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useTransition, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import { transitionDraftToInReview } from '@/actions/assessor'
@@ -27,6 +27,33 @@ export default function ClusteringDashboardPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isMounted, setIsMounted] = useState(false)
+
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [quadrantHover, setQuadrantHover] = useState<{
+    label: string
+    subtitle: string
+    x: number
+    y: number
+  } | null>(null)
+
+  const quadrantInfo = {
+    c3: { label: 'Cluster 1', subtitle: 'Lengkap & Cepat (≥80%, ≤7 Hari)' },
+    c2: { label: 'Cluster 2', subtitle: 'Belum Lengkap & Cepat (<80%, ≤7 Hari)' },
+    c1: { label: 'Cluster 3', subtitle: 'Lengkap & Lambat (≥80%, >7 Hari)' },
+    c4: { label: 'Cluster 4', subtitle: 'Belum Lengkap & Lambat (<80%, >7 Hari)' }
+  }
+
+  const handleQuadrantHover = (key: keyof typeof quadrantInfo) => (e: any) => {
+    const rect = chartContainerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setQuadrantHover({
+      ...quadrantInfo[key],
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    })
+  }
+
+  const handleQuadrantLeave = () => setQuadrantHover(null)
 
   // State
   const [data, setData] = useState<ClusteringResult>({
@@ -460,6 +487,7 @@ export default function ClusteringDashboardPage() {
               {
                 id: 'c3',
                 label: 'Cluster 1',
+                subtitle: 'Lengkap & Cepat (≥80%, ≤7 Hari)',
                 badgeText: 'Ideal',
                 count: tabCounts.c3,
                 activeColor: 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-500',
@@ -468,6 +496,7 @@ export default function ClusteringDashboardPage() {
               {
                 id: 'c2',
                 label: 'Cluster 2',
+                subtitle: 'Belum Lengkap & Cepat (<80%, ≤7 Hari)',
                 badgeText: 'Aktif',
                 count: tabCounts.c2,
                 activeColor: 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500',
@@ -476,6 +505,7 @@ export default function ClusteringDashboardPage() {
               {
                 id: 'c1',
                 label: 'Cluster 3',
+                subtitle: 'Lengkap & Lambat (≥80%, >7 Hari)',
                 badgeText: 'Prioritas Review',
                 count: tabCounts.c1,
                 activeColor: 'border-amber-600 text-amber-600 dark:text-amber-400 dark:border-amber-500',
@@ -484,6 +514,7 @@ export default function ClusteringDashboardPage() {
               {
                 id: 'c4',
                 label: 'Cluster 4',
+                subtitle: 'Belum Lengkap & Lambat (<80%, >7 Hari)',
                 badgeText: 'Stagnan',
                 count: tabCounts.c4,
                 activeColor: 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-500',
@@ -534,7 +565,7 @@ export default function ClusteringDashboardPage() {
                   </p>
                 </div>
 
-                <div className="w-full mt-6">
+                <div className="w-full mt-6 relative" ref={chartContainerRef}>
                   {isMounted ? (
                     <ResponsiveContainer width="100%" height={380}>
                       <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -10 }}>
@@ -563,10 +594,42 @@ export default function ClusteringDashboardPage() {
                         />
 
                         {/* Shading Areas for Quadrants */}
-                        <ReferenceArea x1={0} x2={7} y1={80} y2={100} fill="rgba(16, 185, 129, 0.08)" stroke="none" />
-                        <ReferenceArea x1={0} x2={7} y1={0} y2={80} fill="rgba(59, 130, 246, 0.08)" stroke="none" />
-                        <ReferenceArea x1={7} x2={maxX} y1={80} y2={100} fill="rgba(245, 158, 11, 0.08)" stroke="none" />
-                        <ReferenceArea x1={7} x2={maxX} y1={0} y2={80} fill="rgba(239, 68, 68, 0.08)" stroke="none" />
+                        <ReferenceArea
+                          x1={0} x2={7} y1={80} y2={100}
+                          fill="rgba(16, 185, 129, 0.08)"
+                          stroke="none"
+                          onMouseEnter={handleQuadrantHover('c3')}
+                          onMouseMove={handleQuadrantHover('c3')}
+                          onMouseLeave={handleQuadrantLeave}
+                          cursor="pointer"
+                        />
+                        <ReferenceArea
+                          x1={0} x2={7} y1={0} y2={80}
+                          fill="rgba(59, 130, 246, 0.08)"
+                          stroke="none"
+                          onMouseEnter={handleQuadrantHover('c2')}
+                          onMouseMove={handleQuadrantHover('c2')}
+                          onMouseLeave={handleQuadrantLeave}
+                          cursor="pointer"
+                        />
+                        <ReferenceArea
+                          x1={7} x2={maxX} y1={80} y2={100}
+                          fill="rgba(245, 158, 11, 0.08)"
+                          stroke="none"
+                          onMouseEnter={handleQuadrantHover('c1')}
+                          onMouseMove={handleQuadrantHover('c1')}
+                          onMouseLeave={handleQuadrantLeave}
+                          cursor="pointer"
+                        />
+                        <ReferenceArea
+                          x1={7} x2={maxX} y1={0} y2={80}
+                          fill="rgba(239, 68, 68, 0.08)"
+                          stroke="none"
+                          onMouseEnter={handleQuadrantHover('c4')}
+                          onMouseMove={handleQuadrantHover('c4')}
+                          onMouseLeave={handleQuadrantLeave}
+                          cursor="pointer"
+                        />
 
                         {/* Quad Dividers */}
                         <ReferenceLine x={7} stroke="#94A3B8" strokeDasharray="3 3" />
@@ -582,6 +645,20 @@ export default function ClusteringDashboardPage() {
                     </ResponsiveContainer>
                   ) : (
                     <div className="h-[380px] w-full bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
+                  )}
+
+                  {/* Quadrant Hover Tooltip */}
+                  {quadrantHover && (
+                    <div
+                      className="absolute z-20 pointer-events-none bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-lg px-3 py-2 text-xs"
+                      style={{
+                        left: quadrantHover.x + 12,
+                        top: quadrantHover.y + 12
+                      }}
+                    >
+                      <p className="font-bold text-gray-900 dark:text-white">{quadrantHover.label}</p>
+                      <p className="text-gray-500 dark:text-gray-400 mt-0.5">{quadrantHover.subtitle}</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -639,12 +716,15 @@ export default function ClusteringDashboardPage() {
 
                   <div className="space-y-3.5">
                     {/* C1 (Ideal) */}
-                    <div className="space-y-1.5">
+                    <div
+                      onClick={() => handleTabChange('c3')}
+                      className="space-y-1.5 cursor-pointer group"
+                    >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300">Cluster 1 (Ideal)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cluster 1 (Ideal)</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">{data.c3.length} ({totalUsulan === 0 ? 0 : Math.round(data.c3.length / totalUsulan * 100)}%)</span>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
                         <div
                           className="h-full bg-[#10B981] rounded-full transition-all duration-500"
                           style={{ width: `${totalUsulan === 0 ? 0 : (data.c3.length / totalUsulan * 100)}%` }}
@@ -653,12 +733,15 @@ export default function ClusteringDashboardPage() {
                     </div>
 
                     {/* C2 (Aktif) */}
-                    <div className="space-y-1.5">
+                    <div
+                      onClick={() => handleTabChange('c2')}
+                      className="space-y-1.5 cursor-pointer group"
+                    >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300">Cluster 2 (Aktif)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Cluster 2 (Aktif)</span>
                         <span className="text-blue-600 dark:text-blue-400 font-bold">{data.c2.length} ({totalUsulan === 0 ? 0 : Math.round(data.c2.length / totalUsulan * 100)}%)</span>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
                         <div
                           className="h-full bg-[#3B82F6] rounded-full transition-all duration-500"
                           style={{ width: `${totalUsulan === 0 ? 0 : (data.c2.length / totalUsulan * 100)}%` }}
@@ -667,12 +750,15 @@ export default function ClusteringDashboardPage() {
                     </div>
 
                     {/* C3 (Review) */}
-                    <div className="space-y-1.5">
+                    <div
+                      onClick={() => handleTabChange('c1')}
+                      className="space-y-1.5 cursor-pointer group"
+                    >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300">Cluster 3 (Review)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cluster 3 (Review)</span>
                         <span className="text-amber-600 dark:text-amber-400 font-bold">{data.c1.length} ({totalUsulan === 0 ? 0 : Math.round(data.c1.length / totalUsulan * 100)}%)</span>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
                         <div
                           className="h-full bg-[#F28705] rounded-full transition-all duration-500"
                           style={{ width: `${totalUsulan === 0 ? 0 : (data.c1.length / totalUsulan * 100)}%` }}
@@ -681,12 +767,15 @@ export default function ClusteringDashboardPage() {
                     </div>
 
                     {/* C4 (Stagnan) */}
-                    <div className="space-y-1.5">
+                    <div
+                      onClick={() => handleTabChange('c4')}
+                      className="space-y-1.5 cursor-pointer group"
+                    >
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-700 dark:text-gray-300">Cluster 4 (Stagnan)</span>
+                        <span className="text-gray-700 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Cluster 4 (Stagnan)</span>
                         <span className="text-rose-600 dark:text-rose-400 font-bold">{data.c4.length} ({totalUsulan === 0 ? 0 : Math.round(data.c4.length / totalUsulan * 100)}%)</span>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-100 dark:bg-zinc-950 h-2.5 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
                         <div
                           className="h-full bg-[#D91E2E] rounded-full transition-all duration-500"
                           style={{ width: `${totalUsulan === 0 ? 0 : (data.c4.length / totalUsulan * 100)}%` }}
