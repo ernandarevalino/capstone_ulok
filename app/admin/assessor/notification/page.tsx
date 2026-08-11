@@ -190,7 +190,7 @@ export default function NotificationPage() {
                 onClick={() => setVisibleCount(prev => prev + 5)}
                 className="px-5 py-2 text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer"
               >
-                Muat Lebih Banyak ({notifications.length - visibleCount} lagi)
+                Load More ({notifications.length - visibleCount} lagi)
               </button>
             </div>
           )}
