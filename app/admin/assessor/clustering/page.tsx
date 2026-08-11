@@ -610,7 +610,7 @@ export default function ClusteringDashboardPage() {
                         <Layers className="w-5 h-5 text-[#F28705]" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rerata Kelengkapan</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rata-rata Kelengkapan</p>
                         <p className="text-xl font-black text-gray-900 dark:text-white">
                           {totalUsulan === 0 ? '0.0%' : `${avgCompleteness.toFixed(1)}%`}
                         </p>
@@ -622,7 +622,7 @@ export default function ClusteringDashboardPage() {
                         <Clock className="w-5 h-5 text-[#D91E2E]" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rerata Durasi Pengumpulan</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rata-rata Durasi Pengumpulan</p>
                         <p className="text-xl font-black text-gray-900 dark:text-white">
                           {totalUsulan === 0 ? '0 Hari' : `${avgDuration.toFixed(1)} Hari`}
                         </p>
