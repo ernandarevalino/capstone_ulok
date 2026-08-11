@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, updateUlokSubmission, getUploadedDocuments, uploadUlokFile } from '@/actions/cabang'
 import { softDeleteDocument } from '@/actions/recyclebin'
@@ -55,7 +55,7 @@ export default function Section2PeroranganPage() {
       const minutes = pad(date.getMinutes())
       const seconds = pad(date.getSeconds())
       return ` (${day}-${month}-${year} ${hours}:${minutes}:${seconds})`
-    } catch (e) {
+    } catch {
       return ''
     }
   }
