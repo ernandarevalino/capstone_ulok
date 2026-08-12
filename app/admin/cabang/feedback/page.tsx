@@ -146,11 +146,11 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
 
         {/* === HEADER: FEEDBACK === */}
-        <div className="max-w-255 mx-auto mb-10">
+        <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Feedback & Revisi Assessor
           </h1>

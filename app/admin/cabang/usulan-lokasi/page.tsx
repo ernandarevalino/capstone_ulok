@@ -718,8 +718,8 @@ export default function UsulanLokasiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-255 mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-12">
+    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Usulan Lokasi (ULOK)</h1>
           <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -769,7 +769,7 @@ export default function UsulanLokasiPage() {
 
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-950 dark:bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-900 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md flex items-center gap-2 w-full lg:w-auto justify-center"
+            className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md flex items-center gap-2 w-full lg:w-auto justify-center"
           >
             <img src="/icons/icon-location-add.svg" alt="" className="w-4 h-4 brightness-0 invert" />
             Tambah Lokasi Baru
@@ -777,7 +777,7 @@ export default function UsulanLokasiPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto">
+      <div className="space-y-6">
         {renderTableGroup("ULOK Baru", ["Draft"], "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60")}
         {renderTableGroup("Sedang Direview", ["In Review"], "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60")}
         {renderTableGroup("Perlu Revisi", ["Revisi"], "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/60")}
@@ -839,7 +839,7 @@ export default function UsulanLokasiPage() {
           <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
             
             {/* === HEADER MODAL === */}
-            <div className="bg-linear-to-r from-blue-950 to-slate-900 text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
+            <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
                 <img src="/icons/icon-location.svg" alt="" className="w-5 h-4 brightness-0 invert" /> Tambah Lokasi Baru
               </div>
@@ -910,7 +910,7 @@ export default function UsulanLokasiPage() {
                 type="submit" 
                 form="form-ulok"
                 disabled={isPending}
-                className="bg-linear-to-r from-blue-950 to-slate-900 text-white px-32 py-3 mt-1 rounded-lg font-bold text-sm hover:bg-blue-900 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 shadow-xs"
+                className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-32 py-3 mt-1 rounded-lg font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 shadow-md"
                 title="Simpan Usulan"
               >
                 <img src="/icons/icon-add.svg" alt="" className="w-4 h-4 brightness-0 invert" />

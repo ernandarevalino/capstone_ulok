@@ -55,7 +55,7 @@ export default function PeringkatCabangPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center transition-colors">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-4 border-[#142B4D] dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-xs font-bold text-gray-400 dark:text-gray-500 animate-pulse">Menyusun matriks peringkat SAW...</p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function PeringkatCabangPage() {
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Gagal Memuat Data</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">{error}</p>
-          <button onClick={loadData} className="w-full bg-blue-950 dark:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95">
+          <button onClick={loadData} className="w-full bg-[#142B4D] hover:bg-[#1a3863] dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95">
             Coba Lagi
           </button>
         </div>
@@ -108,8 +108,8 @@ export default function PeringkatCabangPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-8">
 
         {/* === BANNER: HERO === */}
         <div className="bg-linear-to-r from-blue-950 via-slate-950 to-blue-950 text-white p-6 md:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-blue-900/40">
@@ -397,23 +397,23 @@ export default function PeringkatCabangPage() {
                   Prev
                 </button>
 
-                <div className="hidden sm:flex items-center gap-1.5">
-                  {Array.from({ length: totalPages }, (_, idx) => {
-                    const pageNum = idx + 1
-                    return (
-                      <button
-                        key={`page-btn-${pageNum}`}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all ${currentPage === pageNum
-                          ? 'bg-blue-950 text-white dark:bg-slate-800 dark:text-blue-300 border border-blue-950 dark:border-slate-700 shadow-xs'
-                          : 'border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  })}
-                </div>
+                        <div className="hidden sm:flex items-center gap-1.5">
+                          {Array.from({ length: totalPages }, (_, idx) => {
+                            const pageNum = idx + 1
+                            return (
+                              <button
+                                key={`page-btn-${pageNum}`}
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={`w-7.5 h-7.5 text-xs font-bold rounded-lg transition-all ${currentPage === pageNum
+                                  ? 'bg-[#142B4D] text-white dark:bg-slate-800 dark:text-blue-300 border border-[#142B4D] dark:border-slate-700 shadow-xs'
+                                  : 'border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                  }`}
+                              >
+                                {pageNum}
+                              </button>
+                            )
+                          })}
+                        </div>
 
                 <span className="sm:hidden text-xs font-semibold text-gray-500">
                   Halaman {currentPage} / {totalPages}

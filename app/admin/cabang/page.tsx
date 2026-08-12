@@ -119,9 +119,6 @@ export default function AdminCabangPage() {
           <Layers className="w-64 h-64 text-white" />
         </div>
         <div className="relative z-10 space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-white/10 backdrop-blur-md border border-white/20 text-[#FE9A00]">
-            🏢 Dashboard Cabang
-          </span>
           <h1 className="text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
             Selamat Datang Kembali, {loading ? (
               <span className="inline-block h-6 w-32 bg-white/20 animate-pulse rounded-md align-middle" />
