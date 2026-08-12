@@ -1,10 +1,102 @@
 'use client'
 
-import React, { useEffect, useState, useTransition } from 'react'
+import React, { useEffect, useState, useTransition, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
+import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
+import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
+
+const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
+  if (['PT', 'Yayasan', 'Koperasi'].includes(jenisBadanHukum)) {
+    switch (docName) {
+      case 'E-KTP (yang mewakili)':
+        return 'ektp_mewakili'
+      case 'Akta Pendirian & SK Menteri':
+        return 'akta_pendirian'
+      case 'Akta Penyesuaian dengan UU No. 40 Tahun 2007 & SK Menteri':
+        return 'akta_penyesuaian'
+      case 'Anggaran Dasar Terbaru & SK Menteri':
+        return 'anggaran_dasar'
+      case 'Akta susunan Direksi & Komisaris terakhir & SK Menteri':
+        return 'akta_direksi_komisaris'
+      case 'Akta susunan Pengurus terakhir & SK Menteri':
+        return 'akta_pengurus'
+      case 'NIB OSS RBA':
+        return 'nib_oss'
+      case 'NPWP':
+        return 'npwp_badan'
+      case 'Surat Pengukuhan Pengusaha Kena Pajak (Apabila PKP) / Surat Pernyataan (Apabila Non-PKP)':
+        return 'sppkp'
+      case 'E-KTP Direksi/Pengurus':
+        return 'ektp_direksi'
+      case 'Akta Kuasa Notariil/Legalisasi (Jika Dikuasakan)':
+        return 'akta_kuasa'
+      case 'Surat Persetujuan Dewan Komisaris/RUPS (PT) (Apabila diperlukan)':
+        return 'rups_persetujuan'
+      case 'Sertifikat Tanah (Hak Milik / HGB / Hak Pakai)':
+        return 'sertifikat_tanah'
+      case 'Akta Jual Beli (AJB) / Girik / Letter C (Jika Belum Sertifikat)':
+        return 'ajb_girik'
+      case 'Surat Pemberitahuan Pajak Terutang (SPPT PBB) Terbaru':
+        return 'sppt_pbb'
+      case 'Izin Mendirikan Bangunan (IMB) / Persetujuan Bangunan Gedung (PBG)':
+        return 'imb_pbg'
+      case 'Sertifikat Laik Fungsi (SLF)':
+        return 'slf'
+      default:
+        return null
+    }
+  } else {
+    switch (docName) {
+      case 'E-KTP':
+        return 'ektp'
+      case 'KITAS/KITAP':
+        return 'kitas_kitap'
+      case 'NPWP':
+        return 'npwp'
+      case 'PKP/SPPKP / Non PKP/Surat Pernyataan':
+        return 'pkp_sppkp'
+      case 'Kartu Keluarga':
+        return 'kartu_keluarga'
+      case 'Buku Nikah/Akta Perkawinan':
+        return 'buku_nikah'
+      case 'Surat Persetujuan Suami/Istri':
+        return 'persetujuan_pasangan'
+      case 'Surat Penetapan Ganti Nama (Apabila Ganti Nama)':
+        return 'dokumen_ganti_nama'
+      case 'Akta Cerai (Apabila Cerai)':
+        return 'akta_cerai'
+      case 'Sertifikat Tanah (Hak Milik / HGB / Hak Pakai)':
+        return 'sertifikat_tanah'
+      case 'Akta Jual Beli (AJB) / Girik / Letter C (Jika Belum Sertifikat)':
+        return 'ajb_girik'
+      case 'Surat Pemberitahuan Pajak Terutang (SPPT PBB) Terbaru':
+        return 'sppt_pbb'
+      case 'Izin Mendirikan Bangunan (IMB) / Persetujuan Bangunan Gedung (PBG)':
+        return 'imb_pbg'
+      case 'Sertifikat Laik Fungsi (SLF)':
+        return 'slf'
+      case 'Akta Kuasa Notariil/Legalisasi (Jika Dikuasakan)':
+        return 'akta_kuasa'
+      case 'KTP Penerima Kuasa (Jika dikuasakan)':
+        return 'ktp_kuasa'
+      case 'Akta Waris/Surat Keterangan Waris (Jika Waris)':
+        return 'akta_waris'
+      case 'Surat Keterangan Kematian (Jika Waris)':
+        return 'surat_kematian'
+      case 'KTP Ahli Waris (Jika Waris)':
+        return 'ktp_ahli_waris'
+      case 'KK Ahli Waris (Jika Waris)':
+        return 'kk_ahli_waris'
+      case 'Akta Hibah (Jika Hibah)':
+        return 'akta_hibah'
+      default:
+        return null
+    }
+  }
+}
 
 export default function DetailUlokPeroranganPage() {
   const router = useRouter()
@@ -46,6 +138,115 @@ export default function DetailUlokPeroranganPage() {
   const [isSending, setIsSending] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<any>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  const [checklistItems, setChecklistItems] = useState<any[]>([])
+  const [checklistLoading, setChecklistLoading] = useState(true)
+  const [percentage, setPercentage] = useState(0)
+  const [numerator, setNumerator] = useState(0)
+  const [denominator, setDenominator] = useState(0)
+  const [lastUploaderName, setLastUploaderName] = useState<string | null>(null)
+  const [uploadingDocName, setUploadingDocName] = useState<string | null>(null)
+
+  const fetchChecklistData = useCallback(async () => {
+    if (!ulokId) return
+    setChecklistLoading(true)
+    try {
+      const [docsRes, masterRes, uploaderRes] = await Promise.all([
+        getUploadedDocuments(ulokId),
+        getChecklistMaster(statusBadan || 'Perorangan'),
+        getLastUploaderName(ulokId)
+      ])
+
+      if (docsRes.success && masterRes.success) {
+        const docs = docsRes.data || []
+        const master = masterRes.data || []
+        
+        const submissionMock = {
+          jenis_badan_hukum: statusBadan || 'Perorangan',
+        }
+        
+        const checklistMasterIds = getChecklistMasterIds(submissionMock, docs)
+        const denom = checklistMasterIds.length
+
+        const uniqueUploadedIds = new Set<number>()
+        for (const doc of docs) {
+          const effectiveId = getEffectiveChecklistId(doc, submissionMock.jenis_badan_hukum)
+          if (effectiveId !== null && checklistMasterIds.includes(effectiveId)) {
+            uniqueUploadedIds.add(effectiveId)
+          }
+        }
+
+        const num = uniqueUploadedIds.size
+        const pct = denom > 0 ? parseFloat(((num / denom) * 100).toFixed(2)) : 0
+
+        const filteredChecklist = (master || [])
+          .filter((cm: any) => cm.jenis_badan_hukum === submissionMock.jenis_badan_hukum && checklistMasterIds.includes(cm.id))
+          .sort((a: any, b: any) => a.id - b.id)
+
+        const items = filteredChecklist.map((cm: any) => {
+          const doc = docs.find((d: any) => {
+            if (d.checklist_id === cm.id) return true
+            const effectiveId = getEffectiveChecklistId(d, submissionMock.jenis_badan_hukum)
+            return effectiveId === cm.id
+          })
+          return {
+            nama_dokumen: cm.nama_dokumen,
+            is_uploaded: !!(doc && doc.file_url),
+            file_url: doc?.file_url || undefined,
+            is_negotiable: !!cm.is_negotiable
+          }
+        })
+
+        setNumerator(num)
+        setDenominator(denom)
+        setPercentage(pct)
+        setChecklistItems(items)
+      }
+
+      if (uploaderRes.success) {
+        setLastUploaderName(uploaderRes.data)
+      }
+    } catch (err) {
+      console.error('Error fetching checklist data:', err)
+    } finally {
+      setChecklistLoading(false)
+    }
+  }, [ulokId, statusBadan])
+
+  useEffect(() => {
+    fetchChecklistData()
+  }, [fetchChecklistData])
+
+  const handleQuickUpload = async (docName: string, file: File) => {
+    if (!ulokId) return
+    const docType = mapDocNameToType(docName, statusBadan || 'Perorangan')
+    if (!docType) {
+      alert(`Format nama dokumen "${docName}" tidak dikenali untuk diunggah.`)
+      return
+    }
+
+    setUploadingDocName(docName)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await uploadUlokFile(ulokId, docType, formData)
+      if (res.success) {
+        setSuccessMessage('Berkas berhasil diperbarui!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+        await fetchChecklistData()
+        router.refresh()
+      } else {
+        alert('Gagal mengunggah berkas: ' + res.error)
+      }
+    } catch (error: any) {
+      alert('Terjadi kesalahan saat mengunggah: ' + error.message)
+    } finally {
+      setUploadingDocName(null)
+    }
+  }
 
   useEffect(() => {
     if (!ulokId) {
@@ -426,6 +627,25 @@ export default function DetailUlokPeroranganPage() {
             </form>
           </div>
         </div>
+
+        {/* === PANEL CHECKLIST DOKUMEN === */}
+        {checklistLoading ? (
+          <div className="py-8 text-center text-gray-400 italic flex flex-col items-center justify-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 dark:border-slate-800 dark:border-t-slate-200"></div>
+            <span className="text-xs">Memuat status checklist dokumen...</span>
+          </div>
+        ) : (
+          <DocumentChecklistPanel
+            percentage={percentage}
+            numerator={numerator}
+            denominator={denominator}
+            jenisBadanHukum={statusBadan || 'Perorangan'}
+            checklistItems={checklistItems}
+            lastUploaderName={lastUploaderName}
+            onUpload={handleQuickUpload}
+            isUploadingDocName={uploadingDocName}
+          />
+        )}
 
       </div>
 

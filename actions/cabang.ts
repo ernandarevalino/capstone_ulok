@@ -372,6 +372,27 @@ export async function getUploadedDocuments(ulokId: string) {
   }
 }
 
+// === ACTIONS: AMBIL NAMA PENGUNGGAH TERAKHIR ===
+export async function getLastUploaderName(ulokId: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('documents')
+      .select('profiles:uploaded_by (full_name)')
+      .eq('ulok_id', ulokId)
+      .is('deleted_at', null)
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) throw error
+    const fullName = (data as any)?.profiles?.full_name || null
+    return { success: true, data: fullName }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
 // === ACTIONS: UPDATE DATA USULAN LOKASI ===
 export async function updateUlokSubmission(id: string, payload: any) {
   try {

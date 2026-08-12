@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getComments, createComment } from '@/actions/cabang'
+import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName } from '@/actions/cabang'
 import { updateUlokStatus } from '@/actions/assessor'
 import { supabase } from '@/lib/supabaseClient'
+import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
+import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 
 interface DetailPenilaianPeroranganClientProps {
   ulokId: string
@@ -132,6 +134,84 @@ export function DetailPenilaianPeroranganClient({
   const [isSending, setIsSending] = useState(false)
   const [currentProfile] = useState<any>(initialProfile)
   const [currentUserId] = useState<string | null>(initialUserId)
+
+  const [checklistItems, setChecklistItems] = useState<any[]>([])
+  const [checklistLoading, setChecklistLoading] = useState(true)
+  const [percentage, setPercentage] = useState(0)
+  const [numerator, setNumerator] = useState(0)
+  const [denominator, setDenominator] = useState(0)
+  const [lastUploaderName, setLastUploaderName] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!ulokId) return
+
+    const fetchChecklistData = async () => {
+      setChecklistLoading(true)
+      try {
+        const [docsRes, masterRes, uploaderRes] = await Promise.all([
+          getUploadedDocuments(ulokId),
+          getChecklistMaster(statusBadan || 'Perorangan'),
+          getLastUploaderName(ulokId)
+        ])
+
+        if (docsRes.success && masterRes.success) {
+          const docs = docsRes.data || []
+          const master = masterRes.data || []
+          
+          const submissionMock = {
+            jenis_badan_hukum: statusBadan || 'Perorangan',
+          }
+          
+          const checklistMasterIds = getChecklistMasterIds(submissionMock, docs)
+          const denom = checklistMasterIds.length
+
+          const uniqueUploadedIds = new Set<number>()
+          for (const doc of docs) {
+            const effectiveId = getEffectiveChecklistId(doc, submissionMock.jenis_badan_hukum)
+            if (effectiveId !== null && checklistMasterIds.includes(effectiveId)) {
+              uniqueUploadedIds.add(effectiveId)
+            }
+          }
+
+          const num = uniqueUploadedIds.size
+          const pct = denom > 0 ? parseFloat(((num / denom) * 100).toFixed(2)) : 0
+
+          const filteredChecklist = (master || [])
+            .filter((cm: any) => cm.jenis_badan_hukum === submissionMock.jenis_badan_hukum && checklistMasterIds.includes(cm.id))
+            .sort((a: any, b: any) => a.id - b.id)
+
+          const items = filteredChecklist.map((cm: any) => {
+            const doc = docs.find((d: any) => {
+              if (d.checklist_id === cm.id) return true
+              const effectiveId = getEffectiveChecklistId(d, submissionMock.jenis_badan_hukum)
+              return effectiveId === cm.id
+            })
+            return {
+              nama_dokumen: cm.nama_dokumen,
+              is_uploaded: !!(doc && doc.file_url),
+              file_url: doc?.file_url || undefined,
+              is_negotiable: !!cm.is_negotiable
+            }
+          })
+
+          setNumerator(num)
+          setDenominator(denom)
+          setPercentage(pct)
+          setChecklistItems(items)
+        }
+
+        if (uploaderRes.success) {
+          setLastUploaderName(uploaderRes.data)
+        }
+      } catch (err) {
+        console.error('Error fetching checklist data:', err)
+      } finally {
+        setChecklistLoading(false)
+      }
+    }
+
+    fetchChecklistData()
+  }, [ulokId, statusBadan])
 
   // Real-time comments subscription
   useEffect(() => {
@@ -380,6 +460,23 @@ export function DetailPenilaianPeroranganClient({
             </form>
           </div>
         </div>
+
+        {/* === PANEL CHECKLIST DOKUMEN === */}
+        {checklistLoading ? (
+          <div className="py-8 text-center text-gray-400 italic flex flex-col items-center justify-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 dark:border-slate-800 dark:border-t-slate-200"></div>
+            <span className="text-xs">Memuat status checklist dokumen...</span>
+          </div>
+        ) : (
+          <DocumentChecklistPanel
+            percentage={percentage}
+            numerator={numerator}
+            denominator={denominator}
+            jenisBadanHukum={statusBadan || 'Perorangan'}
+            checklistItems={checklistItems}
+            lastUploaderName={lastUploaderName}
+          />
+        )}
 
       </div>
 
