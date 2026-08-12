@@ -7,6 +7,7 @@ import { updateUlokStatus } from '@/actions/assessor'
 import { supabase } from '@/lib/supabaseClient'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
+import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
 
 interface DetailPenilaianPeroranganClientProps {
   ulokId: string
@@ -330,6 +331,18 @@ export function DetailPenilaianPeroranganClient({
             </button>
           </div>
         </div>
+
+        <UlokSummaryCard
+          namaLokasi={namaLokasi}
+          namaCabang={initialDetail?.profiles?.branches?.nama_cabang || 'Cabang Tidak Diketahui'}
+          namaPengusul={initialDetail?.profiles?.full_name || 'Pengusul Tidak Diketahui'}
+          jenisKepemilikan={statusBadan || 'Perorangan'}
+          status={statusSubmission}
+          totalDokumen={checklistItems.length}
+          dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
+          dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
+          dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
+        />
 
         {/* === FORM: DATA UTAMA === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 p-6 space-y-5 transition-colors duration-300">

@@ -7,6 +7,7 @@ import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
+import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
   if (['PT', 'Yayasan', 'Koperasi'].includes(jenisBadanHukum)) {
@@ -110,6 +111,8 @@ export default function DetailUlokBadanHukumPage() {
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
+  const [namaPengusul, setNamaPengusul] = useState('')
+  const [namaCabang, setNamaCabang] = useState('')
   
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
@@ -271,6 +274,8 @@ export default function DetailUlokBadanHukumPage() {
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setStatusSubmission(res.data.status || 'Draft')
         setLastReviewedAt(res.data.last_reviewed_at || null)
+        setNamaPengusul(res.data.profiles?.full_name || 'Pengusul Tidak Diketahui')
+        setNamaCabang(res.data.profiles?.branches?.nama_cabang || 'Cabang Tidak Diketahui')
         
         const commentsRes = await getComments(ulokId)
         if (commentsRes.success && commentsRes.data) {
@@ -459,6 +464,18 @@ export default function DetailUlokBadanHukumPage() {
             </button>
           </div>
         </div>
+
+        <UlokSummaryCard
+          namaLokasi={namaLokasi}
+          namaCabang={namaCabang}
+          namaPengusul={namaPengusul}
+          jenisKepemilikan={statusBadan || 'PT'}
+          status={statusSubmission}
+          totalDokumen={checklistItems.length}
+          dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
+          dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
+          dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
+        />
 
         {/* === PANEL FORM DATA UTAMA === */}
         <form 

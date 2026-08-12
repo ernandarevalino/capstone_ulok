@@ -315,7 +315,13 @@ export async function getUlokDetail(id: string) {
         ulok_sertifikat(*),
         ulok_legal(*),
         ulok_jaminan(*),
-        metode_saw(*)
+        metode_saw(*),
+        profiles:admin_id (
+          full_name,
+          branches (
+            nama_cabang
+          )
+        )
       `)
       .eq('id', id)
       .single()
@@ -328,7 +334,8 @@ export async function getUlokDetail(id: string) {
       ...(rawData as any).ulok_sertifikat,
       ...(rawData as any).ulok_legal,
       ...(rawData as any).ulok_jaminan,
-      ...(rawData as any).metode_saw
+      ...(rawData as any).metode_saw,
+      profiles: (rawData as any).profiles
     } : null
 
     return { success: true, data }
