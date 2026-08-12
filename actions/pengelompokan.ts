@@ -64,7 +64,7 @@ export interface UlokGroupItem {
   recommendation_reason?: string;
 
   // Checklist Status for Accordion dropdown
-  checklistStatus?: Array<{ nama_dokumen: string; is_uploaded: boolean; file_url?: string; is_negotiable: boolean }>;
+  checklistStatus?: Array<{ nama_dokumen: string; is_uploaded: boolean; file_url?: string; is_negotiable: boolean; is_verified?: boolean }>;
 }
 
 export interface PengelompokanResult {
@@ -219,7 +219,8 @@ export async function getPengelompokanData() {
           nama_dokumen: cm.nama_dokumen,
           is_uploaded: !!(doc && doc.file_url),
           file_url: doc?.file_url || undefined,
-          is_negotiable: !!cm.is_negotiable
+          is_negotiable: !!cm.is_negotiable,
+          is_verified: doc ? !!doc.is_verified : false
         }
       })
 

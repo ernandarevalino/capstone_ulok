@@ -557,8 +557,8 @@ export default function ClusteringDashboardPage() {
 
                 <div className="w-full mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
                   {isMounted ? (
-                    <ResponsiveContainer width="100%" height={380}>
-                      <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
+                    <ResponsiveContainer width="100%" height={480}>
+                      <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
                         <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" className="hidden dark:block" />
 
@@ -572,6 +572,7 @@ export default function ClusteringDashboardPage() {
                           fontSize={11}
                           fontWeight={600}
                           label={{ value: 'Durasi Pengumpulan (Hari)', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
+                          allowDataOverflow={true}
                         />
                         <YAxis
                           type="number"
@@ -583,6 +584,7 @@ export default function ClusteringDashboardPage() {
                           fontSize={11}
                           fontWeight={600}
                           label={{ value: 'Kelengkapan Dokumen (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' }, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
+                          allowDataOverflow={true}
                         />
 
                         {/* Shading Areas for Quadrants */}
@@ -629,14 +631,58 @@ export default function ClusteringDashboardPage() {
 
                         <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
 
-                        <Scatter name="Cluster 1 (Ideal)" data={data.c3} fill="#10B981" line={false} />
-                        <Scatter name="Cluster 2 (Aktif)" data={data.c2} fill="#3B82F6" line={false} />
-                        <Scatter name="Cluster 3 (Review)" data={data.c1} fill="#F28705" line={false} />
-                        <Scatter name="Cluster 4 (Stagnan)" data={data.c4} fill="#D91E2E" line={false} />
+                        <Scatter
+                          name="Cluster 1 (Ideal)"
+                          data={data.c3}
+                          fill="#10B981"
+                          line={false}
+                          cursor="pointer"
+                          onClick={(e: any) => {
+                            if (e && e.payload && e.payload.id) {
+                              handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
+                            }
+                          }}
+                        />
+                        <Scatter
+                          name="Cluster 2 (Aktif)"
+                          data={data.c2}
+                          fill="#3B82F6"
+                          line={false}
+                          cursor="pointer"
+                          onClick={(e: any) => {
+                            if (e && e.payload && e.payload.id) {
+                              handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
+                            }
+                          }}
+                        />
+                        <Scatter
+                          name="Cluster 3 (Review)"
+                          data={data.c1}
+                          fill="#F28705"
+                          line={false}
+                          cursor="pointer"
+                          onClick={(e: any) => {
+                            if (e && e.payload && e.payload.id) {
+                              handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
+                            }
+                          }}
+                        />
+                        <Scatter
+                          name="Cluster 4 (Stagnan)"
+                          data={data.c4}
+                          fill="#D91E2E"
+                          line={false}
+                          cursor="pointer"
+                          onClick={(e: any) => {
+                            if (e && e.payload && e.payload.id) {
+                              handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
+                            }
+                          }}
+                        />
                       </ScatterChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-[380px] w-full bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
+                    <div className="h-[480px] w-full bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
                   )}
 
                   {/* Quadrant Hover Tooltip */}

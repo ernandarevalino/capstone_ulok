@@ -193,7 +193,8 @@ export default function DetailUlokBadanHukumPage() {
             nama_dokumen: cm.nama_dokumen,
             is_uploaded: !!(doc && doc.file_url),
             file_url: doc?.file_url || undefined,
-            is_negotiable: !!cm.is_negotiable
+            is_negotiable: !!cm.is_negotiable,
+            is_verified: doc ? !!doc.is_verified : false
           }
         })
 
