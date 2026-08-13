@@ -297,7 +297,7 @@ export default function Section2PeroranganAssessorPage() {
                           className={`p-1 rounded border shadow-sm transition-all flex items-center justify-center ${
                             existingDoc.is_verified
                               ? 'bg-emerald-100 text-green-600 border-green-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800'
-                              : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
+                              : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100 dark:bg-rose-955/40 dark:text-rose-400 dark:border-rose-900/60'
                           } ${verifyingDocId === existingDoc.id ? 'opacity-50 cursor-wait' : ''}`}
                         >
                           {verifyingDocId === existingDoc.id ? (
@@ -305,14 +305,14 @@ export default function Section2PeroranganAssessorPage() {
                           ) : (
                             <Check className="w-3.5 h-3.5 stroke-[3px]" />
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleReplyDocument(label, filename)}
-                            className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
-                            title="Beri Catatan untuk Dokumen Ini"
-                          >
-                            <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
-                          </button>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReplyDocument(label, filename)}
+                          className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
+                          title="Beri Catatan untuk Dokumen Ini"
+                        >
+                          <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
                         </button>
                       </div>
                     </div>
@@ -397,6 +397,14 @@ export default function Section2PeroranganAssessorPage() {
                   ) : (
                     <Check className="w-3.5 h-3.5 stroke-[3px]" />
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleReplyDocument(label, existingDoc.filename)}
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
+                  title="Beri Catatan untuk Dokumen Ini"
+                >
+                  <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
                 </button>
               </div>
             </div>

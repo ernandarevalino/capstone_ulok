@@ -262,9 +262,6 @@ export default function Section1BadanHukumAssessorPage() {
                     <Check className="w-3.5 h-3.5 stroke-[3px]" />
                   )}
                 </button>
-              </div>
-            </div>
-
                 <button
                   type="button"
                   onClick={() => handleReplyDocument(label, existingDoc.filename)}
@@ -273,6 +270,8 @@ export default function Section1BadanHukumAssessorPage() {
                 >
                   <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
                 </button>
+              </div>
+            </div>
             {/* Inline Accordion for History Files */}
             {historyFiles.length > 0 && (
               <div className="w-full mt-1 border-t border-gray-250/30 dark:border-gray-700/30 pt-1.5 animate-fadeIn">

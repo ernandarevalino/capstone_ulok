@@ -396,6 +396,14 @@ export default function Section2BadanHukumAssessorPage() {
                     <Check className="w-3.5 h-3.5 stroke-[3px]" />
                   )}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleReplyDocument(label, existingDoc.filename)}
+                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 transition-all flex items-center justify-center"
+                  title="Beri Catatan untuk Dokumen Ini"
+                >
+                  <img src="/icons/icon-message-now.svg" alt="Reply" className="w-3.5 h-3.5 object-contain" />
+                </button>
               </div>
             </div>
 
