@@ -890,3 +890,48 @@ export async function autoCleanExpiredBackupItems() {
     return { success: false, error: error.message }
   }
 }
+
+export async function getDeletedUlokCount() {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data: currentProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('branch_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !currentProfile || !currentProfile.branch_id) {
+      return { success: true, count: 0 }
+    }
+
+    const { data: siblingProfiles, error: siblingError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('branch_id', currentProfile.branch_id)
+
+    if (siblingError) throw siblingError
+    const branchAdminIds = (siblingProfiles || []).map((p: any) => p.id)
+
+    if (branchAdminIds.length === 0) {
+      return { success: true, count: 0 }
+    }
+
+    const { count, error: ulokError } = await supabase
+      .from('ulok_submissions')
+      .select('*', { count: 'exact', head: true })
+      .in('admin_id', branchAdminIds)
+      .not('deleted_at', 'is', null)
+      .is('purged_by_cabang_at', null)
+
+    if (ulokError) throw ulokError
+
+    return { success: true, count: count || 0 }
+  } catch (error: any) {
+    console.error('getDeletedUlokCount error:', error)
+    return { success: false, error: error.message }
+  }
+}
