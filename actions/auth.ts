@@ -235,7 +235,7 @@ export async function requestPasswordResetAction(email: string) {
 
     return {
       success: true,
-      message: 'Instruksi atur ulang kata sandi telah dikirim ke email Anda.',
+      message: 'Pemulihan kata sandi sukses dikirim ke email Anda.',
     }
   } catch (error: any) {
     return { success: false, error: error.message }

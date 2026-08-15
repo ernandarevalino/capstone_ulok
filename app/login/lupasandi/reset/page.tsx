@@ -98,7 +98,9 @@ export default function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        throw error;
+        setErrorMessage(error.message);
+        setLoading(false);
+        return;
       }
 
       setShowSuccessModal(true);
@@ -106,7 +108,6 @@ export default function ResetPasswordPage() {
         router.push("/login");
       }, 2000);
     } catch (err: any) {
-      console.error("Password reset error:", err);
       setErrorMessage(
         err.message || "Gagal memperbarui kata sandi. Silakan coba lagi.",
       );
@@ -292,15 +293,10 @@ export default function ResetPasswordPage() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-950/50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 dark:text-green-400">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-white mb-2">
-              Kata Sandi Berhasil Diperbarui!
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-[#111C34] rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800/60 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <CheckCircle2 className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 text-emerald-500" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
               Kata sandi Anda telah berhasil diubah. Anda akan diarahkan ke
               halaman login secara otomatis...
             </p>
