@@ -85,26 +85,56 @@ export default function ProfileGlobal() {
   if (loading) {
     return (
       <>
+        {/* Page Header Title/Subtitle */}
         <div className="mb-6">
           <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
           <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
-          <div className="h-24 md:h-32 w-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
-          <div className="flex items-end gap-4 px-6 pb-6 -mt-10 md:-mt-12">
-            {/* Avatar */}
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-slate-900 bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
-            {/* Name & Role */}
-            <div className="flex flex-col gap-2 mb-2 w-full">
-              <div className="h-5 w-48 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-              <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
-            </div>
+        {/* Profile Card Main Container */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
+          {/* Flat neutral header bar */}
+          <div className="bg-slate-200 dark:bg-slate-800 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-pulse">
+            <div className="h-5 w-32 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-6 w-24 bg-slate-300 dark:bg-slate-700 rounded-full hidden sm:block"></div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-11 md:h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-            ))}
+
+          {/* Body */}
+          <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+            {/* Avatar Section */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-6 border-b border-gray-100 dark:border-gray-800/60 animate-pulse">
+              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0"></div>
+              <div className="text-center sm:text-left space-y-2 w-full max-w-xs">
+                <div className="h-5 w-40 bg-slate-300 dark:bg-slate-700 rounded mx-auto sm:mx-0"></div>
+                <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg mx-auto sm:mx-0"></div>
+                <div className="h-3 w-56 bg-slate-100 dark:bg-slate-800/50 rounded mx-auto sm:mx-0"></div>
+              </div>
+            </div>
+
+            {/* Form Fields Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-28 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                  <div className="h-11 md:h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/60 text-slate-400 rounded-2xl flex items-start gap-3 animate-pulse">
+              <div className="h-4 w-4 bg-slate-300 dark:bg-slate-700 rounded-full shrink-0"></div>
+              <div className="space-y-2 w-full">
+                <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div className="h-3 w-5/6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              </div>
+            </div>
+
+            {/* Logout Button Row */}
+            <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex justify-end animate-pulse">
+              <div className="h-10 md:h-11 w-36 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            </div>
+
           </div>
         </div>
       </>

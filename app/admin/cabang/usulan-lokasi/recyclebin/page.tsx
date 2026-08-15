@@ -50,6 +50,12 @@ export default function RecycleBinPage() {
     documentName: string
   }>({ isOpen: false, documentId: '', parentUlokId: '', documentName: '' })
 
+  const [bulkRestoreConfirmModal, setBulkRestoreConfirmModal] = useState<{
+    isOpen: boolean
+    extraParentIds: string[]
+    parentNames: string[]
+  }>({ isOpen: false, extraParentIds: [], parentNames: [] })
+
   // Date formatter
   const formatDeletedAt = (dateStr: string) => {
     if (!dateStr) return '-'
@@ -224,14 +230,13 @@ export default function RecycleBinPage() {
     })
   }
 
-  const handleRestoreBulk = () => {
-    if (selectedItems.length === 0) return
+  const executeRestoreBulk = (finalItems: { id: string; type: 'ulok' | 'document' }[]) => {
     startTransition(async () => {
-      const res = await bulkRestoreItems(selectedItems)
+      const res = await bulkRestoreItems(finalItems)
       if (res.success) {
         setSuccessModal({
           isOpen: true,
-          message: `Berhasil memulihkan ${selectedItems.length} item`
+          message: `Berhasil memulihkan ${finalItems.length} item`
         })
         setSelectedItems([])
         loadTrashData()
@@ -240,6 +245,45 @@ export default function RecycleBinPage() {
         alert('Gagal memulihkan item terpilih: ' + res.error)
       }
     })
+  }
+
+  const handleRestoreBulk = () => {
+    if (selectedItems.length === 0) return
+
+    // Cek: ada dokumen terpilih yang induk ULOK-nya masih di trash tapi belum ikut dicentang?
+    const missingParents = new Map<string, string>()
+
+    selectedItems.forEach((sel) => {
+      if (sel.type !== 'document') return
+      const currentItem = items.find((item) => item.id === sel.id && item.type === 'document')
+      if (!currentItem?.parentId) return
+
+      const parentStillInTrash = items.find((item) => item.id === currentItem.parentId && item.type === 'ulok')
+      if (!parentStillInTrash) return
+
+      const parentAlreadySelected = selectedItems.some((x) => x.id === currentItem.parentId && x.type === 'ulok')
+      if (!parentAlreadySelected) {
+        missingParents.set(currentItem.parentId, parentStillInTrash.name)
+      }
+    })
+
+    if (missingParents.size > 0) {
+      setBulkRestoreConfirmModal({
+        isOpen: true,
+        extraParentIds: Array.from(missingParents.keys()),
+        parentNames: Array.from(missingParents.values())
+      })
+      return
+    }
+
+    executeRestoreBulk(selectedItems)
+  }
+
+  const executeBulkRestoreWithParents = () => {
+    const { extraParentIds } = bulkRestoreConfirmModal
+    setBulkRestoreConfirmModal({ isOpen: false, extraParentIds: [], parentNames: [] })
+    const parentItems = extraParentIds.map((id) => ({ id, type: 'ulok' as const }))
+    executeRestoreBulk([...selectedItems, ...parentItems])
   }
 
   // Delete handlers triggers
@@ -498,26 +542,40 @@ export default function RecycleBinPage() {
 
         {/* BULK ACTION TOOLBAR */}
         {selectedItems.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-4 flex items-center justify-between animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-3 sm:p-4 flex items-center justify-between animate-[fadeIn_0.2s_ease-out]">
             <span className="text-sm font-semibold text-blue-900 dark:text-blue-400">
-              {selectedItems.length} item dipilih
+              {selectedItems.length} Item
             </span>
+
             <div className="flex gap-2">
+              {/* Pulihkan */}
               <button
                 onClick={handleRestoreBulk}
                 disabled={isPending}
-                className="bg-blue-900 hover:bg-blue-950 text-white dark:bg-blue-600 dark:hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-sm"
+                aria-label="Pulihkan"
+                className="bg-blue-900 hover:bg-blue-950 text-white dark:bg-blue-600 dark:hover:bg-blue-500
+                  w-9 h-9 sm:w-auto sm:h-auto
+                  sm:px-4 sm:py-2
+                  rounded-xl text-xs font-bold transition active:scale-95
+                  flex items-center justify-center sm:gap-1.5 shadow-sm"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Pulihkan
+                <RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Pulihkan</span>
               </button>
+
+              {/* Hapus Permanen */}
               <button
                 onClick={triggerDeleteBulk}
                 disabled={isPending}
-                className="bg-red-600 hover:bg-red-750 text-white px-4 py-2 rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-sm"
+                aria-label="Hapus Permanen"
+                className="bg-red-600 hover:bg-red-750 text-white
+                  w-9 h-9 sm:w-auto sm:h-auto
+                  sm:px-4 sm:py-2
+                  rounded-xl text-xs font-bold transition active:scale-95
+                  flex items-center justify-center sm:gap-1.5 shadow-sm"
               >
-                <Trash className="w-3.5 h-3.5" />
-                Hapus Permanen
+                <Trash className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Hapus Permanen</span>
               </button>
             </div>
           </div>
@@ -688,10 +746,51 @@ export default function RecycleBinPage() {
                 </tbody>
               </table>
 
-              {/* MOBILE CARD VIEW */}
+              {/* MOBILE CARD VIEW */}\
               <div className="md:hidden flex flex-col gap-4 p-4 bg-gray-50/50 dark:bg-gray-950/30">
+
+                {/* MOBILE SELECT ALL */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={handleSelectAll}
+                    disabled={filteredItems.length === 0}
+                    className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-[#142B4D] dark:hover:text-blue-400 transition active:scale-95"
+                  >
+                    {filteredItems.length > 0 &&
+                    filteredItems.every((x) =>
+                      selectedItems.some(
+                        (y) => y.id === x.id && y.type === x.type
+                      )
+                    ) ? (
+                      <CheckSquare className="w-5 h-5 text-[#142B4D] dark:text-blue-500" />
+                    ) : (
+                      <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    )}
+
+                    <span>
+                      {filteredItems.length > 0 &&
+                      filteredItems.every((x) =>
+                        selectedItems.some(
+                          (y) => y.id === x.id && y.type === x.type
+                        )
+                      )
+                        ? 'Batal Pilih Semua'
+                        : 'Pilih Semua'}
+                    </span>
+                  </button>
+
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
+                    {selectedItems.length > 0
+                      ? `${selectedItems.length} dipilih`
+                      : `${filteredItems.length} item`}
+                  </span>
+                </div>
+
                 {filteredItems.map((item) => {
-                  const isSelected = selectedItems.some((x) => x.id === item.id && x.type === item.type)
+                  const isSelected = selectedItems.some(
+                    (x) => x.id === item.id && x.type === item.type
+                  )
+
                   return (
                     <div
                       key={`mobile-${item.type}-${item.id}`}
@@ -713,17 +812,25 @@ export default function RecycleBinPage() {
                               <FileText className="w-5 h-5" />
                             </div>
                           )}
+
                           <div className="flex flex-col min-w-0 pt-0.5">
-                            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate w-full pr-2" title={item.name}>
+                            <span
+                              className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate w-full pr-2"
+                              title={item.name}
+                            >
                               {truncateText(item.name, 28)}
                             </span>
+
                             <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
                               Induk: {item.parentName || '-'}
                             </span>
                           </div>
                         </div>
 
-                        <button onClick={() => handleSelectItem(item.id, item.type)} className="shrink-0 p-1 mt-1 text-gray-400">
+                        <button
+                          onClick={() => handleSelectItem(item.id, item.type)}
+                          className="shrink-0 p-1 mt-1 text-gray-400"
+                        >
                           {isSelected ? (
                             <CheckSquare className="w-5 h-5 text-[#142B4D] dark:text-blue-500" />
                           ) : (
@@ -735,30 +842,46 @@ export default function RecycleBinPage() {
                       {/* Middle: Details */}
                       <div className="flex items-center justify-between text-[11px] text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2.5 mb-4">
                         <div>
-                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">Dihapus Pada</span>
-                          <span className="font-semibold">{formatDeletedAt(item.deletedAt)}</span>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">
+                            Dihapus Pada
+                          </span>
+                          <span className="font-semibold">
+                            {formatDeletedAt(item.deletedAt)}
+                          </span>
                         </div>
+
                         <div className="text-right">
-                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">Oleh</span>
-                          <span className="font-semibold text-gray-600 dark:text-gray-300">{item.deletedBy}</span>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">
+                            Oleh
+                          </span>
+                          <span className="font-semibold text-gray-600 dark:text-gray-300">
+                            {item.deletedBy}
+                          </span>
                         </div>
                       </div>
 
                       {/* Bottom Actions */}
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleRestoreSingle(item.id, item.type, item.name)}
+                          onClick={() =>
+                            handleRestoreSingle(item.id, item.type, item.name)
+                          }
                           disabled={isPending}
                           className="flex-1 py-2.5 bg-[#142B4D] dark:bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
                         >
-                          <RotateCcw className="w-3.5 h-3.5" /> Pulihkan
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Pulihkan
                         </button>
+
                         <button
-                          onClick={() => triggerDeleteSingle(item.id, item.type, item.name)}
+                          onClick={() =>
+                            triggerDeleteSingle(item.id, item.type, item.name)
+                          }
                           disabled={isPending}
                           className="flex-1 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 border border-red-100 dark:border-red-900/40 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
                         >
-                          <Trash className="w-3.5 h-3.5" /> Hapus
+                          <Trash className="w-3.5 h-3.5" />
+                          Hapus
                         </button>
                       </div>
                     </div>
@@ -828,6 +951,44 @@ export default function RecycleBinPage() {
                 className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
               >
                 {isPending ? "Memulihkan..." : "Ya, Keduanya"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK RESTORE PARENT CONFIRM MODAL */}
+      {bulkRestoreConfirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-sm text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <Folder className="w-12 h-12 mx-auto text-blue-500 mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              {bulkRestoreConfirmModal.extraParentIds.length === 1
+                ? "Apakah Anda ingin memulihkan Induk ULOK beserta dokumen ini?"
+                : `Apakah Anda ingin memulihkan ${bulkRestoreConfirmModal.extraParentIds.length} Induk ULOK beserta dokumen ini?`}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              (Jika Anda memilih 'Batal', pemulihan dibatalkan).
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() =>
+                  setBulkRestoreConfirmModal({
+                    isOpen: false,
+                    extraParentIds: [],
+                    parentNames: [],
+                  })
+                }
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-bold px-4 py-2 text-sm transition-all"
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeBulkRestoreWithParents}
+                disabled={isPending}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
+              >
+                {isPending ? "Memulihkan..." : "Ya, Pulihkan Semua"}
               </button>
             </div>
           </div>

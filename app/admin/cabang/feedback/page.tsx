@@ -268,18 +268,82 @@ export default function FeedbackPage() {
       <div className="space-y-6">
 
         {/* === HEADER: FEEDBACK === */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-            Feedback Assessor
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
-            Daftar feedback, catatan revisi, dan pesan dari Assessor untuk usulan lokasi cabang Anda.
-          </p>
-        </div>
+        {loading ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="h-7 md:h-8 w-56 md:w-72 bg-slate-200 dark:bg-slate-800 rounded-md" />
+            <div className="h-3.5 md:h-4 w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-md" />
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+              Feedback Assessor
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
+              Daftar feedback, catatan revisi, dan pesan dari Assessor untuk usulan lokasi cabang Anda.
+            </p>
+          </div>
+        )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-[#142B4D] border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-6">
+            {/* ACTION BAR SKELETON */}
+            <div className="flex flex-row items-center gap-2 mb-6 animate-pulse">
+              {/* Search placeholder */}
+              <div className="flex-1 h-11 md:h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+              {/* Filter placeholder */}
+              <div className="w-11 h-11 sm:w-20 sm:h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+              {/* Refresh placeholder */}
+              <div className="w-11 h-11 sm:w-24 sm:h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            </div>
+
+            {/* HORIZONTAL TABS SKELETON */}
+            <div className="flex overflow-x-auto gap-3 pb-4 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="min-w-[180px] sm:min-w-[200px] shrink-0 h-[70px] rounded-xl bg-slate-200 dark:bg-slate-800 p-3.5 flex flex-col gap-1.5"
+                >
+                  <div className="h-3.5 w-2/3 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                  <div className="h-2.5 w-1/2 bg-slate-100 dark:bg-slate-800/50 rounded"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* CHAT ROOM SKELETON */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden flex flex-col h-[800px] animate-pulse">
+              {/* Chat Header */}
+              <div className="bg-slate-200 dark:bg-slate-800 px-4 py-3 md:px-5 md:py-3.5 border-b border-slate-300 dark:border-slate-700">
+                <div className="h-5 w-40 bg-slate-300 dark:bg-slate-700 rounded"></div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 px-4 py-3 md:px-5 md:py-4 space-y-4 bg-gray-50 dark:bg-gray-950">
+                {[1, 2, 3, 4].map((i) => {
+                  const isRight = i % 2 === 0;
+                  return (
+                    <div key={i} className={`flex w-full ${isRight ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-xl flex flex-col gap-2 ${
+                          isRight
+                            ? 'bg-slate-200 dark:bg-slate-800 rounded-tr-none ml-auto'
+                            : 'bg-slate-200 dark:bg-slate-800 rounded-tl-none'
+                        }`}
+                      >
+                        <div className="h-2.5 w-16 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                        <div className="h-3 w-40 sm:w-60 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                        <div className="h-2 w-10 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Input Area */}
+              <div className="px-3 py-2.5 md:px-4 md:py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-2 md:gap-2.5">
+                <div className="flex-1 h-10 md:h-11 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                <div className="w-10 h-10 md:w-11 md:h-11 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+              </div>
+            </div>
           </div>
         ) : (
           <>

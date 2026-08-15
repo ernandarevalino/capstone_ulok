@@ -97,16 +97,26 @@ export default function NotificationPage() {
         </div>
 
         {/* List Card Skeleton */}
-        <div className="shadow-sm bg-white dark:bg-gray-900 rounded-xl overflow-hidden">
+        <div className="shadow-sm bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800/80">
           {/* Table Header Skeleton */}
-          <div className="bg-slate-100 dark:bg-slate-800/50 h-[68px] w-full animate-pulse border-b border-gray-100 dark:border-gray-800/60"></div>
+          <div className="bg-slate-200 dark:bg-slate-800 p-4 md:p-5 flex items-center justify-between gap-2 animate-pulse border-b border-gray-100 dark:border-gray-800/60">
+            <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-6 w-16 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+          </div>
 
           {/* Divide-y List */}
-          <div className="divide-y divide-gray-50 dark:divide-gray-800/60">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="p-5 pl-6 flex flex-col gap-2.5">
-                <div className="h-4 w-1/3 md:w-1/4 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-                <div className="h-3 w-3/4 md:w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-3.5 sm:p-5 sm:pl-6 sm:pr-6 flex justify-between items-start gap-4">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0"></span>
+                    <div className="h-4 w-1/3 md:w-1/4 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                  </div>
+                  <div className="h-3.5 w-3/4 md:w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse pl-4"></div>
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse pl-4"></div>
+                </div>
+                <div className="h-9 w-9 sm:h-11 sm:w-11 md:h-10 md:w-10 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse shrink-0"></div>
               </div>
             ))}
           </div>

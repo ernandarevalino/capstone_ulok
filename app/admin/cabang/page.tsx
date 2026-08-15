@@ -199,67 +199,82 @@ export default function AdminCabangPage() {
     return (
       <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
 
-        {/* =====================================================
-            Skeleton Welcome Banner
-        ====================================================== */}
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800 p-5 sm:p-6 mb-6">
-          <div className="h-6 w-1/2 bg-slate-300 dark:bg-slate-700 rounded mb-3 animate-pulse"></div>
-          <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-800 rounded mb-2 animate-pulse"></div>
-          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+        {/* Skeleton Welcome Banner */}
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800 p-5 sm:p-6">
+          <div className="h-5 sm:h-7 w-1/2 max-w-xs bg-slate-300 dark:bg-slate-700 rounded-md mb-2.5 animate-pulse" />
+          <div className="h-3 w-full max-w-md bg-slate-300/70 dark:bg-slate-700/70 rounded-md animate-pulse" />
         </div>
 
-        {/* =====================================================
-            Skeleton Stats Grid
-        ====================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+        {/* Skeleton Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-28 md:h-32 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"
-            ></div>
+              className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-between gap-2"
+            >
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <div className="h-2.5 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-6 sm:h-8 w-14 bg-slate-300 dark:bg-slate-700 rounded-md animate-pulse" />
+              </div>
+              <div className="w-9 h-9 sm:w-11 sm:h-11 bg-slate-200 dark:bg-slate-800 rounded-lg sm:rounded-xl shrink-0 animate-pulse" />
+            </div>
           ))}
         </div>
 
-        {/* =====================================================
-            Skeleton Chart
-        ====================================================== */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm flex flex-col mb-6">
-          <div className="border-b border-slate-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
-            {/* Chart Title */}
-            <div className="h-4 w-48 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
-            {/* Subtitle */}
-            <div className="h-2 w-64 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
+        {/* Skeleton Chart */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm">
+          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
+            <div className="h-3.5 w-52 bg-slate-300 dark:bg-slate-700 rounded-md mb-2 animate-pulse" />
+            <div className="h-2.5 w-64 max-w-full bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse" />
           </div>
-          <div className="flex flex-col lg:flex-row items-center justify-around gap-4 md:gap-6 w-full py-4">
-            {/* Chart Graphic - One large block */}
-            <div className="w-full lg:w-1/2 flex justify-center items-center h-52 sm:h-60 md:h-64">
-              <div className="w-48 h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+          <div className="flex flex-col lg:flex-row items-center justify-around gap-4 md:gap-6">
+            <div className="w-full lg:w-1/2 h-52 sm:h-60 md:h-64 flex items-center justify-center">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[14px] sm:border-[16px] border-slate-200 dark:border-slate-800 animate-pulse" />
             </div>
-            {/* Legend - Couple of simple blocks */}
-            <div className="w-full lg:w-1/2 flex flex-col gap-3">
-              <div className="h-3.5 w-28 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+            <div className="w-full lg:w-1/2 flex flex-col gap-2">
+              <div className="h-2.5 w-24 bg-slate-200 dark:bg-slate-800 rounded-md mb-1 animate-pulse" />
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-8 w-full bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+                <div key={i} className="h-9 w-full bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse" />
               ))}
             </div>
           </div>
         </div>
 
-        {/* =====================================================
-            Skeleton Bottom Cards
-        ====================================================== */}
+        {/* Skeleton Bottom Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* ===================================================
-              Skeleton Recent Activity
-          ==================================================== */}
-          <div className="h-[360px] sm:h-[410px] w-full bg-slate-200 dark:bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse"></div>
 
-          {/* ===================================================
-              Skeleton Top 7 Lokasi
-          ==================================================== */}
-          <div className="h-[360px] sm:h-[410px] w-full bg-slate-200 dark:bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse"></div>
+          {/* Recent Activity */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[58px]" />
+            <div className="p-3 sm:p-4 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-2.5">
+                  <div className="mt-1 shrink-0 w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-2/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                    <div className="h-2.5 w-4/5 bg-slate-100 dark:bg-slate-800/60 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top 7 Lokasi */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[58px]" />
+            <div className="p-3 sm:p-4 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-3">
+                  <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                  <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800/60 rounded animate-pulse" />
+                  <div className="h-4 w-14 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                  <div className="h-3 w-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
-
       </div>
     );
   }

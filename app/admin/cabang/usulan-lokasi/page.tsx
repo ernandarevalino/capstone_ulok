@@ -829,20 +829,16 @@ export default function UsulanLokasiPage() {
         </div>
 
         {/* === ACTION BAR SKELETON === */}
-        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 mb-6">
-          {/* Search/Filter Input */}
-          <div className="h-11 md:h-10 w-full md:w-72 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-          {/* Group on Mobile */}
-          <div className="flex w-full md:w-auto gap-2">
-            {/* Filter button */}
-            <div className="h-11 md:h-10 flex-1 md:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-            {/* Trash Can button */}
-            <div className="h-11 w-11 md:h-10 md:w-10 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-            {/* Export button */}
-            <div className="h-11 md:h-10 flex-1 md:w-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+        <div className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center gap-3 mb-6">
+          <div className="flex items-center gap-2 md:contents">
+            <div className="flex-1 md:order-1 md:min-w-[240px] h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+            <div className="w-11 h-11 md:order-2 md:w-48 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+            <div className="w-11 h-11 md:order-3 md:w-48 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
           </div>
-          {/* Add Location button */}
-          <div className="h-11 md:h-10 w-full md:w-40 bg-slate-300 dark:bg-slate-700 rounded-xl animate-pulse"></div>
+          <div className="flex items-center gap-2 md:contents">
+            <div className="flex-1 md:order-5 md:w-48 h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+            <div className="w-11 h-11 md:order-4 md:w-10 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+          </div>
         </div>
 
         {/* === ACCORDION & TABLE LIST SKELETON === */}
@@ -862,7 +858,7 @@ export default function UsulanLokasiPage() {
               {/* === DESKTOP TABLE VIEW SKELETON === */}
               <div className="hidden md:block overflow-x-auto">
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {[1, 2, 3, 4].map((rowIndex) => (
+                  {[1, 2, 3].map((rowIndex) => (
                     <div
                       key={rowIndex}
                       className="h-12 w-full bg-slate-100 dark:bg-slate-800 animate-pulse border-b border-gray-100 dark:border-gray-800"
@@ -873,7 +869,7 @@ export default function UsulanLokasiPage() {
 
               {/* === MOBILE CARD VIEW SKELETON === */}
               <div className="block md:hidden p-4">
-                {[1, 2, 3, 4].map((rowIndex) => (
+                {[1, 2, 3].map((rowIndex) => (
                   <div
                     key={rowIndex}
                     className="h-32 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse mb-3"
