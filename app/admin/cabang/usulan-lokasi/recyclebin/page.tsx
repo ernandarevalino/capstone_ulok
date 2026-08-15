@@ -422,7 +422,7 @@ export default function RecycleBinPage() {
 
             {/* Filter Popover Dropdown */}
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 md:mt-2 w-72 sm:w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+              <div className="absolute right-0 mt-2 md:mt-2 w-74 sm:w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
                 
                 {/* Header & Reset */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">

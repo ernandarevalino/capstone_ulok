@@ -147,8 +147,9 @@ const TableGroup = React.memo(function TableGroup({
         </div>
 
         {/* Right-aligned Badge */}
-        <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold shadow-sm">
-          {dataSorted.length} Usulan
+        <span className="bg-white/20 text-white text-xs px-2.5 sm:px-3 py-1 rounded-full font-bold shadow-sm">
+          {dataSorted.length}
+          <span className="hidden sm:inline ml-1">Usulan</span>
         </span>
       </div>
         {/* === DESKTOP TABLE VIEW === */}
@@ -935,7 +936,7 @@ export default function UsulanLokasiPage() {
 
             {/* Filter Popover Dropdown */}
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+              <div className="absolute right-0 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                   <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
                     <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Usulan Lokasi

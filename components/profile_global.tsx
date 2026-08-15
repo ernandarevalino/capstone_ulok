@@ -137,7 +137,7 @@ export default function ProfileGlobal() {
       <div className="bg-[#142B4D] dark:bg-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors">
         <h3 className="text-white font-bold text-base flex items-center gap-2.5">
           <User className="w-5 h-5 text-blue-400 dark:text-blue-300" /> 
-          Informasi Profil & Keanggotaan
+          Informasi Profil
         </h3>
         <span className="hidden sm:inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-3 py-1 rounded-full font-bold tracking-wider uppercase self-start sm:self-auto">
           Akun Aktif
