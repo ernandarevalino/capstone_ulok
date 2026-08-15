@@ -58,9 +58,7 @@ export default function HeaderMobile() {
             alt="Logo PRISMA" 
             className="h-4 w-auto object-contain" 
           />
-          <span className="text-[9px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase">
-            AS
-          </span>
+          <span className="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">AS</span>
         </Link>
 
         {/* === AKSES: NOTIFIKASI === */}

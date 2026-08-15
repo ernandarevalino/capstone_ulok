@@ -56,6 +56,7 @@ export default function HeaderDesktop() {
           alt="Logo PRISMA"
           className="h-5 w-auto object-contain"
         />
+        <span className="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">AC</span>
       </Link>
 
       {/* === NAVIGASI: MENU ADMIN CABANG === */}

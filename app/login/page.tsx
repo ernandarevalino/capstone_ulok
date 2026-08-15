@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { loginAction } from '@/actions/auth';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle, Mail, Lock, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
             {errorMsg && (
               <div className="p-3 text-xs text-[#D91E2E] dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-[#D91E2E]/20 dark:border-red-900/40 rounded-lg font-semibold flex items-center gap-2 animate-shake">
-                <img src="/icons/icon-alert.svg" alt="Alert Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
+                <AlertTriangle className="w-4 h-4 shrink-0 text-[#D91E2E] dark:text-red-400" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -145,8 +145,8 @@ export default function LoginPage() {
                 Email
               </label>
               <div className="relative group">
-                <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                  <img src="/icons/icon-email.svg" alt="Email Icon" width={16} height={16} className="w-4 h-4" />
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
+                  <Mail className="w-4 h-4" />
                 </span>
                 <input
                   type="email"
@@ -166,8 +166,8 @@ export default function LoginPage() {
                 Password
               </label>
               <div className="relative group">
-                <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                  <img src="/icons/icon-lock.svg" alt="Lock Icon" width={16} height={16} className="w-4 h-4" />
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
+                  <Lock className="w-4 h-4" />
                 </span>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -221,7 +221,7 @@ export default function LoginPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-[#111C34] rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800/60 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" width={64} height={64} className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 text-emerald-500" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
               {successMessage}
             </p>
