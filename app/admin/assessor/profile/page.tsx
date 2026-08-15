@@ -5,11 +5,11 @@ import ProfileGlobal from '@/components/profile_global';
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+      <div className="space-y-6">
         
         {/* === HEADER PROFILE === */}
-        <div className="max-w-255 mx-auto mb-10">
+        <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Profil Pengguna
           </h1>

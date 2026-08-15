@@ -84,9 +84,14 @@ export default function ProfileGlobal() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-900 p-12 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 text-center text-sm text-gray-400 dark:text-gray-500 italic">
-        <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-        Memuat data profil pengguna...
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="h-24 md:h-32 w-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-slate-900 -mt-10 ml-6 bg-slate-300 dark:bg-slate-700 animate-pulse"></div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -178,7 +183,7 @@ export default function ProfileGlobal() {
                 type="text" 
                 value={profile?.full_name || ''} 
                 disabled 
-                className="w-full text-xs md:text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 py-3 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
+                className="w-full h-11 md:h-12 text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
               />
             </div>
           </div>
@@ -195,7 +200,7 @@ export default function ProfileGlobal() {
                 type="text" 
                 value={profile?.nik || ''} 
                 disabled 
-                className="w-full text-xs md:text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 py-3 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
+                className="w-full h-11 md:h-12 text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
               />
             </div>
           </div>
@@ -214,7 +219,7 @@ export default function ProfileGlobal() {
                     type="text" 
                     value={profile?.branches ? `${profile.branches.nama_cabang} - ${profile.branches.kabupaten_kota}` : 'Belum Ditentukan'} 
                     disabled 
-                    className="w-full text-xs md:text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 py-3 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
+                    className="w-full h-11 md:h-12 text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
                   />
                 </div>
               </div>
@@ -231,7 +236,7 @@ export default function ProfileGlobal() {
                     type="text" 
                     value={profile?.branches?.provinsi || 'Belum Ditentukan'} 
                     disabled 
-                    className="w-full text-xs md:text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 py-3 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
+                    className="w-full h-11 md:h-12 text-sm bg-gray-50/70 dark:bg-gray-950/40 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800/80 pl-10 pr-4 rounded-xl cursor-not-allowed font-semibold transition-colors shadow-inner"
                   />
                 </div>
               </div>
@@ -251,7 +256,7 @@ export default function ProfileGlobal() {
         <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex justify-end">
           <button
             onClick={handleLogoutTrigger}
-            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs md:text-sm rounded-xl transition-all duration-200 active:scale-95 shadow-md shadow-red-600/10 hover:shadow-red-600/20 flex items-center gap-2"
+            className="px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs md:text-sm rounded-xl transition-all duration-200 active:scale-95 shadow-md shadow-red-600/10 hover:shadow-red-600/20 flex items-center gap-2 h-11 md:h-10"
           >
             <LogOut className="w-4 h-4" />
             Keluar dari Sistem
@@ -272,22 +277,18 @@ export default function ProfileGlobal() {
               <button
                 onClick={() => setShowLogoutConfirm(false)}
                 disabled={isLoggingOut}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50 h-11 md:h-10 flex items-center justify-center"
               >
                 No
               </button>
               <button
                 onClick={executeLogout}
                 disabled={isLoggingOut}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 text-xs md:text-sm transition-all flex items-center justify-center gap-1.5 h-11 md:h-10"
               >
                 {isLoggingOut ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading...
+                  <span className="flex items-center gap-1 animate-pulse">
+                    Proses...
                   </span>
                 ) : (
                   'Yes'

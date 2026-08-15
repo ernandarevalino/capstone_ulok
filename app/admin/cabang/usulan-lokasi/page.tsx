@@ -125,29 +125,32 @@ const TableGroup = React.memo(function TableGroup({
   }, [filteredSubmissions, allowedStatuses, currentPage, isExpanded])
 
   return (
-    <div className="mb-6">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden mb-6">
       <div
         onClick={() => toggleGroup(title)}
-        className="flex items-center gap-2 mb-2 cursor-pointer select-none group transition-all duration-200"
+        className="bg-[#142B4D] dark:bg-slate-900 p-4 md:p-5 flex items-center justify-between cursor-pointer transition-colors"
       >
-        <div
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 rounded-lg transition-all duration-200 flex items-center justify-center"
-          title={isExpanded ? 'Collapse' : 'Expand'}
-        >
+        <div className="flex items-center gap-3">
+          {/* Chevron for expand/collapse */}
           <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+            className={`w-5 h-5 text-white/80 transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''
             }`}
           />
+
+          {/* Dynamic Icon based on lucide-react */}
+          <ClipboardList className="w-5 h-5 text-white/90" />
+
+          <h3 className="text-white font-bold text-sm md:text-base tracking-wide">
+            {title}
+          </h3>
         </div>
-        <h3 className="font-bold text-gray-800 dark:text-gray-200 text-base flex items-center group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors duration-200">
-          {title}
-          <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-bold ml-2">
-            {dataSorted.length}
-          </span>
-        </h3>
+
+        {/* Right-aligned Badge */}
+        <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold shadow-sm">
+          {dataSorted.length} Usulan
+        </span>
       </div>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         {/* === DESKTOP TABLE VIEW === */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -481,7 +484,7 @@ const TableGroup = React.memo(function TableGroup({
                   <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800/60 pt-2.5">
                     <button
                       onClick={() => router.push(`${getFormRoute(item.jenis_badan_hukum)}?id=${item.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition-all active:scale-[0.98] shadow-sm"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm h-11 min-h-[44px]"
                       title="Lihat Detail"
                     >
                       <Edit3 className="w-4 h-4 text-white" />
@@ -490,7 +493,7 @@ const TableGroup = React.memo(function TableGroup({
                     <button
                       onClick={() => handleDeleteLocation(item.id, item.nama_lokasi)}
                       disabled={isPending}
-                      className="px-3 py-2 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center"
+                      className="px-3 py-2 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center h-11 w-11 min-h-[44px] min-w-[44px]"
                       title="Hapus Usulan"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -524,7 +527,6 @@ const TableGroup = React.memo(function TableGroup({
             </button>
           </div>
         )}
-      </div>
     </div>
   )
 })
@@ -828,138 +830,54 @@ export default function UsulanLokasiPage() {
         {/* === ACTION BAR SKELETON === */}
         <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 mb-6">
           {/* Search/Filter Input */}
-          <div className="h-10 w-full md:w-72 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+          <div className="h-11 md:h-10 w-full md:w-72 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           {/* Group on Mobile */}
           <div className="flex w-full md:w-auto gap-2">
             {/* Filter button */}
-            <div className="h-10 flex-1 md:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            <div className="h-11 md:h-10 flex-1 md:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
             {/* Trash Can button */}
-            <div className="h-10 w-10 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            <div className="h-11 w-11 md:h-10 md:w-10 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
             {/* Export button */}
-            <div className="h-10 flex-1 md:w-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            <div className="h-11 md:h-10 flex-1 md:w-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           </div>
           {/* Add Location button */}
-          <div className="h-10 w-full md:w-40 bg-slate-300 dark:bg-slate-700 rounded-xl animate-pulse"></div>
+          <div className="h-11 md:h-10 w-full md:w-40 bg-slate-300 dark:bg-slate-700 rounded-xl animate-pulse"></div>
         </div>
 
         {/* === ACCORDION & TABLE LIST SKELETON === */}
         <div className="space-y-6">
           {[1, 2, 3].map((groupIndex) => (
-            <div key={groupIndex} className="mb-6">
+            <div key={groupIndex} className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden mb-6">
               {/* Group Header */}
-              <div className="h-10 w-full bg-slate-100 dark:bg-slate-900 rounded-lg animate-pulse mb-3 mt-6 flex items-center px-4">
-                <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded"></div>
+              <div className="h-14 w-full bg-slate-300 dark:bg-slate-800 animate-pulse flex items-center px-4 md:px-5 justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-slate-400/50 dark:bg-slate-700/50 rounded-full animate-pulse"></div>
+                  <div className="w-5 h-5 bg-slate-400/50 dark:bg-slate-700/50 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-slate-400/50 dark:bg-slate-700/50 rounded animate-pulse"></div>
+                </div>
+                <div className="h-6 w-20 bg-slate-400/50 dark:bg-slate-700/50 rounded-full animate-pulse"></div>
               </div>
 
-              {/* Table Wrapper Skeleton */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
-                {/* === DESKTOP TABLE VIEW SKELETON === */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
-                        <th className="p-4 w-1/4">
-                          <div className="h-4 w-32 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-                        </th>
-                        <th className="p-4">
-                          <div className="h-4 w-24 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-                        </th>
-                        <th className="p-4">
-                          <div className="h-4 w-24 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-                        </th>
-                        <th className="p-4 text-center">
-                          <div className="h-4 w-28 bg-slate-300 dark:bg-slate-700 rounded animate-pulse mx-auto"></div>
-                        </th>
-                        <th className="p-4 text-center">
-                          <div className="h-4 w-16 bg-slate-300 dark:bg-slate-700 rounded animate-pulse mx-auto"></div>
-                        </th>
-                        <th className="p-4 text-center w-32">
-                          <div className="h-4 w-12 bg-slate-300 dark:bg-slate-700 rounded animate-pulse mx-auto"></div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[1, 2, 3].map((rowIndex) => (
-                        <tr key={rowIndex} className="border-b border-gray-100 dark:border-gray-800/60">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              {/* Chevron Arrow Toggle */}
-                              <div className="p-1 rounded-lg flex items-center justify-center">
-                                <div className="w-3.5 h-3.5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                              </div>
-                              <div className="w-4 h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse shrink-0"></div>
-                              <div>
-                                <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                                <div className="h-2 w-24 bg-slate-100 dark:bg-slate-900 rounded animate-pulse"></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                          </td>
-                          <td className="p-4">
-                            <div className="h-3 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex justify-center">
-                              <div className="h-6 w-20 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                              <div className="h-1.5 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex justify-center items-center gap-2 mx-auto">
-                              <div className="h-8 w-8 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
-                              <div className="h-8 w-8 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* === DESKTOP TABLE VIEW SKELETON === */}
+              <div className="hidden md:block overflow-x-auto">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {[1, 2, 3, 4].map((rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      className="h-12 w-full bg-slate-100 dark:bg-slate-800 animate-pulse border-b border-gray-100 dark:border-gray-800"
+                    ></div>
+                  ))}
                 </div>
+              </div>
 
-                {/* === MOBILE CARD VIEW SKELETON === */}
-                <div className="block md:hidden">
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800 min-w-[300px]">
-                    {[1, 2, 3].map((rowIndex) => (
-                      <div key={rowIndex} className="p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse shrink-0"></div>
-                            <div>
-                              <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                              <div className="h-2 w-24 bg-slate-100 dark:bg-slate-900 rounded animate-pulse"></div>
-                            </div>
-                          </div>
-                          <div className="h-6 w-20 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-x-2 gap-y-3 pt-1.5 border-t border-gray-50 dark:border-gray-800">
-                          <div>
-                            <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                            <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                          </div>
-                          <div>
-                            <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                            <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                          </div>
-                          <div>
-                            <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
-                            <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800/60 pt-2.5">
-                          <div className="h-8 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-                          <div className="h-8 w-10 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {/* === MOBILE CARD VIEW SKELETON === */}
+              <div className="block md:hidden p-4">
+                {[1, 2, 3, 4].map((rowIndex) => (
+                  <div
+                    key={rowIndex}
+                    className="h-32 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse mb-3"
+                  ></div>
+                ))}
               </div>
             </div>
           ))}
@@ -990,7 +908,7 @@ export default function UsulanLokasiPage() {
             placeholder="Search Daftar Lokasi..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200 shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200 shadow-sm h-11 md:h-10"
           />
         </div>
 
@@ -1000,7 +918,7 @@ export default function UsulanLokasiPage() {
           <div className="relative flex-1 md:w-auto" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-10 w-full flex-1 ${
+              className={`px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 w-full flex-1 ${
                 activeFilterCount > 0
                   ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
                   : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -1118,7 +1036,7 @@ export default function UsulanLokasiPage() {
           {/* Trash Can Button */}
           <button
             onClick={() => router.push('/admin/cabang/usulan-lokasi/recyclebin')}
-            className="relative p-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-red-650 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center w-10 h-10 shrink-0 shadow-sm"
+            className="relative p-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-red-650 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center w-11 h-11 md:w-10 md:h-10 shrink-0 shadow-sm"
             title="Tempat Sampah (Recycle Bin)"
           >
             <Trash2 className="w-5 h-5" />
@@ -1133,7 +1051,7 @@ export default function UsulanLokasiPage() {
           <button
             onClick={handleExportCSV}
             disabled={isExporting}
-            className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-blue-950 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 h-10 shrink-0 shadow-sm disabled:opacity-50 disabled:scale-100 flex-1 md:w-auto"
+            className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-blue-950 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 h-11 md:h-10 shrink-0 shadow-sm disabled:opacity-50 disabled:scale-100 flex-1 md:w-auto"
             title="Ekspor ke CSV"
           >
             {isExporting ? (
@@ -1160,7 +1078,7 @@ export default function UsulanLokasiPage() {
         {/* Tambah Lokasi Baru Button */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md flex items-center gap-2 h-10 justify-center shrink-0 w-full md:w-auto"
+          className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:shadow-md flex items-center gap-2 h-11 md:h-10 justify-center shrink-0 w-full md:w-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Lokasi Baru</span>

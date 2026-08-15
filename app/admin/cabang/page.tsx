@@ -212,28 +212,12 @@ export default function AdminCabangPage() {
             Skeleton Stats Grid
         ====================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
-
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="p-5 rounded-2xl bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-between h-32"
-            >
-              {/* Label */}
-              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 rounded mb-4 animate-pulse"></div>
-
-              <div className="flex justify-between items-center">
-                {/* Number */}
-                <div className="h-8 w-16 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
-
-                {/* Icon */}
-                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
-              </div>
-
-              {/* Description/Subtext */}
-              <div className="h-2 w-32 bg-slate-200 dark:bg-slate-800 rounded mt-4 animate-pulse"></div>
-            </div>
+              className="h-28 md:h-32 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"
+            ></div>
           ))}
-
         </div>
 
         {/* =====================================================
@@ -247,21 +231,15 @@ export default function AdminCabangPage() {
             <div className="h-2 w-64 bg-slate-200 dark:bg-slate-800 rounded mb-1 animate-pulse"></div>
           </div>
           <div className="flex flex-col lg:flex-row items-center justify-around gap-4 md:gap-6 w-full py-4">
-            {/* Chart Graphic */}
+            {/* Chart Graphic - One large block */}
             <div className="w-full lg:w-1/2 flex justify-center items-center h-52 sm:h-60 md:h-64">
-              <div className="w-48 h-48 rounded-full border-8 border-slate-200 dark:border-slate-800 animate-pulse"></div>
+              <div className="w-48 h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
             </div>
-            {/* Legend Lines */}
+            {/* Legend - Couple of simple blocks */}
             <div className="w-full lg:w-1/2 flex flex-col gap-3">
-              <div className="h-3 w-28 bg-slate-300 dark:bg-slate-700 rounded mb-1 animate-pulse"></div>
+              <div className="h-3.5 w-28 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
-                    <div className="h-3 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                  </div>
-                  <div className="h-5 w-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                </div>
+                <div key={i} className="h-8 w-full bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
               ))}
             </div>
           </div>
@@ -271,135 +249,15 @@ export default function AdminCabangPage() {
             Skeleton Bottom Cards
         ====================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
           {/* ===================================================
               Skeleton Recent Activity
           ==================================================== */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
-
-            {/* Header */}
-            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 flex items-center justify-between gap-2">
-
-              <div className="flex items-center gap-2 w-full">
-                {/* Bell Icon */}
-                <div className="w-4 h-4 rounded bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
-
-                {/* Title */}
-                <div className="h-3.5 w-52 max-w-[70%] rounded bg-slate-300 dark:bg-slate-700 animate-pulse"></div>
-              </div>
-
-              {/* Real-time Badge */}
-              <div className="h-5 w-16 rounded-full bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
-
-            </div>
-
-            {/* Activity List */}
-            <div className="p-3 sm:p-4 flex-1 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
-
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="py-2.5 sm:py-3 flex gap-2.5 sm:gap-3"
-                >
-
-                  {/* Notification Dot */}
-                  <div className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
-
-                  <div className="flex-1 min-w-0 space-y-2">
-
-                    {/* Title + Time */}
-                    <div className="flex items-start sm:items-center justify-between gap-2">
-
-                      <div className="h-3 w-36 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
-
-                      <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse shrink-0"></div>
-
-                    </div>
-
-                    {/* Message */}
-                    <div className="h-2.5 w-[85%] bg-slate-100 dark:bg-slate-800 rounded animate-pulse"></div>
-
-                    <div className="h-2.5 w-[60%] bg-slate-100 dark:bg-slate-800 rounded animate-pulse"></div>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          </div>
+          <div className="h-[360px] sm:h-[410px] w-full bg-slate-200 dark:bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse"></div>
 
           {/* ===================================================
               Skeleton Top 7 Lokasi
           ==================================================== */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
-
-            {/* Header */}
-            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 flex items-center justify-between gap-2">
-
-              <div className="flex items-center gap-2 w-full">
-
-                {/* Map Icon */}
-                <div className="w-4 h-4 rounded bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
-
-                {/* Title */}
-                <div className="h-3.5 w-44 max-w-[70%] rounded bg-slate-300 dark:bg-slate-700 animate-pulse"></div>
-
-              </div>
-
-              {/* SAW Badge */}
-              <div className="h-5 w-20 rounded-full bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
-
-            </div>
-
-            {/* Table */}
-            <div className="overflow-hidden flex-1 p-3 sm:p-4">
-
-              {/* Table Header */}
-              <div className="grid grid-cols-4 gap-3 items-center h-9 px-2 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse mb-2">
-
-                <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
-
-                <div className="h-2.5 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
-
-                <div className="h-2.5 w-12 bg-slate-200 dark:bg-slate-700 rounded mx-auto"></div>
-
-                <div className="h-2.5 w-12 bg-slate-200 dark:bg-slate-700 rounded mx-auto"></div>
-
-              </div>
-
-              {/* Table Rows */}
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-
-                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-4 items-center gap-3 py-3 px-2"
-                  >
-
-                    {/* Nama Lokasi */}
-                    <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
-
-                    {/* Badan Hukum */}
-                    <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse"></div>
-
-                    {/* Status */}
-                    <div className="flex justify-center">
-                      <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse"></div>
-                    </div>
-
-                    {/* Score */}
-                    <div className="flex justify-center">
-                      <div className="h-3 w-10 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
-                    </div>
-
-                  </div>
-                ))}
-
-              </div>
-
-            </div>
-          </div>
-
+          <div className="h-[360px] sm:h-[410px] w-full bg-slate-200 dark:bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse"></div>
         </div>
 
       </div>

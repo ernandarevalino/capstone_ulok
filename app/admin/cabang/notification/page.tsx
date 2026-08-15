@@ -83,8 +83,24 @@ export default function NotificationPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+        <div className="h-8 md:h-10 w-48 md:w-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-6"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="h-20 md:h-24 w-full bg-slate-100 dark:bg-slate-900 rounded-xl mb-3 animate-pulse border border-slate-100 dark:border-slate-800"
+            ></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       <div className="space-y-6">
 
         {/* === HEADER: NOTIFIKASI === */}
@@ -119,7 +135,7 @@ export default function NotificationPage() {
                 <button
                   onClick={handleDeleteAllTrigger}
                   disabled={isDeletingAll}
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg font-bold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm"
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs md:text-sm px-4 rounded-lg font-bold flex items-center justify-center gap-1 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm h-11 md:h-10"
                   title="Hapus semua notifikasi"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -131,12 +147,7 @@ export default function NotificationPage() {
 
           {/* === LIST: NOTIFIKASI === */}
           <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-            {loading ? (
-              <div className="p-12 text-center text-gray-400 dark:text-gray-500 italic text-sm">
-                <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                Memuat daftar pemberitahuan sistem...
-              </div>
-            ) : notifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <div className="p-12 text-center text-gray-400 dark:text-gray-500">
                 <span className="text-4xl block mb-2 opacity-60">🔔</span>
                 <p className="font-bold text-gray-500 dark:text-gray-400">Tidak ada notifikasi baru!</p>
@@ -172,7 +183,7 @@ export default function NotificationPage() {
 
                   <button
                     onClick={() => handleDelete(notif.id)}
-                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs md:text-sm p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 h-11 w-11 md:h-10 md:w-10 flex items-center justify-center"
                     title="Hapus notifikasi"
                   >
                     ✕
@@ -183,11 +194,11 @@ export default function NotificationPage() {
           </div>
 
           {/* === LOAD MORE BUTTON === */}
-          {!loading && visibleCount < notifications.length && (
+          {visibleCount < notifications.length && (
             <div className="p-4 flex justify-center border-t border-gray-100 dark:border-gray-800/60">
               <button
                 onClick={() => setVisibleCount(prev => prev + 5)}
-                className="px-5 py-2 text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer"
+                className="px-5 text-xs md:text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer h-11 md:h-10 flex items-center justify-center"
               >
                 Load More ({notifications.length - visibleCount} lagi)
               </button>
@@ -210,21 +221,17 @@ export default function NotificationPage() {
               <button
                 onClick={() => setShowDeleteAllConfirm(false)}
                 disabled={isDeletingAll}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50 h-11 md:h-10 flex items-center justify-center"
               >
                 No
               </button>
               <button
                 onClick={executeDeleteAll}
                 disabled={isDeletingAll}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 text-xs md:text-sm transition-all flex items-center justify-center gap-1.5 h-11 md:h-10"
               >
                 {isDeletingAll ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                  <span className="flex items-center gap-1 animate-pulse">
                     Proses...
                   </span>
                 ) : (
