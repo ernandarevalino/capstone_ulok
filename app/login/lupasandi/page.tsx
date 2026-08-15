@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { requestPasswordResetAction } from '@/actions/auth';
+import { AlertTriangle, CheckCircle2, Mail } from 'lucide-react';
 
 export default function LupaSandiPage() {
   const [email, setEmail] = useState('');
@@ -94,7 +95,7 @@ export default function LupaSandiPage() {
           {/* === ERROR FEEDBACK === */}
           {errorMsg && (
             <div className="p-3 text-xs text-[#D91E2E] dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-[#D91E2E]/20 dark:border-red-900/40 rounded-lg font-semibold flex items-center gap-2 animate-shake">
-              <img src="/icons/icon-alert.svg" alt="Alert Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -102,7 +103,7 @@ export default function LupaSandiPage() {
           {/* === SUCCESS FEEDBACK === */}
           {successMsg && (
             <div className="p-3 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-lg font-semibold flex items-center gap-2">
-              <img src="/icons/icon-check.svg" alt="Success Icon" width={16} height={16} className="w-4 h-4 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -113,8 +114,8 @@ export default function LupaSandiPage() {
               Alamat Email
             </label>
             <div className="relative group">
-              <span className="dark:invert absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
-                <img src="/icons/icon-email.svg" alt="Email Icon" width={16} height={16} className="w-4 h-4" />
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 group-hover:text-[#3365A6] dark:group-hover:text-[#F28705] transition-colors duration-200">
+                <Mail className="w-4 h-4" />
               </span>
               <input
                 id="email-address"
