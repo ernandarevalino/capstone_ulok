@@ -21,6 +21,31 @@ export default function FeedbackPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeUlok, setActiveUlok] = useState<any>(null)
   const [chatInput, setChatInput] = useState('')
+  const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({})
+
+  // Load read timestamps from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('ulok_feedback_read_times')
+    if (saved) {
+      try {
+        setReadTimestamps(JSON.parse(saved))
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  }, [])
+
+  const handleSelectTab = (sub: any) => {
+    setActiveUlok(sub)
+
+    // Mark this ULOK as read up to the current time
+    const now = new Date().toISOString()
+    setReadTimestamps((prev) => {
+      const updated = { ...prev, [sub.id]: now }
+      localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+      return updated
+    })
+  }
 
   // Scroll ref for tab strip
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
@@ -31,18 +56,7 @@ export default function FeedbackPage() {
     }
   }
 
-  const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
-  // Smooth and isolated auto-scroll effect
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      // block: 'nearest' ensures ONLY the chat container scrolls, preventing the whole page from jumping
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      })
-    }
-  }, [activeUlok?.id, activeUlok?.allCommentsSorted?.length])
 
   const fetchSubmissions = React.useCallback(async () => {
     setLoading(true)
@@ -165,7 +179,16 @@ export default function FeedbackPage() {
 
     // First load: select the newest chat
     if (!activeUlok) {
-      setActiveUlok(filteredTabSubmissions[0])
+      const initialSub = filteredTabSubmissions[0]
+      setActiveUlok(initialSub)
+      if (initialSub && !readTimestamps[initialSub.id]) {
+        const now = new Date().toISOString()
+        setReadTimestamps((prev) => {
+          const updated = { ...prev, [initialSub.id]: now }
+          localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+          return updated
+        })
+      }
       return
     }
 
@@ -179,8 +202,18 @@ export default function FeedbackPage() {
       setActiveUlok(freshActive)
     } else {
       // If the current chat is no longer in the active filter, select the first one.
-      setActiveUlok(filteredTabSubmissions[0])
+      const initialSub = filteredTabSubmissions[0]
+      setActiveUlok(initialSub)
+      if (initialSub && !readTimestamps[initialSub.id]) {
+        const now = new Date().toISOString()
+        setReadTimestamps((prev) => {
+          const updated = { ...prev, [initialSub.id]: now }
+          localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+          return updated
+        })
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredTabSubmissions])
 
   const parseFeedbackMessage = (message: string) => {
@@ -330,35 +363,63 @@ export default function FeedbackPage() {
                     Tidak ada data yang cocok dengan pencarian/filter.
                   </div>
                 ) : (
-                  filteredTabSubmissions.map((sub) => (
-                    <button
-                      key={sub.id}
-                      onClick={() => setActiveUlok(sub)}
-                      className={`shrink-0 w-[calc(50%-0.375rem)] md:w-60 lg:w-[calc(25%-0.75rem)] p-3.5 rounded-xl border text-left transition-all snap-start shadow-sm flex flex-col gap-1.5 ${
-                        activeUlok?.id === sub.id
-                          ? 'dark:border-blue-500 bg-blue-50/80 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <h4 className="font-bold text-sm truncate text-gray-900 dark:text-gray-100 w-full">
-                        {sub.nama_lokasi}
-                      </h4>
+                  filteredTabSubmissions.map((sub) => {
+                    const lastReadTime = readTimestamps[sub.id] ? new Date(readTimestamps[sub.id]).getTime() : 0;
 
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-full">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          {sub.lastComment?.profiles?.full_name || 'System'}:
-                        </span>{' '}
-                        {sub.lastComment?.message || ''}
-                      </p>
+                    const unreadCount = (sub.comments || []).filter((msg: any) => {
+                      const isMyMessage = currentUser?.id === msg.user_id || currentUser?.id === msg.profiles?.id;
+                      const msgTime = new Date(msg.created_at).getTime();
+                      return !isMyMessage && msgTime > lastReadTime;
+                    }).length;
 
-                      <p className="text-[10px] text-gray-500 flex items-center mt-0.5 font-medium">
-                        Status:{' '}
-                        <span className="font-bold ml-1 text-gray-700 dark:text-gray-300">
-                          {sub.status}
-                        </span>
-                      </p>
-                    </button>
-                  ))
+                    return (
+                      <div
+                        key={sub.id}
+                        className="relative shrink-0 w-[calc(50%-0.375rem)] md:w-60 lg:w-[calc(25%-0.75rem)]"
+                      >
+                        {/* UNREAD COUNTER BADGE (TOP-LEFT) */}
+                        {unreadCount > 0 && (
+                          <span className="absolute h-5 min-w-[20px] px-1.5 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-md animate-pulse top-20 left-65">
+                            {unreadCount > 15 ? '15+' : unreadCount}
+                          </span>
+                        )}
+
+                        <button
+                          onClick={() => handleSelectTab(sub)}
+                          className={`w-full h-full p-3.5 rounded-xl border text-left transition-all snap-start shadow-sm flex flex-col gap-1.5 ${
+                            activeUlok?.id === sub.id
+                              ? "dark:border-blue-500 bg-blue-50/80 dark:bg-blue-900/20"
+                              : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 w-full">
+                            <h4 className="font-bold text-sm truncate text-gray-900 dark:text-gray-100">
+                              {sub.nama_lokasi}
+                            </h4>
+
+                            <span className="bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap shrink-0">
+                              {sub.allCommentsSorted?.length || 0}
+                              <span className="hidden sm:inline"> Pesan</span>
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-full">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                              {sub.lastComment?.profiles?.full_name || "System"}:
+                            </span>{" "}
+                            {sub.lastComment?.message || ""}
+                          </p>
+
+                          <p className="text-[10px] text-gray-500 flex items-center mt-0.5 font-medium">
+                            Status:{" "}
+                            <span className="font-bold ml-1 text-gray-700 dark:text-gray-300">
+                              {sub.status}
+                            </span>
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  })
                 )}
               </div>
 
@@ -616,8 +677,6 @@ export default function FeedbackPage() {
                     })
                   )}
 
-                  {/* Scroll anchor — scrollIntoView targets this element */}
-                  <div ref={messagesEndRef} className="h-px w-full" />
                 </div>
 
                 {/* Input Area */}
