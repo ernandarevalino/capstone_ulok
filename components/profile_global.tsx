@@ -84,15 +84,30 @@ export default function ProfileGlobal() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="h-24 md:h-32 w-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-slate-900 -mt-10 ml-6 bg-slate-300 dark:bg-slate-700 animate-pulse"></div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-          ))}
+      <>
+        <div className="mb-6">
+          <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
         </div>
-      </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="h-24 md:h-32 w-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+          <div className="flex items-end gap-4 px-6 pb-6 -mt-10 md:-mt-12">
+            {/* Avatar */}
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-slate-900 bg-slate-300 dark:bg-slate-700 animate-pulse shrink-0"></div>
+            {/* Name & Role */}
+            <div className="flex flex-col gap-2 mb-2 w-full">
+              <div className="h-5 w-48 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
+              <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-11 md:h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -106,7 +121,17 @@ export default function ProfileGlobal() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden space-y-0 transition-colors">
+    <>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+          Profil Pengguna
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
+          Informasi detail akun, hak akses penugasan, dan manajemen identitas Anda.
+        </p>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden space-y-0 transition-colors">
       
       {/* === HEADER: INFORMASI PROFIL === */}
       <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
@@ -312,5 +337,6 @@ export default function ProfileGlobal() {
       )}
 
     </div>
+    </>
   );
 }

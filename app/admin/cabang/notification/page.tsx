@@ -85,15 +85,36 @@ export default function NotificationPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
-        <div className="h-8 md:h-10 w-48 md:w-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-6"></div>
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="h-20 md:h-24 w-full bg-slate-100 dark:bg-slate-900 rounded-xl mb-3 animate-pulse border border-slate-100 dark:border-slate-800"
-            ></div>
-          ))}
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
+        {/* Page Header Skeleton */}
+        <div className="mb-6">
+          <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+        </div>
+
+        {/* List Card Skeleton */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
+          {/* Table Header Skeleton */}
+          <div className="bg-[#142B4D] dark:bg-slate-900 p-5 h-16"></div>
+
+          {/* Divide-y List */}
+          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="p-5 pl-6 pr-6 flex justify-between items-start gap-4"
+              >
+                <div className="space-y-2.5 w-full">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 animate-pulse shrink-0"></div>
+                    <div className="h-4 w-1/2 md:w-1/3 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-3 w-5/6 md:w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse ml-4"></div>
+                  <div className="h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse ml-4 mt-2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

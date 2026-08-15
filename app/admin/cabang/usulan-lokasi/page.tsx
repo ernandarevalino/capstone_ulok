@@ -820,11 +820,11 @@ export default function UsulanLokasiPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
         {/* === HEADER SECTION SKELETON === */}
         <div className="mb-6">
-          <div className="h-7 w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
-          <div className="h-3 w-80 bg-slate-200 dark:bg-slate-800 rounded mb-6 animate-pulse"></div>
+          <div className="h-7 w-2/3 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 w-[90%] md:w-80 bg-slate-200 dark:bg-slate-800 rounded mb-6 animate-pulse"></div>
         </div>
 
         {/* === ACTION BAR SKELETON === */}
@@ -887,7 +887,7 @@ export default function UsulanLokasiPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       {/* === HEADER SECTION === */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -901,7 +901,7 @@ export default function UsulanLokasiPage() {
       {/* === ACTION BAR SECTION === */}
       <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3">
         {/* Search Input */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 w-full md:w-auto md:min-w-[240px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
           <input
             type="text"
