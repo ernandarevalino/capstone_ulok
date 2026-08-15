@@ -981,6 +981,83 @@ export async function getNotificationsAction(userId?: string | null) {
   }
 }
 
+// === ACTIONS: HAPUS SATU NOTIFIKASI CABANG ===
+export async function deleteNotificationAction(id: number) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error(`Error deleting notification ${id}:`, error)
+      throw error
+    }
+
+    revalidatePath('/admin/cabang/notification')
+    return { success: true }
+  } catch (error: any) {
+    console.error(`Catch error deleting notification ${id}:`, error)
+    return { success: false, error: error.message }
+  }
+}
+
+// === ACTIONS: HAPUS SEMUA NOTIFIKASI CABANG ===
+export async function clearAllNotificationsAction() {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error("Error clearing all notifications:", error)
+      throw error
+    }
+
+    revalidatePath('/admin/cabang/notification')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Catch error clearing all notifications:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+// === ACTIONS: TANDAI SEMUA NOTIFIKASI SEBAGAI DIBACA ===
+export async function markAllNotificationsAsReadAction() {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false)
+
+    if (error) {
+      console.error("Error marking all notifications as read:", error)
+      throw error
+    }
+
+    revalidatePath('/admin/cabang/notification')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Catch error marking all notifications as read:", error)
+    return { success: false, error: error.message }
+  }
+}
+
 // === HELPER ACTION: CHECK AND SEND PROGRESS EMAIL ===
 async function checkAndSendProgressNotification(ulokId: string, oldPersentase: number, newPersentase: number) {
   try {

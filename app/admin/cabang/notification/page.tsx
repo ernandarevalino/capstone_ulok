@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getNotificationsAction, deleteNotificationAction, markAllNotificationsAsReadAction } from '@/actions/superadmin';
+import { getNotificationsAction, deleteNotificationAction, clearAllNotificationsAction, markAllNotificationsAsReadAction } from '@/actions/cabang';
 import { getCurrentProfile } from '@/actions/auth';
 import { Trash2, Bell, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -63,19 +63,23 @@ export default function NotificationPage() {
   const executeDeleteAll = async () => {
     setIsDeletingAll(true);
     try {
-      await Promise.all(notifications.map(notif => deleteNotificationAction(notif.id)));
-      setNotifications([]);
-      setShowDeleteAllConfirm(false);
+      const res = await clearAllNotificationsAction();
+      if (res.success) {
+        setNotifications([]);
+        setShowDeleteAllConfirm(false);
 
-      setSuccessMessage('Semua notifikasi berhasil dibersihkan!');
-      setShowSuccessModal(true);
+        setSuccessMessage('Semua notifikasi berhasil dibersihkan!');
+        setShowSuccessModal(true);
 
-      setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 1500);
-    } catch (err) {
+        setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 1500);
+      } else {
+        throw new Error(res.error || 'Terjadi kesalahan saat menghapus semua notifikasi.');
+      }
+    } catch (err: any) {
       setShowDeleteAllConfirm(false);
-      setSuccessMessage('Terjadi kesalahan saat menghapus semua notifikasi.');
+      setSuccessMessage(err.message || 'Terjadi kesalahan saat menghapus semua notifikasi.');
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 1500);
     } finally {

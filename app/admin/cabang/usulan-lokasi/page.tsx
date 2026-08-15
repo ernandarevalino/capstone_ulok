@@ -1217,29 +1217,17 @@ export default function UsulanLokasiPage() {
 
       {/* === MODAL: FORM ULOK === */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-full max-w-80 space-y-3 animate-[scaleUp_0.2s_ease-out]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out] p-4">
+          <div className="w-full max-w-80 space-y-2 animate-[scaleUp_0.2s_ease-out]">
             {/* === HEADER MODAL === */}
-            <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-white" />
-                <span>Tambah Lokasi Baru</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="hover:bg-white/15 p-1 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50 flex items-center justify-center"
-                  title="Batal"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
+            <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center gap-2 rounded-xl shadow-md">
+              <Building2 className="w-5 h-5 text-white shrink-0" />
+              <span>Tambah Lokasi Baru</span>
             </div>
 
             {/* === FORM INPUT === */}
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <form id="form-ulok" onSubmit={handleCreateLocation} className="p-6 space-y-4">
+              <form id="form-ulok" onSubmit={handleCreateLocation} className="p-6 space-y-2">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
                     Nama Lokasi
@@ -1249,7 +1237,7 @@ export default function UsulanLokasiPage() {
                     value={namaLokasi}
                     onChange={(e) => setNamaLokasi(e.target.value)}
                     placeholder="Contoh: Alfamidi Jababeka 2"
-                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200"
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200"
                     required
                   />
                 </div>
@@ -1288,22 +1276,27 @@ export default function UsulanLokasiPage() {
                     value={namaPemegang}
                     onChange={(e) => setNamaPemegang(e.target.value)}
                     placeholder="Nama pemilik asli sertifikat"
-                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200"
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200"
                     required
                   />
                 </div>
               </form>
             </div>
 
-            <div className="flex justify-end">
+            {/* === FOOTER: AKSI === */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 flex items-center gap-1 p-1">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
+              >
+                Batal
+              </button>
               <button
                 type="submit"
                 form="form-ulok"
-                disabled={isPending}
-                className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-32 py-3 mt-1 rounded-lg font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 shadow-md"
-                title="Simpan Usulan"
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-white bg-[#142B4D] hover:bg-[#1a3863] transition-all duration-200 active:scale-95 shadow-sm"
               >
-                <Plus className="w-4 h-4 text-white" />
                 Simpan
               </button>
             </div>
