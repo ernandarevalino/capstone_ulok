@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getFeedbackSubmissions, createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export default function FeedbackPage() {
   const router = useRouter()
@@ -29,6 +30,19 @@ export default function FeedbackPage() {
       scrollContainerRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
     }
   }
+
+  const messagesEndRef = React.useRef<HTMLDivElement>(null)
+
+  // Smooth and isolated auto-scroll effect
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      // block: 'nearest' ensures ONLY the chat container scrolls, preventing the whole page from jumping
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
+    }
+  }, [activeUlok?.id, activeUlok?.allCommentsSorted?.length])
 
   const fetchSubmissions = React.useCallback(async () => {
     setLoading(true)
@@ -55,6 +69,57 @@ export default function FeedbackPage() {
   useEffect(() => {
     fetchSubmissions()
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Step 2: Realtime subscription — bypass Next.js cache by directly injecting new comments
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('realtime-feedback-comments')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comments' },
+        async (payload) => {
+          console.log('Realtime payload received:', payload)
+
+          // Fetch the exact new comment with its profile directly from Supabase (bypassing Next.js cache)
+          const { data: newComment } = await supabase
+            .from('comments')
+            .select('*, profiles(*)')
+            .eq('id', payload.new.id)
+            .single()
+
+          if (newComment) {
+            setSubmissions((prevSubmissions) => {
+              // Find the submission this comment belongs to
+              const targetSub = prevSubmissions.find((s) => s.id === newComment.ulok_id)
+              if (!targetSub) return prevSubmissions // Ignore if submission isn't currently loaded
+
+              // Prevent duplication if the sender already appended it via handleSendMessage
+              const isDuplicate = targetSub.comments?.some((c: any) => c.id === newComment.id)
+              if (isDuplicate) return prevSubmissions
+
+              // Inject the new comment into the specific submission's comments array
+              return prevSubmissions.map((sub) => {
+                if (sub.id === newComment.ulok_id) {
+                  return {
+                    ...sub,
+                    comments: [...(sub.comments || []), newComment],
+                  }
+                }
+                return sub
+              })
+            })
+          }
+        },
+      )
+      .subscribe((status) => {
+        console.log('Supabase Realtime Status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   // Step 2: Fixed processedSubmissions — show ALL submissions with at least 1 comment, sort by newest comment
@@ -399,7 +464,7 @@ export default function FeedbackPage() {
                         <div
                           key={msg.id}
                           className={`flex w-full ${
-                            isSelf || isAdminCabang
+                            isSelf
                               ? "justify-end"
                               : "justify-start"
                           }`}
@@ -431,7 +496,7 @@ export default function FeedbackPage() {
                                       bg-blue-500
                                       dark:bg-blue-500
                                       text-white
-                                      rounded-tr-none
+                                      rounded-tl-none
                                       shadow-[0_2px_6px_rgba(59,130,246,0.12)]
                                     `
                                     : isComplaint
@@ -528,7 +593,7 @@ export default function FeedbackPage() {
                                 md:text-[9px]
                                 mt-0.5
                                 md:mt-1
-                                text-right
+                                ${isSelf ? 'text-right' : 'text-left'}
 
                                 ${
                                   isSelf || isAdminCabang
@@ -550,6 +615,9 @@ export default function FeedbackPage() {
                       )
                     })
                   )}
+
+                  {/* Scroll anchor — scrollIntoView targets this element */}
+                  <div ref={messagesEndRef} className="h-px w-full" />
                 </div>
 
                 {/* Input Area */}
