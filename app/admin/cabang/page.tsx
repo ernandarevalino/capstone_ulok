@@ -295,7 +295,7 @@ export default function AdminCabangPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
 
         {/* Total Pengajuan */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
 
           <div className="space-y-0.5 sm:space-y-1 min-w-0">
 
@@ -320,7 +320,7 @@ export default function AdminCabangPage() {
         </div>
 
         {/* Draft */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-slate-400 shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-slate-400 shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
 
           <div className="space-y-0.5 sm:space-y-1 min-w-0">
 
@@ -345,7 +345,7 @@ export default function AdminCabangPage() {
         </div>
 
         {/* Review */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
 
           <div className="space-y-0.5 sm:space-y-1 min-w-0">
 
@@ -370,7 +370,7 @@ export default function AdminCabangPage() {
         </div>
 
         {/* Revisi */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
 
           <div className="space-y-0.5 sm:space-y-1 min-w-0">
 
@@ -399,7 +399,7 @@ export default function AdminCabangPage() {
       {/* =====================================================
           CHART
       ====================================================== */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
 
         <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
 
@@ -496,7 +496,7 @@ export default function AdminCabangPage() {
         {/* ===================================================
             RECENT ACTIVITY
         ==================================================== */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
 
           <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
 
@@ -580,7 +580,7 @@ export default function AdminCabangPage() {
         {/* ===================================================
             TOP 7 LOKASI
         ==================================================== */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
 
           <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
 

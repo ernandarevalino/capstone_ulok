@@ -1041,7 +1041,7 @@ export default function UsulanLokasiPage() {
           >
             <Trash2 className="w-5 h-5" />
             {deletedCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 border border-slate-900 shadow-sm animate-pulse">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 shadow-sm">
                 {deletedCount > 15 ? '15+' : deletedCount}
               </span>
             )}

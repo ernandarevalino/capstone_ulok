@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCurrentProfile, updateAvatarAction, logoutAction } from '@/actions/auth'; 
 import { useRouter } from 'next/navigation'; 
-import { User, Shield, MapPin, Building, Info, LogOut, Camera } from 'lucide-react';
+import { User, Shield, MapPin, Building, Info, LogOut, Camera, Bell, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function ProfileGlobal() {
   const [profile, setProfile] = useState<any>(null);          
@@ -47,7 +47,7 @@ export default function ProfileGlobal() {
     const res = await updateAvatarAction(formData);
     if (res && res.success) {
       setProfile((prev: any) => ({ ...prev, avatar_url: res.avatarUrl }));
-      setSuccessMessage('Foto profil berhasil diperbarui! 🎉');
+      setSuccessMessage('Foto profil berhasil diperbarui!');
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
@@ -134,21 +134,21 @@ export default function ProfileGlobal() {
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden space-y-0 transition-colors">
       
       {/* === HEADER: INFORMASI PROFIL === */}
-      <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex items-center justify-between transition-colors">
+      <div className="bg-[#142B4D] dark:bg-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors">
         <h3 className="text-white font-bold text-base flex items-center gap-2.5">
           <User className="w-5 h-5 text-blue-400 dark:text-blue-300" /> 
           Informasi Profil & Keanggotaan
         </h3>
-        <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-3 py-1 rounded-full font-bold tracking-wider uppercase">
+        <span className="hidden sm:inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-3 py-1 rounded-full font-bold tracking-wider uppercase self-start sm:self-auto">
           Akun Aktif
         </span>
       </div>
 
       {/* === KONTEN: BODY === */}
-      <div className="p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
         
         {/* === SEKTOR: FOTO PROFIL === */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 dark:border-gray-800/60">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-6 border-b border-gray-100 dark:border-gray-800/60">
           <div 
             className="relative group cursor-pointer overflow-hidden rounded-full ring-4 ring-gray-100 dark:ring-gray-800/50 hover:ring-blue-500/30 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0" 
             onClick={handleAvatarClick}
@@ -157,10 +157,10 @@ export default function ProfileGlobal() {
               <img 
                 src={profile.avatar_url} 
                 alt="Foto Profil" 
-                className="h-24 w-24 rounded-full object-cover group-hover:scale-110 transition-transform duration-300"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
             ) : (
-              <div className="h-24 w-24 bg-linear-to-br from-[#142B4D] to-slate-700 text-white rounded-full flex items-center justify-center font-black text-3xl group-hover:opacity-90 transition-all shadow-inner">
+              <div className="h-20 w-20 sm:h-24 sm:w-24 bg-linear-to-br from-[#142B4D] to-slate-700 text-white rounded-full flex items-center justify-center font-black text-3xl group-hover:opacity-90 transition-all shadow-inner">
                 {initialLetter}
               </div>
             )}
@@ -183,10 +183,16 @@ export default function ProfileGlobal() {
             <h3 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
               {profile?.full_name}
             </h3>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">
-              <Shield className="w-3.5 h-3.5" />
-              {formatRole(profile?.role)}
-            </span>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 mt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">
+                <Shield className="w-3.5 h-3.5" />
+                {formatRole(profile?.role)}
+              </span>
+              {/* Mobile Only Badge */}
+              <span className="inline-block sm:hidden bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-3 py-1 rounded-full font-bold tracking-wider uppercase mt-1">
+                Akun Aktif
+              </span>
+            </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
               Klik pada lingkaran foto untuk memperbarui gambar avatar profile Anda.
             </p>
@@ -281,7 +287,7 @@ export default function ProfileGlobal() {
         <div className="pt-5 border-t border-gray-100 dark:border-gray-800/60 flex justify-end">
           <button
             onClick={handleLogoutTrigger}
-            className="px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs md:text-sm rounded-xl transition-all duration-200 active:scale-95 shadow-md shadow-red-600/10 hover:shadow-red-600/20 flex items-center gap-2 h-11 md:h-10"
+            className="px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xs md:text-sm rounded-xl transition-all duration-200 active:scale-95 shadow-md shadow-red-600/10 hover:shadow-red-600/20 flex items-center gap-2 h-10 md:h-11"
           >
             <LogOut className="w-4 h-4" />
             Keluar dari Sistem
@@ -294,7 +300,7 @@ export default function ProfileGlobal() {
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-hand.svg" alt="Confirm Logout" className="w-16 h-16 mx-auto mb-2" />
+            <AlertTriangle className="w-16 h-16 mx-auto mb-2 text-amber-500" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               Apakah Anda yakin ingin keluar dari aplikasi PRISMA?
             </p>
@@ -328,7 +334,7 @@ export default function ProfileGlobal() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-16 h-16 mx-auto mb-2 text-emerald-500" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
               {successMessage}
             </p>
