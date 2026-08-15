@@ -918,7 +918,7 @@ export default function UsulanLokasiPage() {
           <div className="relative flex-1 md:w-auto" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 w-full flex-1 ${
+              className={`relative px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 w-full flex-1 md:w-auto ${
                 activeFilterCount > 0
                   ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
                   : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -927,9 +927,7 @@ export default function UsulanLokasiPage() {
               <Filter className="w-4 h-4" />
               <span>Filter</span>
               {activeFilterCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-[#142B4D] dark:bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
+                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
               )}
             </button>
 

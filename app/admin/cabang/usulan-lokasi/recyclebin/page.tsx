@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Filter, RotateCcw, Trash, Trash2, AlertTriangle, FileText, Folder, CheckSquare, Square, Loader2 } from 'lucide-react'
+import { ArrowLeft, Search, Filter, RotateCcw, Trash, Trash2, AlertTriangle, FileText, Folder, CheckSquare, Square, Loader2, ChevronDown, CheckCircle2, ArrowLeftCircle, Calendar } from 'lucide-react'
 import { getTrashItems, restoreUlok, restoreDocument, purgeFromCabangRecycleBin, bulkRestoreItems, bulkPurgeFromCabangRecycleBin, emptyTrash, TrashItem } from '@/actions/recyclebin'
 import { getCurrentUserBranchId } from '@/actions/saw'
 
@@ -17,6 +17,9 @@ export default function RecycleBinPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'ulok' | 'document'>('all')
   const [selectedItems, setSelectedItems] = useState<{ id: string; type: 'ulok' | 'document' }[]>([])
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
   
   // Modals
   const [confirmModal, setConfirmModal] = useState<{
@@ -39,6 +42,13 @@ export default function RecycleBinPage() {
     isOpen: false,
     message: ''
   })
+
+  const [restoreConfirmModal, setRestoreConfirmModal] = useState<{
+    isOpen: boolean
+    documentId: string
+    parentUlokId: string
+    documentName: string
+  }>({ isOpen: false, documentId: '', parentUlokId: '', documentName: '' })
 
   // Date formatter
   const formatDeletedAt = (dateStr: string) => {
@@ -96,14 +106,28 @@ export default function RecycleBinPage() {
   // Filter items in memory
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      const matchesSearch = 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.parentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.deletedBy.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesSource = sourceFilter === 'all' ? true : item.type === sourceFilter
-      return matchesSearch && matchesSource
-    })
-  }, [items, searchQuery, sourceFilter])
+        item.deletedBy.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesSource =
+        sourceFilter === "all" ? true : item.type === sourceFilter;
+
+      let matchesDate = true;
+      if (startDate || endDate) {
+        const itemDate = new Date(item.deletedAt);
+        if (startDate)
+          matchesDate = matchesDate && itemDate >= new Date(startDate);
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && itemDate <= end;
+        }
+      }
+      return matchesSearch && matchesSource && matchesDate;
+    });
+  }, [items, searchQuery, sourceFilter, startDate, endDate]);
 
   // Select handlers
   const handleSelectItem = (id: string, type: 'ulok' | 'document') => {
@@ -139,6 +163,20 @@ export default function RecycleBinPage() {
 
   // Restore handlers
   const handleRestoreSingle = (id: string, type: 'ulok' | 'document', name: string) => {
+    if (type === 'document') {
+      const currentItem = items.find((item) => item.id === id && item.type === 'document')
+      const parentInTrash = items.some((item) => item.id === currentItem?.parentId && item.type === 'ulok')
+      if (parentInTrash && currentItem?.parentId) {
+        setRestoreConfirmModal({
+          isOpen: true,
+          documentId: id,
+          parentUlokId: currentItem.parentId,
+          documentName: name
+        })
+        return
+      }
+    }
+
     startTransition(async () => {
       const res = type === 'ulok' ? await restoreUlok(id) : await restoreDocument(id)
       if (res.success) {
@@ -151,6 +189,31 @@ export default function RecycleBinPage() {
         setTimeout(() => setSuccessModal({ isOpen: false, message: '' }), 1500)
       } else {
         alert('Gagal memulihkan item: ' + res.error)
+      }
+    })
+  }
+
+  const executeRestoreWithParent = () => {
+    const { documentId, parentUlokId, documentName } = restoreConfirmModal
+    setRestoreConfirmModal({ isOpen: false, documentId: '', parentUlokId: '', documentName: '' })
+    
+    startTransition(async () => {
+      const resParent = await restoreUlok(parentUlokId)
+      if (resParent.success) {
+        const resDoc = await restoreDocument(documentId)
+        if (resDoc.success) {
+          setSuccessModal({
+            isOpen: true,
+            message: `Berhasil memulihkan Induk ULOK dan dokumen "${documentName}"`
+          })
+          setSelectedItems((prev) => prev.filter((x) => !(x.id === documentId && x.type === 'document') && !(x.id === parentUlokId && x.type === 'ulok')))
+          loadTrashData()
+          setTimeout(() => setSuccessModal({ isOpen: false, message: '' }), 1500)
+        } else {
+          alert('Gagal memulihkan dokumen: ' + resDoc.error)
+        }
+      } else {
+        alert('Gagal memulihkan induk ULOK: ' + resParent.error)
       }
     })
   }
@@ -178,7 +241,7 @@ export default function RecycleBinPage() {
     setConfirmModal({
       isOpen: true,
       title: 'Hapus Permanen Item',
-      message: `Apakah Anda yakin ingin menghapus "${name}" secara permanen? Tindakan ini tidak dapat dibatalkan dan file fisik akan dihapus selamanya.`,
+      message: `Apakah Anda yakin ingin menghapus "${name}" secara permanen?`,
       actionType: 'delete_single',
       targetItem: { id, type, name }
     })
@@ -198,7 +261,7 @@ export default function RecycleBinPage() {
     setConfirmModal({
       isOpen: true,
       title: 'Kosongkan Tempat Sampah',
-      message: 'Apakah Anda yakin ingin menghapus seluruh item di tempat sampah secara permanen? Semua usulan lokasi dan dokumen di dalam cabang ini akan dihapus selamanya.',
+      message: 'Apakah Anda yakin ingin menghapus seluruh item di tempat sampah secara permanen?',
       actionType: 'empty'
     })
   }
@@ -255,23 +318,13 @@ export default function RecycleBinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
         
-        {/* BACK TO MAIN DASHBOARD LINK */}
-        <button
-          onClick={() => router.push('/admin/cabang/usulan-lokasi')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-blue-900 dark:hover:text-blue-400 transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-          Kembali ke Daftar Usulan
-        </button>
-
         {/* HEADER TOOLBAR */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight flex items-center gap-3">
-              <Trash2 className="w-8 h-8 text-red-500" />
+            <h1 className="text-2xl md:text-3xl font-bold text-[#142B4D] dark:text-gray-100 tracking-tight flex items-center gap-3">
               Tempat Sampah
             </h1>
             <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -283,47 +336,134 @@ export default function RecycleBinPage() {
             <button
               onClick={triggerEmptyTrash}
               disabled={isPending}
-              className="bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              className="bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-[#D91E2E] border border-red-200 dark:border-red-900/40 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <Trash className="w-4 h-4" />
-              Kosongkan Trash
+              Clear All
             </button>
           )}
         </div>
 
-        {/* SEARCH AND FILTERS */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 p-4 flex flex-col md:flex-row items-center gap-4">
-          
+        {/* ACTION BAR */}
+        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3">
+
+          {/* Back Button */}
+          <button
+            onClick={() => router.push("/admin/cabang/usulan-lokasi")}
+            className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-500 hover:text-[#142B4D] dark:hover:text-blue-400 transition-all hover:scale-105 shrink-0 shadow-sm"
+            title="Kembali ke Daftar Usulan"
+          >
+            <ArrowLeftCircle className="w-5 h-5"/>
+          </button>
+
           {/* Search Box */}
-          <div className="relative flex items-center w-full md:flex-1">
-            <Search className="absolute left-3 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          <div className="relative flex-1 w-full md:w-auto md:min-w-[240px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"/>
             <input
               type="text"
-              placeholder="Cari berdasarkan nama item, induk ULOK, atau penghapus..."
+              placeholder="Cari item, induk ULOK, atau penghapus..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-255 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-900 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-900/10 w-full transition-all duration-300 shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10 transition-all duration-200 shadow-sm h-11 md:h-10"
             />
           </div>
 
-          {/* Filter Dropdown */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value as any)}
-              className="px-3 py-2.5 border border-gray-255 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-900 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-900/10 w-full md:w-48 transition-all duration-300 shadow-xs"
+          {/* Filter Button & Popover */}
+          <div className="relative flex w-full md:w-auto gap-2">
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 w-full flex-1 md:w-auto ${
+                (sourceFilter !== 'all' || startDate || endDate)
+                  ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
             >
-              <option value="all">Semua Tipe</option>
-              <option value="ulok">Usulan Lokasi (ULOK)</option>
-              <option value="document">Dokumen / File</option>
-            </select>
+              <Filter className="w-4 h-4" />
+              <span>Filter</span>
+              {(sourceFilter !== 'all' || startDate || endDate) && (
+                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
+              )}
+            </button>
+
+            {/* Filter Popover Dropdown */}
+            {isFilterOpen && (
+              <div className="absolute left-0 md:right-0 md:left-auto mt-14 md:mt-12 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+                
+                {/* Header & Reset */}
+                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                  <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Tempat Sampah
+                  </h4>
+                  {(sourceFilter !== 'all' || startDate || endDate) && (
+                    <button
+                      onClick={() => { setSourceFilter('all'); setStartDate(''); setEndDate(''); }}
+                      className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Reset
+                    </button>
+                  )}
+                </div>
+
+                {/* Tipe Item Filter */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                    Tipe Item
+                  </label>
+                  <select
+                    value={sourceFilter}
+                    onChange={(e) => setSourceFilter(e.target.value as any)}
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                  >
+                    <option value="all">Semua Tipe</option>
+                    <option value="ulok">Usulan Lokasi (ULOK)</option>
+                    <option value="document">Dokumen / File</option>
+                  </select>
+                </div>
+
+                {/* Date Range Filter */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                    Rentang Tanggal Dihapus
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">Dari</span>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">Sampai</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                  >
+                    Terapkan Filter
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* BULK ACTION TOOLBAR */}
         {selectedItems.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-150 dark:border-blue-900/30 rounded-2xl p-4 flex items-center justify-between animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-2xl p-4 flex items-center justify-between animate-[fadeIn_0.2s_ease-out]">
             <span className="text-sm font-semibold text-blue-900 dark:text-blue-400">
               {selectedItems.length} item dipilih
             </span>
@@ -352,9 +492,43 @@ export default function RecycleBinPage() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
           
           {loading ? (
-            <div className="p-12 text-center text-gray-500 flex flex-col items-center justify-center gap-4">
-              <Loader2 className="w-8 h-8 text-blue-900 dark:text-blue-500 animate-spin" />
-              <span className="text-sm font-medium">Memuat item tempat sampah...</span>
+            <div className="w-full animate-pulse">
+              {/* Desktop Skeleton */}
+              <div className="hidden md:block">
+                <div className="h-12 bg-gray-55/40 dark:bg-gray-800/40 w-full border-b border-gray-100 dark:border-gray-800 rounded-t-2xl"></div>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 border-b border-gray-50 dark:border-gray-800/30">
+                    <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded shrink-0"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                    <div className="flex gap-2 ml-auto">
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile Skeleton Cards */}
+              <div className="md:hidden flex flex-col gap-4 p-4 bg-gray-50/50 dark:bg-gray-950/30">
+                {[1, 2, 3].map((i) => (
+                  <div key={`mob-skel-${i}`} className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex gap-3">
+                         <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
+                         <div className="space-y-2">
+                           <div className="w-32 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                           <div className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                         </div>
+                      </div>
+                      <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded shrink-0"></div>
+                    </div>
+                    <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mt-2"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-16 text-center text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center gap-4">
@@ -372,7 +546,7 @@ export default function RecycleBinPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="hidden md:table w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800/40 text-gray-500 dark:text-gray-400 font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
                     <th className="p-4 w-12 text-center">
@@ -493,6 +667,84 @@ export default function RecycleBinPage() {
                   })}
                 </tbody>
               </table>
+
+              {/* MOBILE CARD VIEW */}
+              <div className="md:hidden flex flex-col gap-4 p-4 bg-gray-50/50 dark:bg-gray-950/30">
+                {filteredItems.map((item) => {
+                  const isSelected = selectedItems.some((x) => x.id === item.id && x.type === item.type)
+                  return (
+                    <div
+                      key={`mobile-${item.type}-${item.id}`}
+                      className={`bg-white dark:bg-gray-900 border rounded-2xl p-4 shadow-sm transition-all relative ${
+                        isSelected
+                          ? 'border-[#142B4D] dark:border-blue-500 bg-blue-50/10 dark:bg-blue-950/10'
+                          : 'border-gray-100 dark:border-gray-800'
+                      }`}
+                    >
+                      {/* Top: Icon, Name & Checkbox */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          {item.type === 'ulok' ? (
+                            <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-xl text-amber-500 shrink-0">
+                              <Folder className="w-5 h-5" />
+                            </div>
+                          ) : (
+                            <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 rounded-xl text-blue-500 shrink-0">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="flex flex-col min-w-0 pt-0.5">
+                            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate w-full pr-2" title={item.name}>
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+                              Induk: {item.parentName || '-'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button onClick={() => handleSelectItem(item.id, item.type)} className="shrink-0 p-1 mt-1 text-gray-400">
+                          {isSelected ? (
+                            <CheckSquare className="w-5 h-5 text-[#142B4D] dark:text-blue-500" />
+                          ) : (
+                            <Square className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Middle: Details */}
+                      <div className="flex items-center justify-between text-[11px] text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2.5 mb-4">
+                        <div>
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">Dihapus Pada</span>
+                          <span className="font-semibold">{formatDeletedAt(item.deletedAt)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-gray-400 text-[9px] uppercase tracking-wider mb-0.5">Oleh</span>
+                          <span className="font-semibold text-gray-600 dark:text-gray-300">{item.deletedBy}</span>
+                        </div>
+                      </div>
+
+                      {/* Bottom Actions */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleRestoreSingle(item.id, item.type, item.name)}
+                          disabled={isPending}
+                          className="flex-1 py-2.5 bg-[#142B4D] dark:bg-[#142B4D] hover:bg-[#1a3863] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" /> Pulihkan
+                        </button>
+                        <button
+                          onClick={() => triggerDeleteSingle(item.id, item.type, item.name)}
+                          disabled={isPending}
+                          className="flex-1 py-2.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 border border-red-100 dark:border-red-900/40 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+                        >
+                          <Trash className="w-3.5 h-3.5" /> Hapus
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -500,44 +752,77 @@ export default function RecycleBinPage() {
 
       {/* CONFIRMATION MODAL */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-850 w-full max-w-sm text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-500 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-gray-850 dark:text-gray-100 font-bold text-lg">{confirmModal.title}</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 leading-relaxed">
-                {confirmModal.message}
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-3 pt-2">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              {confirmModal.message}
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
               <button
-                onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-                className="flex-1 bg-gray-100 hover:bg-gray-250 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2.5 rounded-xl text-sm font-bold transition active:scale-95"
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
               >
                 Batal
               </button>
               <button
                 onClick={executeConfirmAction}
                 disabled={isPending}
-                className="flex-1 bg-red-600 hover:bg-red-750 text-white py-2.5 rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
               >
-                {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                Hapus
+                {isPending ? "Loading..." : "Hapus"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SUCCESS MODAL / NOTIFICATION */}
-      {successModal.isOpen && (
-        <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-slate-800 z-50 animate-[fadeIn_0.2s_ease-out] max-w-md">
-          <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded-full">
-            <span className="text-sm font-bold flex items-center justify-center w-4 h-4">✓</span>
+      {/* RESTORE PARENT CONFIRM MODAL */}
+      {restoreConfirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-sm text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <Folder className="w-12 h-12 mx-auto text-blue-500 mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              Apakah Anda ingin memulihkan Induk ULOK beserta dokumen ini?
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              (Jika Anda memilih 'Batal', pemulihan dokumen dibatalkan).
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() =>
+                  setRestoreConfirmModal({
+                    isOpen: false,
+                    documentId: "",
+                    parentUlokId: "",
+                    documentName: "",
+                  })
+                }
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-bold px-4 py-2 text-sm transition-all"
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeRestoreWithParent}
+                disabled={isPending}
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95"
+              >
+                {isPending ? "Memulihkan..." : "Ya, Keduanya"}
+              </button>
+            </div>
           </div>
-          <span className="text-sm font-semibold">{successModal.message}</span>
+        </div>
+      )}
+
+      {/* SUCCESS MODAL */}
+      {successModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-[#111C34] rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800/60 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <CheckCircle2 className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 text-emerald-500" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
+              {successModal.message}
+            </p>
+          </div>
         </div>
       )}
     </div>

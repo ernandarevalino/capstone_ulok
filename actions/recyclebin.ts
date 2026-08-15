@@ -9,6 +9,7 @@ export interface TrashItem {
   type: 'ulok' | 'document'
   name: string
   parentName: string
+  parentId?: string
   deletedAt: string
   deletedBy: string
   fileUrl: string | null
@@ -68,6 +69,7 @@ export async function getTrashItems(branchId: number) {
       .from('documents')
       .select(`
         id,
+        ulok_id,
         file_url,
         document_type,
         deleted_at,
@@ -100,6 +102,7 @@ export async function getTrashItems(branchId: number) {
         type: 'document',
         name: docName,
         parentName: (item.ulok_submissions as any)?.nama_lokasi || 'Tidak Diketahui',
+        parentId: item.ulok_id,
         deletedAt: item.deleted_at,
         deletedBy: item.deleted_by_profile?.full_name || 'Sistem / Tidak Diketahui',
         fileUrl: item.file_url
