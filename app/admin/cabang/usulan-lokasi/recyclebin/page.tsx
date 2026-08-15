@@ -71,6 +71,12 @@ export default function RecycleBinPage() {
     }
   }
 
+  // Name truncator
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '-'
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
+  }
+
   // Load user branch and trash items
   const loadTrashData = async (bId?: number) => {
     setLoading(true)
@@ -317,6 +323,46 @@ export default function RecycleBinPage() {
     })
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+          {/* === SKELETON: HEADER TOOLBAR === */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div className="space-y-2">
+              <div className="h-8 md:h-10 w-48 md:w-64 bg-slate-300 dark:bg-slate-700 rounded animate-pulse"></div>
+              <div className="h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* === SKELETON: ACTION BAR === */}
+          <div className="flex flex-row flex-wrap items-stretch md:items-center gap-3 mb-6">
+            {/* Back Button Skeleton */}
+            <div className="order-1 md:order-none h-11 w-11 md:h-10 md:w-10 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shrink-0"></div>
+            {/* Search Box Skeleton */}
+            <div className="order-3 md:order-none h-11 md:h-10 flex-1 w-full md:w-auto md:min-w-[240px] bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            {/* Filter Button Skeleton */}
+            <div className="order-2 md:order-none h-11 md:h-10 flex-1 md:w-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+          </div>
+
+          {/* === SKELETON: TABLE WRAPPER === */}
+          <div className="bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            {/* Retain the existing table/list skeleton logic here... */}
+            <div className="h-[68px] w-full bg-slate-200 dark:bg-slate-800 animate-pulse border-b border-gray-100 dark:border-gray-800/60"></div>
+            <div className="p-4 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-12 w-full bg-slate-100 dark:bg-slate-800/50 rounded-lg animate-pulse"
+                ></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
@@ -331,21 +377,10 @@ export default function RecycleBinPage() {
               Kelola usulan lokasi (ULOK) dan berkas dokumen yang telah dihapus sementara.
             </p>
           </div>
-          
-          {items.length > 0 && (
-            <button
-              onClick={triggerEmptyTrash}
-              disabled={isPending}
-              className="bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-[#D91E2E] border border-red-200 dark:border-red-900/40 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <Trash className="w-4 h-4" />
-              Clear All
-            </button>
-          )}
         </div>
 
         {/* ACTION BAR */}
-        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3">
+        <div className="flex flex-row items-center gap-2 sm:gap-3">
 
           {/* Back Button */}
           <button
@@ -357,7 +392,7 @@ export default function RecycleBinPage() {
           </button>
 
           {/* Search Box */}
-          <div className="relative flex-1 w-full md:w-auto md:min-w-[240px]">
+          <div className="relative flex-1 md:min-w-[240px]">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"/>
             <input
               type="text"
@@ -369,17 +404,17 @@ export default function RecycleBinPage() {
           </div>
 
           {/* Filter Button & Popover */}
-          <div className="relative flex w-full md:w-auto gap-2">
+          <div className="relative shrink-0">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 w-full flex-1 md:w-auto ${
+              className={`px-3 md:px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm h-11 md:h-10 active:scale-95 ${
                 (sourceFilter !== 'all' || startDate || endDate)
                   ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
                   : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>Filter</span>
+              <span className="hidden md:inline">Filter</span>
               {(sourceFilter !== 'all' || startDate || endDate) && (
                 <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
               )}
@@ -387,7 +422,7 @@ export default function RecycleBinPage() {
 
             {/* Filter Popover Dropdown */}
             {isFilterOpen && (
-              <div className="absolute left-0 md:right-0 md:left-auto mt-14 md:mt-12 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+              <div className="absolute right-0 mt-2 md:mt-2 w-72 sm:w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
                 
                 {/* Header & Reset */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
@@ -489,50 +524,35 @@ export default function RecycleBinPage() {
         )}
 
         {/* DATA CONTAINER */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
           
-          {loading ? (
-            <div className="w-full animate-pulse">
-              {/* Desktop Skeleton */}
-              <div className="hidden md:block">
-                <div className="h-12 bg-gray-55/40 dark:bg-gray-800/40 w-full border-b border-gray-100 dark:border-gray-800 rounded-t-2xl"></div>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 border-b border-gray-50 dark:border-gray-800/30">
-                    <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded shrink-0"></div>
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                    <div className="flex gap-2 ml-auto">
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Mobile Skeleton Cards */}
-              <div className="md:hidden flex flex-col gap-4 p-4 bg-gray-50/50 dark:bg-gray-950/30">
-                {[1, 2, 3].map((i) => (
-                  <div key={`mob-skel-${i}`} className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex gap-3">
-                         <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
-                         <div className="space-y-2">
-                           <div className="w-32 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                           <div className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                         </div>
-                      </div>
-                      <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded shrink-0"></div>
-                    </div>
-                    <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mt-2"></div>
-                  </div>
-                ))}
-              </div>
+          {/* === TABEL: HEADER === */}
+          <div className="bg-[#142B4D] dark:bg-slate-900 p-4 md:p-5 flex items-center justify-between gap-2 transition-colors">
+            <h3 className="text-white font-bold text-sm md:text-base flex items-center gap-2">
+              <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-400" />
+              Recycle Bin (Trash)
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="bg-white/20 text-white text-[10px] md:text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap">
+                {filteredItems.length} <span className="hidden sm:inline">Items</span>
+              </span>
+              {items.length > 0 && (
+                <button
+                  onClick={triggerEmptyTrash}
+                  disabled={isPending}
+                  title="Empty Trash"
+                  className="bg-red-600 hover:bg-red-700 text-white text-[10px] md:text-xs px-2 sm:px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all h-6 md:h-7 shadow-sm disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Clear All</span>
+                </button>
+              )}
             </div>
-          ) : filteredItems.length === 0 ? (
+          </div>
+
+          {filteredItems.length === 0 ? (
             <div className="p-16 text-center text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center gap-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-950 rounded-full border border-gray-100 dark:border-gray-850">
+              <div className="p-4">
                 <Trash2 className="w-12 h-12 text-gray-300 dark:text-gray-700" />
               </div>
               <div>
@@ -607,7 +627,7 @@ export default function RecycleBinPage() {
                             )}
                             <div className="min-w-0 max-w-md">
                               <span className="font-semibold text-gray-700 dark:text-gray-250 text-sm truncate block" title={item.name}>
-                                {item.name}
+                                {truncateText(item.name, 40)}
                               </span>
                             </div>
                           </div>
@@ -695,7 +715,7 @@ export default function RecycleBinPage() {
                           )}
                           <div className="flex flex-col min-w-0 pt-0.5">
                             <span className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate w-full pr-2" title={item.name}>
-                              {item.name}
+                              {truncateText(item.name, 28)}
                             </span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
                               Induk: {item.parentName || '-'}
