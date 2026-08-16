@@ -264,7 +264,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       <div className="space-y-6">
 
         {/* === HEADER: FEEDBACK === */}
@@ -285,7 +285,7 @@ export default function FeedbackPage() {
         )}
 
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-1">
             {/* ACTION BAR SKELETON */}
             <div className="flex flex-row items-center gap-2 mb-6 animate-pulse">
               {/* Search placeholder */}
@@ -348,7 +348,7 @@ export default function FeedbackPage() {
         ) : (
           <>
             {/* ACTION BAR: SEARCH, FILTER & REFRESH */}
-            <div className="flex flex-row items-center gap-2 mb-6 relative z-20">
+            <div className="flex flex-row items-center gap-2 mb-3 relative z-20">
               {/* Search */}
               <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -420,7 +420,7 @@ export default function FeedbackPage() {
 
               <div
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto gap-3 pb-4 snap-x scrollbar-hide scroll-smooth"
+                className="flex overflow-x-auto gap-3 pt-3 px-2 pb-4 snap-x scrollbar-hide scroll-smooth -mx-2"
               >
                 {filteredTabSubmissions.length === 0 ? (
                   <div className="text-sm text-gray-400 p-4 w-full text-center border border-dashed rounded-xl border-gray-200 dark:border-gray-800">
@@ -443,8 +443,8 @@ export default function FeedbackPage() {
                       >
                         {/* UNREAD COUNTER BADGE (TOP-LEFT) */}
                         {unreadCount > 0 && (
-                          <span className="absolute h-5 min-w-[20px] px-1.5 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-md animate-pulse top-20 left-65">
-                            {unreadCount > 15 ? '15+' : unreadCount}
+                          <span className="absolute -top-1 -left-1 z-50 h-5 min-w-[20px] px-1.5 bg-red-500 text-white border-2 border-white dark:border-gray-900 rounded-full text-[9px] font-black flex items-center justify-center shadow-md animate-pulse">
+                            {unreadCount > 99 ? '99+' : unreadCount}
                           </span>
                         )}
 

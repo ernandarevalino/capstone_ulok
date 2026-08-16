@@ -197,7 +197,7 @@ export default function AdminCabangPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
 
         {/* Skeleton Welcome Banner */}
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800 p-5 sm:p-6">
@@ -280,7 +280,7 @@ export default function AdminCabangPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* =====================================================
           WELCOME BANNER
