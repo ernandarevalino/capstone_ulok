@@ -122,131 +122,303 @@ export default function AssessorDashboardPage() {
     router.push(`/admin/assessor/penilaian/${path}?id=${id}`);
   };
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto p-3 md:p-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
-      
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#10223d] to-[#1d3c6a] p-6 text-white shadow-lg border border-[#142B4D] dark:border-slate-800 transition-all duration-300 hover:shadow-xl">
-        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500">
-          <ClipboardCheck className="w-64 h-64 text-white" />
+  if (loading) {
+    return (
+      <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+
+        {/* Skeleton Welcome Banner */}
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800 p-5 sm:p-6">
+          <div className="h-5 sm:h-7 w-1/2 max-w-xs bg-slate-300 dark:bg-slate-700 rounded-md mb-2.5 animate-pulse" />
+          <div className="h-3 w-full max-w-md bg-slate-300/70 dark:bg-slate-700/70 rounded-md animate-pulse" />
         </div>
-        <div className="relative z-10 space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-white/10 backdrop-blur-md border border-white/20 text-[#FE9A00]">
-            ⚡ Live Update Sistem
-          </span>
-          <h1 className="text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-            Panel Assessor Nasional, {loading ? (
-              <span className="inline-block h-6 w-32 bg-white/20 animate-pulse rounded-md align-middle" />
-            ) : fullName}!
+
+        {/* Skeleton Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-between gap-2"
+            >
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-6 sm:h-8 w-12 bg-slate-300 dark:bg-slate-700 rounded-md animate-pulse" />
+              </div>
+              <div className="w-9 h-9 sm:w-11 sm:h-11 bg-slate-200 dark:bg-slate-800 rounded-lg sm:rounded-xl shrink-0 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+
+          {/* Skeleton Pie Chart Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm">
+            <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
+              <div className="h-3.5 w-48 bg-slate-300 dark:bg-slate-700 rounded-md mb-2 animate-pulse" />
+              <div className="h-2.5 w-56 max-w-full bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse" />
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
+              <div className="w-full sm:w-1/2 h-40 sm:h-52 flex items-center justify-center">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-[10px] sm:border-[12px] border-slate-200 dark:border-slate-800 animate-pulse" />
+              </div>
+              <div className="w-full sm:w-1/2 flex flex-col gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-8 w-full bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton Bar Chart Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm">
+            <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
+              <div className="h-3.5 w-52 bg-slate-300 dark:bg-slate-700 rounded-md mb-2 animate-pulse" />
+              <div className="h-2.5 w-60 max-w-full bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse" />
+            </div>
+            <div className="h-40 sm:h-52 flex items-end justify-between gap-2.5 sm:gap-4 px-1 sm:px-4 pt-6 sm:pt-8 pb-2">
+              {[70, 45, 85, 55, 65].map((h, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 w-full">
+                  <div
+                    className="w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-t-lg"
+                    style={{ height: `${h}%` }}
+                  />
+                  <div className="w-8 sm:w-10 h-3 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Skeleton Bottom Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+          {/* Antrean Berkas */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[56px]" />
+            <div className="p-2.5 sm:p-3 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="py-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 px-2.5 sm:px-3">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 animate-pulse" />
+                    <div className="flex gap-2">
+                      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-md w-20 animate-pulse" />
+                      <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded-md w-14 animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-xl w-full sm:w-24 shrink-0 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Peringkat Kebijakan */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[56px]" />
+            <div className="overflow-x-auto flex-1">
+              <table className="w-full text-left border-collapse text-xs min-w-[420px]">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-slate-800/50 dark:border-slate-800">
+                    <th className="p-2.5 sm:p-3 pl-4 sm:pl-5">
+                      <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    </th>
+                    <th className="p-2.5 sm:p-3">
+                      <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    </th>
+                    <th className="p-2.5 sm:p-3 text-center">
+                      <div className="h-2.5 w-10 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mx-auto" />
+                    </th>
+                    <th className="p-2.5 sm:p-3 text-center">
+                      <div className="h-2.5 w-10 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mx-auto" />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50">
+                  {[1, 2, 3].map((n) => (
+                    <tr key={n}>
+                      <td className="p-2.5 sm:p-3 pl-4 sm:pl-5">
+                        <div className="h-3.5 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md w-2/3" />
+                      </td>
+                      <td className="p-2.5 sm:p-3">
+                        <div className="h-3.5 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md w-20" />
+                      </td>
+                      <td className="p-2.5 sm:p-3 text-center">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full w-14 mx-auto" />
+                      </td>
+                      <td className="p-2.5 sm:p-3 text-center">
+                        <div className="h-3.5 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md w-8 mx-auto" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      
+      {/* WELCOME BANNER */}
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#10223d] to-[#1d3c6a] p-5 sm:p-6 text-white shadow-lg border border-[#142B4D] dark:border-slate-800 transition-all duration-300 hover:shadow-xl">
+        <div className="absolute -right-6 -bottom-6 sm:-right-10 sm:-bottom-10 opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500">
+          <ClipboardCheck className="w-40 h-40 sm:w-64 sm:h-64 text-white" />
+        </div>
+        <div className="relative z-10 space-y-1.5 sm:space-y-2">
+          <h1 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent leading-snug">
+            Panel Assessor Nasional, {fullName}!
           </h1>
-          <p className="text-blue-100/80 dark:text-slate-300 text-xs md:text-sm max-w-2xl leading-relaxed">
+          <p className="text-blue-100/80 dark:text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
             Anda memegang kendali penilaian seluruh cabang. Periksa antrean review usulan lokasi (ULOK), berikan catatan revisi, dan pantau perangkingan nilai SAW terbaik secara terpusat.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+      {/* STATS GRID */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
         
-        <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-          <div className="space-y-1">
-            <p className="text-[#FE9A00] text-xs font-bold uppercase tracking-wider">Antrean Review</p>
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#FE9A00] dark:border-t-[#FE9A00] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-[#FE9A00] text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Antrean Review
+            </p>
+
             {loading ? (
-              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+              <div className="h-6 sm:h-9 w-14 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
             ) : (
-              <h3 className="text-3xl font-black text-[#FE9A00] tracking-tight">{inReviewCount}</h3>
+              <h3 className="text-xl sm:text-3xl font-black text-[#FE9A00] tracking-tight">
+                {inReviewCount}
+              </h3>
             )}
-            <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Menunggu penilaian Anda</p>
+
+            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
+              Menunggu penilaian Anda
+            </p>
           </div>
-          <div className="bg-[#FE9A00]/10 dark:bg-[#FE9A00]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <Clock className="w-6 h-6 text-[#FE9A00]" />
+
+          <div className="bg-[#FE9A00]/10 dark:bg-[#FE9A00]/20 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+            <Clock className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#FE9A00]" />
           </div>
         </div>
 
-        <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-          <div className="space-y-1">
-            <p className="text-[#D11A22] text-xs font-bold uppercase tracking-wider">Sedang Direvisi</p>
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#D11A22] dark:border-t-[#D11A22] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-[#D11A22] text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Sedang Direvisi
+            </p>
+
             {loading ? (
-              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+              <div className="h-6 sm:h-9 w-14 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
             ) : (
-              <h3 className="text-3xl font-black text-[#D11A22] tracking-tight">{revisionCount}</h3>
+              <h3 className="text-xl sm:text-3xl font-black text-[#D11A22] tracking-tight">
+                {revisionCount}
+              </h3>
             )}
-            <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Dikembalikan ke cabang</p>
+
+            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
+              Dikembalikan ke cabang
+            </p>
           </div>
-          <div className="bg-[#D11A22]/10 dark:bg-[#D11A22]/20 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <AlertTriangle className="w-6 h-6 text-[#D11A22]" />
+
+          <div className="bg-[#D11A22]/10 dark:bg-[#D11A22]/20 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+            <AlertTriangle className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#D11A22]" />
           </div>
         </div>
 
-        <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-emerald-500 shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-          <div className="space-y-1">
-            <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">Selesai Dinilai</p>
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-emerald-500 dark:border-t-emerald-500 shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Selesai Dinilai
+            </p>
+
             {loading ? (
-              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+              <div className="h-6 sm:h-9 w-14 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
             ) : (
-              <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{completedCount}</h3>
+              <h3 className="text-xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                {completedCount}
+              </h3>
             )}
-            <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Approved & Rejected</p>
+
+            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
+              Approved & Rejected
+            </p>
           </div>
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+            <CheckCircle2 className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-emerald-500" />
           </div>
         </div>
 
-        <div className="group bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-          <div className="space-y-1">
-            <p className="text-[#142B4D] dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Cabang Berpartisipasi</p>
+        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 border-t-4 border-t-[#142B4D] dark:border-t-[#142B4D] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-[#142B4D] dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Cabang Berpartisipasi
+            </p>
+
             {loading ? (
-              <div className="h-9 w-16 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
+              <div className="h-6 sm:h-9 w-14 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md my-1" />
             ) : (
-              <h3 className="text-3xl font-black text-[#142B4D] dark:text-white tracking-tight">{activeBranchesCount}</h3>
+              <h3 className="text-xl sm:text-3xl font-black text-[#142B4D] dark:text-white tracking-tight">
+                {activeBranchesCount}
+              </h3>
             )}
-            <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">Cabang mengirim data aktif</p>
+
+            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
+              Cabang mengirim data aktif
+            </p>
           </div>
-          <div className="bg-[#142B4D]/10 dark:bg-slate-800 p-3 rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <Building2 className="w-6 h-6 text-[#142B4D] dark:text-blue-400" />
+
+          <div className="bg-[#142B4D]/10 dark:bg-slate-800 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+            <Building2 className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#142B4D] dark:text-blue-400" />
           </div>
         </div>
+
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* CHARTS GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
-          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-4 mb-4">
-            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-base flex items-center gap-2">
-              <Layers className="w-5 h-5 text-[#FE9A00]" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
+          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
+            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#FE9A00] shrink-0" />
               Persentase Status Review Nasional
             </h3>
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Komposisi tumpukan pekerjaan review saat ini</p>
+            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 mt-0.5">Komposisi tumpukan pekerjaan review saat ini</p>
           </div>
           {loading ? (
-            <div className="h-64 flex flex-col sm:flex-row items-center justify-around gap-6">
+            <div className="h-52 sm:h-60 md:h-64 flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
               <div className="w-full sm:w-1/2 flex justify-center items-center">
-                <div className="relative w-40 h-40 rounded-full border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-900 border border-dashed border-gray-100 dark:border-slate-800" />
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full border-[10px] sm:border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-900 border border-dashed border-gray-100 dark:border-slate-800" />
                 </div>
               </div>
-              <div className="w-full sm:w-1/2 flex flex-col gap-3">
+              <div className="w-full sm:w-1/2 flex flex-col gap-2 sm:gap-3">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-slate-800/50 px-2">
+                  <div key={n} className="flex items-center justify-between py-1.5 sm:py-2 border-b border-gray-50 dark:border-slate-800/50 px-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse" />
-                      <div className="w-28 h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                      <div className="w-24 sm:w-28 h-3.5 sm:h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
                     </div>
-                    <div className="w-12 h-5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                    <div className="w-10 sm:w-12 h-4.5 sm:h-5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="h-64 flex flex-col sm:flex-row items-center justify-around gap-6">
-              <div className="w-full sm:w-1/2 h-full min-h-[180px]">
+            <div className="flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
+              <div className="w-full sm:w-1/2 h-52 sm:h-60 md:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={displayPieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
+                      innerRadius={55}
+                      outerRadius={80}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -261,11 +433,11 @@ export default function AssessorDashboardPage() {
               <div className="w-full sm:w-1/2 flex flex-col gap-2">
                 {displayPieData.map((entry, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 px-2 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-gray-600 dark:text-slate-300">{entry.name}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                      <span className="text-gray-600 dark:text-slate-300 truncate">{entry.name}</span>
                     </div>
-                    <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{entry.value} Data</span>
+                    <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md shrink-0 ml-2">{entry.value} Data</span>
                   </div>
                 ))}
               </div>
@@ -273,28 +445,28 @@ export default function AssessorDashboardPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
-          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-4 mb-4">
-            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-base flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[#142B4D] dark:text-blue-400" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
+          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
+            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-[#142B4D] dark:text-blue-400 shrink-0" />
               Top 5 Cabang Teraktif (Volume Usulan)
             </h3>
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Cabang penyuplai usulan lokasi terbanyak di luar tipe draf</p>
+            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 mt-0.5">Cabang penyuplai usulan lokasi terbanyak di luar tipe draf</p>
           </div>
           {loading ? (
-            <div className="h-64 flex items-end justify-between gap-4 px-4 pt-8 pb-2">
+            <div className="h-52 sm:h-60 md:h-64 flex items-end justify-between gap-2.5 sm:gap-4 px-1 sm:px-4 pt-6 sm:pt-8 pb-2">
               {[70, 45, 85, 55, 65].map((h, i) => (
-                <div key={i} className="flex flex-col items-center gap-2.5 w-full">
+                <div key={i} className="flex flex-col items-center gap-2 sm:gap-2.5 w-full">
                   <div 
                     className="w-full bg-gray-200 dark:bg-slate-800 animate-pulse rounded-t-lg" 
                     style={{ height: `${h}%` }} 
                   />
-                  <div className="w-10 h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  <div className="w-8 sm:w-10 h-3 sm:h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="h-64 w-full">
+            <div className="h-52 sm:h-60 md:h-64 w-full">
               {branchDistribution.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-xs text-gray-400 italic">Tidak ada data distribusi cabang</div>
               ) : (
@@ -317,32 +489,33 @@ export default function AssessorDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* BOTTOM CONTENT */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between">
-            <h3 className="font-bold text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#FE9A00]" />
-              Antrean Berkas Masuk Terbaru
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+            <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
+              <Clock className="w-4 h-4 text-[#FE9A00] shrink-0" />
+              <span className="truncate">Antrean Berkas Masuk Terbaru</span>
             </h3>
-            <span className="text-[10px] bg-[#FE9A00] text-slate-950 font-black px-2.5 py-0.5 rounded-full animate-pulse">
+            <span className="text-[10px] bg-[#FE9A00] text-slate-950 font-black px-2 sm:px-2.5 py-0.5 rounded-full animate-pulse shrink-0">
               Belum Di-checklist
             </span>
           </div>
 
-          <div className="p-3 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[350px] scrollbar-thin">
+          <div className="p-2.5 sm:p-3 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[300px] sm:max-h-[350px] scrollbar-thin">
             {loading ? (
               <div className="space-y-3.5 py-2">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-3">
-                    <div className="space-y-2 flex-1">
-                      <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-3/4" />
+                  <div key={n} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2.5 sm:px-3">
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-3/4" />
                       <div className="flex gap-2">
-                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-24" />
-                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-16" />
+                        <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-20" />
+                        <div className="h-3 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-14" />
                       </div>
                     </div>
-                    <div className="h-8 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-xl w-full sm:w-28 shrink-0" />
+                    <div className="h-8 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-xl w-full sm:w-24 shrink-0" />
                   </div>
                 ))}
               </div>
@@ -350,9 +523,9 @@ export default function AssessorDashboardPage() {
               <div className="text-center py-12 text-xs text-gray-400 italic">Semua berkas masuk telah mulai dinilai atau dinilai penuh! ✨</div>
             ) : (
               reviewQueue.map((item) => (
-                <div key={item.id} className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 px-3 rounded-xl transition-all duration-200 group">
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-xs text-gray-900 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors">{item.nama_lokasi}</h4>
+                <div key={item.id} className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2.5 sm:px-3 rounded-xl transition-all duration-200 group">
+                  <div className="space-y-1 min-w-0">
+                    <h4 className="font-bold text-xs text-gray-900 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors truncate">{item.nama_lokasi}</h4>
                     <div className="flex items-center gap-2 flex-wrap text-[11px] text-gray-400 dark:text-slate-500">
                       <span className="bg-[#142B4D]/10 text-[#142B4D] dark:bg-slate-800 dark:text-slate-300 font-bold px-2 py-0.5 rounded text-[10px]">
                         {item.profiles?.branches?.nama_cabang || 'Cabang Pusat'}
@@ -362,7 +535,7 @@ export default function AssessorDashboardPage() {
                   </div>
                   <button
                     onClick={() => handleGoToReview(item.id, item.jenis_badan_hukum)}
-                    className="w-full sm:w-auto px-3 py-2 text-xs font-bold text-white bg-[#142B4D] hover:bg-[#1d3c6a] dark:bg-blue-600 dark:hover:bg-blue-700 rounded-xl flex items-center justify-center gap-1 transition shadow-sm active:scale-95 group"
+                    className="w-full sm:w-auto px-3 py-2 text-xs font-bold text-white bg-[#142B4D] hover:bg-[#1d3c6a] dark:bg-blue-600 dark:hover:bg-blue-700 rounded-xl flex items-center justify-center gap-1 transition shadow-sm active:scale-95 group shrink-0"
                   >
                     Buka Formulir 
                     <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
@@ -373,42 +546,42 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-4 text-white flex items-center justify-between">
-            <h3 className="font-bold text-sm flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-emerald-400" />
-              Peringkat Kebijakan ULOK Terbaik (Nasional)
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+            <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
+              <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="truncate">Peringkat Kebijakan ULOK Terbaik (Nasional)</span>
             </h3>
-            <span className="text-[10px] bg-emerald-600 text-white font-bold px-2.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 sm:px-2.5 py-0.5 rounded-full shrink-0">
               Skor SAW
             </span>
           </div>
 
           <div className="overflow-x-auto flex-1 scrollbar-thin">
-            <table className="w-full text-left border-collapse text-xs min-w-[500px]">
+            <table className="w-full text-left border-collapse text-xs min-w-[420px]">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-800/50 border-b dark:border-slate-800 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
-                  <th className="p-3 pl-5">Nama ULOK</th>
-                  <th className="p-3">Asal Cabang</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-center">Skor Akhir</th>
+                  <th className="p-2.5 sm:p-3 pl-4 sm:pl-5">Nama ULOK</th>
+                  <th className="p-2.5 sm:p-3">Asal Cabang</th>
+                  <th className="p-2.5 sm:p-3 text-center">Status</th>
+                  <th className="p-2.5 sm:p-3 text-center">Skor Akhir</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50 text-gray-700 dark:text-slate-300">
                 {loading ? (
                   [1, 2, 3, 4, 5].map((n) => (
                     <tr key={n}>
-                      <td className="p-3.5 pl-5">
-                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-2/3" />
+                      <td className="p-2.5 sm:p-3 pl-4 sm:pl-5">
+                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-2/3" />
                       </td>
-                      <td className="p-3.5">
-                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-24" />
+                      <td className="p-2.5 sm:p-3">
+                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-20" />
                       </td>
-                      <td className="p-3.5 text-center">
-                        <div className="h-4.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full w-16 mx-auto" />
+                      <td className="p-2.5 sm:p-3 text-center">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full w-14 mx-auto" />
                       </td>
-                      <td className="p-3.5 text-center">
-                        <div className="h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-10 mx-auto" />
+                      <td className="p-2.5 sm:p-3 text-center">
+                        <div className="h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md w-8 mx-auto" />
                       </td>
                     </tr>
                   ))
@@ -425,16 +598,16 @@ export default function AssessorDashboardPage() {
 
                     return (
                       <tr key={row.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                        <td className="p-3 pl-5 font-bold text-gray-900 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors">{row.nama_lokasi}</td>
-                        <td className="p-3 text-gray-500 dark:text-slate-400 font-medium">
+                        <td className="p-2.5 sm:p-3 pl-4 sm:pl-5 font-bold text-gray-900 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors">{row.nama_lokasi}</td>
+                        <td className="p-2.5 sm:p-3 text-gray-500 dark:text-slate-400 font-medium">
                           {row.profiles?.branches?.nama_cabang || 'Cabang Pusat'}
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-2.5 sm:p-3 text-center">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusColor}`}>
                             {row.status}
                           </span>
                         </td>
-                        <td className="p-3 text-center font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                        <td className="p-2.5 sm:p-3 text-center font-black text-emerald-600 dark:text-emerald-400 text-sm">
                           {row.final_score ? row.final_score.toFixed(2) : '0.00'}
                         </td>
                       </tr>

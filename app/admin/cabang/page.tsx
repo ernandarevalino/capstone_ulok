@@ -206,7 +206,7 @@ export default function AdminCabangPage() {
         </div>
 
         {/* Skeleton Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -307,7 +307,7 @@ export default function AdminCabangPage() {
       {/* =====================================================
           STATS
       ====================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
 
         {/* Total Pengajuan */}
         <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
