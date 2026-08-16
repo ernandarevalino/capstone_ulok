@@ -830,21 +830,37 @@ export default function UsulanLokasiPage() {
 
         {/* === ACTION BAR SKELETON === */}
         <div className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center gap-3 mb-6">
+
           <div className="flex items-center gap-2 md:contents">
-            <div className="flex-1 md:order-1 md:min-w-[240px] h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
-            <div className="w-11 h-11 md:order-2 md:w-48 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
-            <div className="w-11 h-11 md:order-3 md:w-48 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+
+            {/* Search Skeleton */}
+            <div className="flex-1 md:order-1 md:w-auto md:min-w-[240px] h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+
+            {/* Filter Skeleton */}
+            <div className="w-11 h-11 md:order-2 md:w-10 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+
+            {/* Export Skeleton */}
+            <div className="w-11 h-11 md:order-3 md:w-10 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+
           </div>
+
           <div className="flex items-center gap-2 md:contents">
-            <div className="flex-1 md:order-5 md:w-48 h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+
+            {/* Tambah Lokasi Skeleton */}
+            <div className="flex-1 md:order-5 md:flex-none md:w-48 h-11 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+
+            {/* Recycle Bin Skeleton */}
             <div className="w-11 h-11 md:order-4 md:w-10 md:h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl shrink-0" />
+
           </div>
+
         </div>
 
         {/* === ACCORDION & TABLE LIST SKELETON === */}
         <div className="space-y-6">
           {[1, 2, 3].map((groupIndex) => (
             <div key={groupIndex} className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden mb-6">
+
               {/* Group Header */}
               <div className="h-14 w-full bg-slate-300 dark:bg-slate-800 animate-pulse flex items-center px-4 md:px-5 justify-between">
                 <div className="flex items-center gap-3">
@@ -852,6 +868,7 @@ export default function UsulanLokasiPage() {
                   <div className="w-5 h-5 bg-slate-400/50 dark:bg-slate-700/50 rounded animate-pulse"></div>
                   <div className="h-4 w-32 bg-slate-400/50 dark:bg-slate-700/50 rounded animate-pulse"></div>
                 </div>
+
                 <div className="h-6 w-20 bg-slate-400/50 dark:bg-slate-700/50 rounded-full animate-pulse"></div>
               </div>
 
@@ -876,9 +893,11 @@ export default function UsulanLokasiPage() {
                   ></div>
                 ))}
               </div>
+
             </div>
           ))}
         </div>
+
       </div>
     );
   }
@@ -914,29 +933,32 @@ export default function UsulanLokasiPage() {
           </div>
 
           {/* Combined Filter Popover Button */}
-          <div className="shrink-0 md:relative md:order-2 md:w-48" ref={filterRef}>
+          <div className="shrink-0 md:relative md:order-2" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`relative w-11 h-11 md:w-full md:h-10 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-95 ${
+              className={`relative w-11 h-11 md:w-10 md:h-10 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-95 ${
                 activeFilterCount > 0
                   ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
                   : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
+              title="Filter"
             >
               <Filter className="w-4 h-4" />
-              <span className="hidden md:inline">Filter</span>
+
               {activeFilterCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
+                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:top-1.5 md:right-1.5"></span>
               )}
             </button>
 
             {/* Filter Popover Dropdown */}
             {isFilterOpen && (
               <div className="absolute right-0 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-40 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                   <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
                     <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Usulan Lokasi
                   </h4>
+
                   {activeFilterCount > 0 && (
                     <button
                       onClick={handleResetFilters}
@@ -979,12 +1001,10 @@ export default function UsulanLokasiPage() {
                     <option value="">Semua Kepemilikan</option>
                     <optgroup label="Perorangan">
                       <option value="Perorangan">Perorangan</option>
-                      <option value="Waris">Waris</option>
-                      <option value="Hibah">Hibah</option>
-                      <option value="Kuasa">Kuasa</option>
                     </optgroup>
                     <optgroup label="Badan Hukum">
                       <option value="PT">PT</option>
+                      <option value="CV">CV</option>
                       <option value="Yayasan">Yayasan</option>
                       <option value="Koperasi">Koperasi</option>
                     </optgroup>
@@ -996,6 +1016,7 @@ export default function UsulanLokasiPage() {
                   <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
                     Rentang Tanggal Dibuat
                   </label>
+
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <span className="text-[10px] text-gray-400 block mb-0.5">Dari</span>
@@ -1006,6 +1027,7 @@ export default function UsulanLokasiPage() {
                         className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
                       />
                     </div>
+
                     <div>
                       <span className="text-[10px] text-gray-400 block mb-0.5">Sampai</span>
                       <input
@@ -1026,6 +1048,7 @@ export default function UsulanLokasiPage() {
                     Terapkan Filter
                   </button>
                 </div>
+
               </div>
             )}
           </div>
@@ -1034,7 +1057,7 @@ export default function UsulanLokasiPage() {
           <button
             onClick={handleExportCSV}
             disabled={isExporting}
-            className="w-11 h-11 md:w-48 md:h-10 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-blue-950 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shrink-0 shadow-sm disabled:opacity-50 disabled:scale-100 md:order-3"
+            className="w-11 h-11 md:w-10 md:h-10 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:text-blue-950 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shrink-0 shadow-sm disabled:opacity-50 disabled:scale-100 md:order-3"
             title="Ekspor ke CSV"
           >
             {isExporting ? (
@@ -1044,7 +1067,15 @@ export default function UsulanLokasiPage() {
                 fill="none"
                 viewBox="0 0 24 24"
               >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+
                 <path
                   className="opacity-75"
                   fill="currentColor"
@@ -1054,7 +1085,6 @@ export default function UsulanLokasiPage() {
             ) : (
               <Download className="w-4 h-4" />
             )}
-            <span className="hidden md:inline text-xs font-bold whitespace-nowrap">Export CSV</span>
           </button>
         </div>
 
@@ -1077,12 +1107,14 @@ export default function UsulanLokasiPage() {
             title="Tempat Sampah (Recycle Bin)"
           >
             <Trash2 className="w-5 h-5" />
+
             {deletedCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center px-1 shadow-sm">
                 {deletedCount > 15 ? '15+' : deletedCount}
               </span>
             )}
           </button>
+
         </div>
       </div>
 

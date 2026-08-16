@@ -699,7 +699,7 @@ export default function AssessorFeedbackPage() {
               <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden flex flex-col h-[800px]">
 
                 {/* Chat Header */}
-                <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3 md:px-5 md:py-3.5 flex flex-wrap items-center justify-between gap-3 transition-colors rounded-t-xl">
+                <div className="bg-[#142B4D] dark:bg-slate-900 h-16 px-4 py-3 md:px-5 md:py-3.5 flex flex-wrap items-center justify-between gap-3 transition-colors rounded-t-xl">
                   <h3 className="text-white font-bold text-sm md:text-base flex items-center gap-2.5 min-w-0">
                     <MessagesSquare className="w-5 h-5 md:w-5.5 md:h-5.5 text-blue-400 shrink-0" />
 

@@ -775,7 +775,7 @@ export default function PengelompokanDashboard() {
         </div>
 
         {/* --- TABS --- */}
-        <div className="mb-5 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+        <div className="mb-5 mt-6 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
           <div className="flex gap-2 sm:flex-wrap">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id
@@ -795,7 +795,7 @@ export default function PengelompokanDashboard() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className={`flex items-center gap-1.5 ${isActive ? colors.text : 'text-gray-500 dark:text-gray-400'}`}>
-                      <TabIcon className="w-4 h-4" />
+                      <TabIcon className="w-4 h-13" />
                       <span className={`font-bold text-[13px] ${isActive ? colors.text : 'text-gray-700 dark:text-gray-200'}`}>
                         {tab.label}
                       </span>
@@ -823,13 +823,16 @@ export default function PengelompokanDashboard() {
         <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 shadow-sm">
           {/* Header bar */}
           <div className="flex items-center justify-between gap-3 bg-[#142B4D] dark:bg-slate-900 px-4 py-3 sm:px-6 text-white">
-            <div className="flex items-center gap-2 min-w-0">
-              <ActiveTabIcon className="w-4 h-4 flex-shrink-0" />
+            <div className="flex items-center gap-3 min-w-0">
+              <ActiveTabIcon className="w-5 h-10 shrink-0" />
+              <span className="shrink-0 text-white/80 font-bold">
+                List Usulan -
+              </span>
               <span className="truncate text-sm sm:text-base font-bold">
-                List Ulok - {activeTabConfig.label}
+                {activeTabConfig.label}
               </span>
             </div>
-            <span className="flex-shrink-0 text-xs font-semibold text-slate-300">{totalItems} usulan</span>
+            <span className="flex-shrink-0 text-[14px] font-semibold text-slate-300">{totalItems} usulan</span>
           </div>
 
           {/* Mobile: card list */}

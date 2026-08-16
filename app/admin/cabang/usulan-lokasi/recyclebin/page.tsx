@@ -746,7 +746,7 @@ export default function RecycleBinPage() {
                 </tbody>
               </table>
 
-              {/* MOBILE CARD VIEW */}\
+              {/* MOBILE CARD VIEW */}
               <div className="md:hidden flex flex-col gap-4 p-4 bg-gray-50/50 dark:bg-gray-950/30">
 
                 {/* MOBILE SELECT ALL */}
