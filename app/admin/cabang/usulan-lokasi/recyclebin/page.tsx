@@ -369,7 +369,7 @@ export default function RecycleBinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <div className="min-h-screen transition-colors duration-300">
         <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8">
           {/* === SKELETON: HEADER TOOLBAR === */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -408,8 +408,8 @@ export default function RecycleBinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
         
         {/* HEADER TOOLBAR */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

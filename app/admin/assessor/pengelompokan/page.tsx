@@ -130,41 +130,59 @@ function getTabColorClasses(id: TabId, active: boolean) {
 // Skeleton components (replace all loading spinners)
 // ---------------------------------------------------------------------------
 
-function SkeletonBlock({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-gray-200 dark:bg-gray-800 ${className}`} />
-}
-
 function TableRowSkeleton({ showScoreColumn }: { showScoreColumn: boolean }) {
   return (
-    <tr className="border-b border-gray-100 dark:border-gray-800">
+    <tr className="border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 animate-[pulse_1.5s_ease-in-out_infinite]">
+      {/* Nama ULOK */}
       <td className="p-4 pl-6">
-        <SkeletonBlock className="h-4 w-32 mb-2" />
-        <SkeletonBlock className="h-3 w-20" />
+        <div className="flex gap-2 items-start">
+          <div className="w-3.5 h-3.5 mt-1 bg-slate-200 dark:bg-slate-700 rounded-sm" />
+          <div className="space-y-2 flex-1">
+            <div className="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+            <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+          </div>
+        </div>
       </td>
+      {/* Cabang */}
       <td className="p-4">
-        <SkeletonBlock className="h-5 w-20 rounded-full" />
+        <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 rounded-md" />
       </td>
+      {/* Jenis */}
       <td className="p-4">
-        <SkeletonBlock className="h-4 w-16" />
+        <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
       </td>
+      {/* Tgl Dibuat */}
       <td className="p-4">
-        <SkeletonBlock className="h-3 w-20" />
+        <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
       </td>
+      {/* Last Review */}
       <td className="p-4">
-        <SkeletonBlock className="h-3 w-24" />
+        <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
       </td>
-      <td className="p-4">
+      {/* Progress / Score */}
+      <td className={showScoreColumn ? 'p-4 text-center' : 'p-4 w-52'}>
         {showScoreColumn ? (
-          <SkeletonBlock className="h-6 w-16 mx-auto" />
+          <div className="space-y-1 flex flex-col items-center">
+            <div className="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
+            <div className="h-2 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+          </div>
         ) : (
-          <SkeletonBlock className="h-2 w-40 rounded-full" />
+          <div className="space-y-2 w-full max-w-[180px]">
+            <div className="flex justify-between">
+              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+              <div className="h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+            <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full" />
+          </div>
         )}
       </td>
-      <td className="p-4">
-        <SkeletonBlock className="h-5 w-24 mx-auto rounded-full" />
+      {/* Status */}
+      <td className="p-4 text-center">
+        <div className="h-6 w-20 mx-auto bg-slate-200 dark:bg-slate-700 rounded-full" />
       </td>
-      <td className="p-4">
-        <SkeletonBlock className="h-6 w-6 mx-auto rounded" />
+      {/* Aksi */}
+      <td className="p-4 text-center">
+        <div className="h-8 w-8 mx-auto bg-slate-200 dark:bg-slate-700 rounded-lg" />
       </td>
     </tr>
   )
@@ -172,16 +190,32 @@ function TableRowSkeleton({ showScoreColumn }: { showScoreColumn: boolean }) {
 
 function CardSkeleton() {
   return (
-    <div className="p-4 space-y-3">
+    <div className="p-4 w-full bg-white dark:bg-gray-900 animate-[pulse_1.5s_ease-in-out_infinite]">
       <div className="flex items-start justify-between gap-2">
-        <SkeletonBlock className="h-4 w-40" />
-        <SkeletonBlock className="h-5 w-16 rounded-full" />
+        <div className="space-y-2 flex-1">
+          <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
       </div>
-      <SkeletonBlock className="h-3 w-24" />
-      <SkeletonBlock className="h-2 w-full rounded-full" />
-      <div className="flex gap-2">
-        <SkeletonBlock className="h-5 w-20 rounded-full" />
-        <SkeletonBlock className="h-5 w-16 rounded-full" />
+      <div className="flex gap-2 mt-3">
+        <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded-md" />
+        <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-md" />
+        <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
+      </div>
+      <div className="flex justify-between mt-3">
+        <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+        <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+      </div>
+      <div className="space-y-2 mt-4">
+        <div className="flex justify-between">
+          <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+        <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full" />
+      </div>
+      <div className="mt-4 flex justify-end">
+        <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded-lg" />
       </div>
     </div>
   )
@@ -426,6 +460,8 @@ export default function PengelompokanDashboard() {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const [selectedBadanHukum, setSelectedBadanHukum] = useState<string>('all')
+  const [startDate, setStartDate] = useState<string>('')
+  const [endDate, setEndDate] = useState<string>('')
   const [showFilterPopover, setShowFilterPopover] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
@@ -545,9 +581,30 @@ export default function PengelompokanDashboard() {
       const matchesBranch = selectedBranch === 'all' || item.profiles?.branches?.nama_cabang === selectedBranch
       const matchesBadanHukum = selectedBadanHukum === 'all' || item.jenis_badan_hukum === selectedBadanHukum
 
-      return matchesSearch && matchesBranch && matchesBadanHukum
+      let matchDate = true
+      if (startDate || endDate) {
+        if (!item.last_reviewed_at) {
+          matchDate = false
+        } else {
+          const reviewDate = new Date(item.last_reviewed_at)
+          reviewDate.setHours(0, 0, 0, 0)
+
+          if (startDate) {
+            const start = new Date(startDate)
+            start.setHours(0, 0, 0, 0)
+            if (reviewDate < start) matchDate = false
+          }
+          if (endDate) {
+            const end = new Date(endDate)
+            end.setHours(23, 59, 59, 999)
+            if (reviewDate > end) matchDate = false
+          }
+        }
+      }
+
+      return matchesSearch && matchesBranch && matchesBadanHukum && matchDate
     },
-    [queryLower, selectedBranch, selectedBadanHukum]
+    [queryLower, selectedBranch, selectedBadanHukum, startDate, endDate]
   )
 
   const filteredBaruMasuk = useMemo(() => data.baruMasuk.filter(applyAllFilters), [data.baruMasuk, applyAllFilters])
@@ -610,7 +667,20 @@ export default function PengelompokanDashboard() {
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1
   const displayedItems = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
-  const activeFilterCount = (selectedBranch !== 'all' ? 1 : 0) + (selectedBadanHukum !== 'all' ? 1 : 0)
+  const activeFilterCount = [
+    selectedBranch !== 'all' ? selectedBranch : null,
+    selectedBadanHukum !== 'all' ? selectedBadanHukum : null,
+    startDate,
+    endDate,
+  ].filter(Boolean).length
+
+  const handleResetFilters = () => {
+    setSelectedBranch('all')
+    setSelectedBadanHukum('all')
+    setStartDate('')
+    setEndDate('')
+    setCurrentPage(1)
+  }
 
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab)
@@ -628,186 +698,242 @@ export default function PengelompokanDashboard() {
         
         {/* --- HEADER--- */}
         {loading ? (
-          <div className="space-y-2 animate-pulse">
-            <div className="h-7 md:h-8 w-56 md:w-72 bg-slate-200 dark:bg-slate-800 rounded-md" />
-            <div className="h-3.5 md:h-4 w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-md" />
-          </div>
+          <>
+            {/* Title Skeleton */}
+            <div className="space-y-2 mb-6 animate-pulse">
+              <div className="h-7 md:h-8 w-56 md:w-72 bg-slate-200 dark:bg-slate-800 rounded-md" />
+              <div className="h-3.5 md:h-4 w-64 md:w-96 max-w-full bg-slate-200 dark:bg-slate-800 rounded-md" />
+            </div>
+            {/* Action Bar Skeleton */}
+            <div className="mb-4 flex flex-row items-center gap-2 animate-pulse">
+              <div className="h-11 sm:h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-11 w-11 sm:h-10 sm:w-24 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-11 w-11 sm:h-10 sm:w-24 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-11 w-11 sm:h-10 sm:w-28 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+            </div>
+          </>
         ) : (
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-              Progress ULOK
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
-              Evaluasi berkas usulan lokasi berdasarkan progress pengunggahan dokumen dan penilaian kelayakan.
-            </p>
-          </div>
-        )}
+          <>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+                Progress ULOK
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
+                Evaluasi berkas usulan lokasi berdasarkan progress pengunggahan dokumen dan penilaian kelayakan.
+              </p>
+            </div>
 
-        {/* --- SEARCH + ACTIONS --- */}
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* --- SEARCH + ACTIONS --- */}
+            <div className="mb-4 flex flex-row items-center gap-2 relative z-50">
+          {/* Search */}
           <div className="relative flex-1 min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Cari berdasarkan lokasi, pemilik, cabang, dll..."
+              placeholder="Cari lokasi, pemilik, cabang..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-2.5 pl-10 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+              className="w-full h-11 sm:h-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Filter popover */}
-            <div className="relative">
-              <button
-                onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
-              >
-                <Filter className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                <span className="hidden sm:inline">Filter</span>
-                {activeFilterCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-[10px] font-black text-white select-none">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
+          {/* Filter */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setShowFilterPopover(!showFilterPopover)}
+              className={`relative flex h-11 w-11 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl border transition-all active:scale-95 shadow-sm sm:px-4 ${
+                activeFilterCount > 0
+                  ? 'border-[#142B4D] bg-blue-50/50 text-[#142B4D] dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+              }`}
+              title="Filter Data"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-semibold">Filter</span>
+              {activeFilterCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
+              )}
+            </button>
 
-              {showFilterPopover && (
-                <>
-                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowFilterPopover(false)} />
-                  <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-150 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shadow-xl z-50 space-y-4">
-                    <h4 className="text-sm font-bold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-850">
-                      Filter Usulan Lokasi
+            {showFilterPopover && (
+              <>
+                <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowFilterPopover(false)} />
+                <div className="absolute -right-13 mt-2 w-74 -mr-13 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <h4 className="flex items-center gap-2 text-sm font-bold text-gray-950 dark:text-white">
+                      <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Usulan
                     </h4>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Asal Cabang</label>
-                      <select
-                        value={selectedBranch}
-                        onChange={(e) => {
-                          setSelectedBranch(e.target.value)
-                          setCurrentPage(1)
-                        }}
-                        className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      >
-                        <option value="all">Semua Cabang</option>
-                        {allBranches.map((br) => (
-                          <option key={br} value={br}>
-                            {br}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Jenis Badan Hukum</label>
-                      <select
-                        value={selectedBadanHukum}
-                        onChange={(e) => {
-                          setSelectedBadanHukum(e.target.value)
-                          setCurrentPage(1)
-                        }}
-                        className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      >
-                        <option value="all">Semua Jenis</option>
-                        {BADAN_HUKUM_OPTIONS.map((bh) => (
-                          <option key={bh} value={bh}>
-                            {bh}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="pt-2 flex gap-2">
+                    {activeFilterCount > 0 && (
                       <button
-                        onClick={() => {
-                          setSelectedBranch('all')
-                          setSelectedBadanHukum('all')
-                          setCurrentPage(1)
-                          setShowFilterPopover(false)
-                        }}
-                        disabled={activeFilterCount === 0}
-                        className="flex-1 py-1.5 text-xs font-bold text-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-950/40 rounded-xl disabled:opacity-40 transition cursor-pointer"
+                        onClick={handleResetFilters}
+                        className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
                       >
-                        Reset Filter
+                        Reset
                       </button>
-                      <button
-                        onClick={() => setShowFilterPopover(false)}
-                        className="flex-1 py-1.5 text-xs font-bold text-center text-gray-700 dark:text-gray-250 bg-gray-100 dark:bg-gray-850 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-xl transition cursor-pointer"
-                      >
-                        Tutup
-                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Asal Cabang</label>
+                    <select
+                      value={selectedBranch}
+                      onChange={(e) => {
+                        setSelectedBranch(e.target.value)
+                        setCurrentPage(1)
+                      }}
+                      className="w-full px-3 py-2 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
+                    >
+                      <option value="all">Semua Cabang</option>
+                      {allBranches.map((br) => (
+                        <option key={br} value={br}>{br}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Jenis Badan Hukum</label>
+                    <select
+                      value={selectedBadanHukum}
+                      onChange={(e) => {
+                        setSelectedBadanHukum(e.target.value)
+                        setCurrentPage(1)
+                      }}
+                      className="w-full px-3 py-2 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
+                    >
+                      <option value="all">Semua Jenis</option>
+                      {BADAN_HUKUM_OPTIONS.map((bh) => (
+                        <option key={bh} value={bh}>{bh}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Terakhir Direview (Last Review)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-gray-400 block mb-0.5">Dari</span>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => {
+                            setStartDate(e.target.value)
+                            setCurrentPage(1)
+                          }}
+                          className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-400 block mb-0.5">Sampai</span>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => {
+                            setEndDate(e.target.value)
+                            setCurrentPage(1)
+                          }}
+                          className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
+                        />
+                      </div>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
 
-            {/* Export */}
-            <button
-              onClick={handleExportCSV}
-              disabled={isExporting}
-              title="Ekspor Data ke CSV"
-              className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition active:scale-95 cursor-pointer disabled:scale-100"
-            >
-              {isExporting ? (
-                <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
-              ) : (
-                <Download className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-              )}
-              <span className="hidden sm:inline">Export</span>
-            </button>
-
-            {/* Refresh */}
-            <button
-              onClick={fetchData}
-              disabled={mounted ? loading : false}
-              title="Muat Ulang Data"
-              className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-850 disabled:opacity-50 transition active:scale-95 cursor-pointer"
-            >
-              <RefreshCw className={`w-4 h-4 text-slate-600 dark:text-slate-400 ${loading && mounted ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowFilterPopover(false)}
+                      className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                    >
+                      Terapkan Filter
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
 
-        {/* --- TABS --- */}
+          {/* Export */}
+          <button
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            title="Ekspor Data ke CSV"
+            className="flex h-11 w-11 shrink-0 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-95 disabled:scale-100 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 sm:px-4"
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin text-slate-600 dark:text-slate-300" />
+            ) : (
+              <Download className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            )}
+            <span className="hidden sm:inline text-sm font-semibold">Export</span>
+          </button>
+
+          {/* Refresh */}
+          <button
+            onClick={fetchData}
+            disabled={mounted ? loading : false}
+            title="Muat Ulang Data"
+            className="flex h-11 w-11 shrink-0 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 sm:px-4"
+          >
+            <RefreshCw className={`h-4 w-4 text-slate-600 dark:text-slate-400 ${loading && mounted ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline text-sm font-semibold">Refresh</span>
+          </button>
+        </div>
+      </>
+    )}
+
+    {/* --- TABS --- */}
         <div className="mb-5 mt-6 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
           <div className="flex gap-2 sm:flex-wrap">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id
-              const colors = getTabColorClasses(tab.id, isActive)
-              const TabIcon = tab.icon
-              const count = tabCounts[tab.id]
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex-shrink-0 w-[180px] sm:w-auto sm:flex-1 sm:min-w-[170px] rounded-xl border px-4 py-3 text-left transition-all focus:outline-none ${
-                    isActive
-                      ? `${colors.border} ${colors.bg} border-2 shadow-sm`
-                      : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60'
-                  }`}
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[180px] sm:w-auto sm:flex-1 sm:min-w-[170px] rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 animate-[pulse_1.5s_ease-in-out_infinite]"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className={`flex items-center gap-1.5 ${isActive ? colors.text : 'text-gray-500 dark:text-gray-400'}`}>
-                      <TabIcon className="w-4 h-13" />
-                      <span className={`font-bold text-[13px] ${isActive ? colors.text : 'text-gray-700 dark:text-gray-200'}`}>
-                        {tab.label}
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700" />
+                      <div className="w-20 h-4 rounded bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <div className="w-7 h-4 rounded-full bg-slate-200 dark:bg-slate-700" />
+                  </div>
+                  <div className="w-28 h-2.5 rounded bg-slate-200 dark:bg-slate-700" />
+                </div>
+              ))
+            ) : (
+              TABS.map((tab) => {
+                const isActive = activeTab === tab.id
+                const colors = getTabColorClasses(tab.id, isActive)
+                const TabIcon = tab.icon
+                const count = tabCounts[tab.id]
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex-shrink-0 w-[180px] sm:w-auto sm:flex-1 sm:min-w-[170px] rounded-xl border px-4 py-3 text-left transition-all focus:outline-none ${
+                      isActive
+                        ? `${colors.border} ${colors.bg} border-2 shadow-sm`
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className={`flex items-center gap-1.5 ${isActive ? colors.text : 'text-gray-500 dark:text-gray-400'}`}>
+                        <TabIcon className="w-4 h-13" />
+                        <span className={`font-bold text-[13px] ${isActive ? colors.text : 'text-gray-700 dark:text-gray-200'}`}>
+                          {tab.label}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black select-none ${colors.badge}`}>
+                        {count}
                       </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-black select-none ${colors.badge}`}>
-                      {count}
-                    </span>
-                  </div>
-                  <p className="text-[10.5px] text-gray-400 mt-0.5 font-normal truncate">{tab.subtitle}</p>
-                </button>
-              )
-            })}
+                    <p className="text-[10.5px] text-gray-400 -mt-3 mb-3 font-normal truncate">{tab.subtitle}</p>
+                  </button>
+                )
+              })
+            )}
           </div>
         </div>
 
@@ -822,18 +948,28 @@ export default function PengelompokanDashboard() {
         {/* --- CONTENT CARD --- */}
         <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 shadow-sm">
           {/* Header bar */}
-          <div className="flex items-center justify-between gap-3 bg-[#142B4D] dark:bg-slate-900 px-4 py-3 sm:px-6 text-white">
-            <div className="flex items-center gap-3 min-w-0">
-              <ActiveTabIcon className="w-5 h-10 shrink-0" />
-              <span className="shrink-0 text-white/80 font-bold">
-                List Usulan -
-              </span>
-              <span className="truncate text-sm sm:text-base font-bold">
-                {activeTabConfig.label}
+          {loading ? (
+            <div className="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-gray-100 dark:border-gray-800 animate-pulse w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-6 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="w-40 h-5 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+              <div className="w-16 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 bg-[#142B4D] dark:bg-slate-900 px-4 py-3 sm:px-6 text-white w-full">
+              <div className="flex items-center gap-3 min-w-0">
+                <ActiveTabIcon className="w-5 h-10 shrink-0" />
+                <span className="shrink-0 text-white/80 font-bold">List Usulan -</span>
+                <span className="truncate text-sm sm:text-base font-bold">
+                  {activeTabConfig.label}
+                </span>
+              </div>
+              <span className="flex-shrink-0 text-[14px] font-semibold text-slate-300">
+                {totalItems} usulan
               </span>
             </div>
-            <span className="flex-shrink-0 text-[14px] font-semibold text-slate-300">{totalItems} usulan</span>
-          </div>
+          )}
 
           {/* Mobile: card list */}
           <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
@@ -929,20 +1065,74 @@ export default function PengelompokanDashboard() {
           {/* Desktop: table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className={loading ? "animate-pulse" : ""}>
                 <tr className="bg-gray-50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
-                  <th className="p-4 pl-6">Nama ULOK</th>
-                  <th className="p-4">Asal Cabang</th>
-                  <th className="p-4">Jenis</th>
-                  <th className="p-4">Tanggal Dibuat</th>
-                  <th className="p-4">Last Review</th>
+                  <th className="p-4 pl-6">
+                    {loading ? (
+                      <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Nama ULOK"
+                    )}
+                  </th>
+                  <th className="p-4">
+                    {loading ? (
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Asal Cabang"
+                    )}
+                  </th>
+                  <th className="p-4">
+                    {loading ? (
+                      <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Jenis"
+                    )}
+                  </th>
+                  <th className="p-4">
+                    {loading ? (
+                      <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Tanggal Dibuat"
+                    )}
+                  </th>
+                  <th className="p-4">
+                    {loading ? (
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Last Review"
+                    )}
+                  </th>
                   {showScoreColumn ? (
-                    <th className="p-4 text-center font-bold text-slate-800 dark:text-white">Skor Rekomendasi SAW</th>
+                    <th className="p-4 text-center font-bold text-slate-800 dark:text-white">
+                      {loading ? (
+                        <div className="h-3 w-32 mx-auto bg-slate-200 dark:bg-slate-700 rounded" />
+                      ) : (
+                        "Skor Rekomendasi SAW"
+                      )}
+                    </th>
                   ) : (
-                    <th className="p-4 w-52 text-left">Progress Upload Dokumen</th>
+                    <th className="p-4 w-52 text-left">
+                      {loading ? (
+                        <div className="h-3 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+                      ) : (
+                        "Progress Upload Dokumen"
+                      )}
+                    </th>
                   )}
-                  <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-center w-28">Aksi</th>
+                  <th className="p-4 text-center">
+                    {loading ? (
+                      <div className="h-3 w-16 mx-auto bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Status"
+                    )}
+                  </th>
+                  <th className="p-4 text-center w-28">
+                    {loading ? (
+                      <div className="h-3 w-12 mx-auto bg-slate-200 dark:bg-slate-700 rounded" />
+                    ) : (
+                      "Aksi"
+                    )}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
