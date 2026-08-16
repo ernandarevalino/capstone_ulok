@@ -49,7 +49,7 @@ export default function HeaderMobile() {
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';
 
   return (
-    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50 h-16">
+    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-[100] h-16">
       <div className="flex items-center justify-between px-4 h-full">
         {/* === UTAMA: LOGO & ROLE === */}
         <Link href="/admin/assessor" className="flex items-center hover:opacity-90 transition-opacity">

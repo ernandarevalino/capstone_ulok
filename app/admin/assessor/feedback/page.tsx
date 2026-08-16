@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getAssessorFeedbackSubmissions } from '@/actions/assessor'
 import { createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
-import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function AssessorFeedbackPage() {
@@ -18,11 +18,35 @@ export default function AssessorFeedbackPage() {
 
   // New states for Tab-Based Chat UI
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeUlok, setActiveUlok] = useState<any>(null)
   const [chatInput, setChatInput] = useState('')
   const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({})
+
+  const [selectedStatus, setSelectedStatus] = useState("")
+  const [selectedKepemilikan, setSelectedKepemilikan] = useState("")
+  const [selectedCabang, setSelectedCabang] = useState("")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const filterRef = React.useRef<HTMLDivElement>(null)
+
+  // Derive active filter count
+  const activeFilterCount = [
+    selectedStatus,
+    selectedKepemilikan,
+    selectedCabang,
+    startDate,
+    endDate,
+  ].filter(Boolean).length
+
+  const handleResetFilters = () => {
+    setSelectedStatus("")
+    setSelectedKepemilikan("")
+    setSelectedCabang("")
+    setStartDate("")
+    setEndDate("")
+    setSearchQuery("")
+  }
 
   // Load read timestamps from localStorage on mount
   useEffect(() => {
@@ -35,6 +59,19 @@ export default function AssessorFeedbackPage() {
       }
     }
   }, [])
+
+  // Click outside to close filter dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [filterRef])
 
   const handleSelectTab = (sub: any) => {
     setActiveUlok(sub)
@@ -165,17 +202,60 @@ export default function AssessorFeedbackPage() {
       })
   }, [submissions])
 
+  const uniqueBranches = React.useMemo(() => {
+    const branches = processedSubmissions
+      .map((sub) => sub.profiles?.branches?.nama_cabang)
+      .filter(Boolean)
+    return Array.from(new Set(branches))
+  }, [processedSubmissions])
+
   const filteredTabSubmissions = React.useMemo(() => {
     return processedSubmissions.filter((sub) => {
-      const locationLabel = sub.namaCabang
-        ? `${sub.nama_lokasi} - ${sub.namaCabang}`
-        : sub.nama_lokasi
-      const matchSearch = locationLabel?.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchSearch =
+        !searchQuery ||
+        sub.nama_lokasi?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchStatus =
-        statusFilter === 'all' || sub.status?.toLowerCase() === statusFilter.toLowerCase()
-      return matchSearch && matchStatus
-    })
-  }, [processedSubmissions, searchQuery, statusFilter])
+        !selectedStatus ||
+        sub.status?.toLowerCase() === selectedStatus.toLowerCase();
+      const matchKepemilikan =
+        !selectedKepemilikan || sub.jenis_badan_hukum === selectedKepemilikan;
+      const matchCabang =
+        !selectedCabang ||
+        sub.profiles?.branches?.nama_cabang === selectedCabang;
+
+      let matchDate = true;
+      if (startDate || endDate) {
+        const subDate = new Date(sub.created_at);
+        subDate.setHours(0, 0, 0, 0);
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (subDate < start) matchDate = false;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (subDate > end) matchDate = false;
+        }
+      }
+
+      return (
+        matchSearch &&
+        matchStatus &&
+        matchKepemilikan &&
+        matchCabang &&
+        matchDate
+      );
+    });
+  }, [
+    processedSubmissions,
+    searchQuery,
+    selectedStatus,
+    selectedKepemilikan,
+    selectedCabang,
+    startDate,
+    endDate,
+  ]);
 
   useEffect(() => {
     if (filteredTabSubmissions.length === 0) {
@@ -269,6 +349,16 @@ export default function AssessorFeedbackPage() {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'in review': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400'
+      case 'revisi': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400'
+      case 'approved': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+      case 'rejected': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400'
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+    }
+  }
+
   return (
     <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       <div className="space-y-6">
@@ -354,7 +444,7 @@ export default function AssessorFeedbackPage() {
         ) : (
           <>
             {/* ACTION BAR: SEARCH, FILTER & REFRESH */}
-            <div className="flex flex-row items-center gap-2 mb-3 relative z-20">
+            <div className="flex flex-row items-center gap-2 mb-3 relative z-50">
               {/* Search */}
               <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -368,35 +458,135 @@ export default function AssessorFeedbackPage() {
               </div>
 
               {/* Filter */}
-              <div className="relative shrink-0">
+              <div className="relative shrink-0" ref={filterRef}>
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`w-11 h-11 sm:w-auto sm:h-10 sm:px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 ${
-                    statusFilter !== 'all'
-                      ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50'
-                      : 'border-gray-200 dark:border-gray-800'
+                  className={`relative w-11 h-11 sm:w-auto sm:h-10 sm:px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-95 ${
+                    activeFilterCount > 0
+                      ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                      : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
-                  title="Filter Status"
+                  title="Filter Feedback"
                 >
                   <Filter className="w-4 h-4" />
                   <span className="hidden sm:inline">Filter</span>
+                  {activeFilterCount > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
+                  )}
                 </button>
 
                 {isFilterOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-xl z-30 py-2">
-                    {['all', 'In Review', 'Revisi', 'Approved'].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => { setStatusFilter(status); setIsFilterOpen(false) }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                          statusFilter === status
-                            ? 'font-bold text-[#142B4D] dark:text-blue-400'
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}
+                  <div className="absolute -right-13 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Feedback
+                      </h4>
+                      {activeFilterCount > 0 && (
+                        <button
+                          onClick={handleResetFilters}
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Reset
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Status Filter */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                        Status Assessor
+                      </label>
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
                       >
-                        {status === 'all' ? 'Semua Status' : status}
+                        <option value="">Semua Status</option>
+                        <option value="In Review">Sedang Review</option>
+                        <option value="Revisi">Butuh Revisi</option>
+                        <option value="Approved">Disetujui</option>
+                      </select>
+                    </div>
+
+                    {/* Asal Cabang Filter */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                        Asal Cabang
+                      </label>
+                      <select
+                        value={selectedCabang}
+                        onChange={(e) => setSelectedCabang(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      >
+                        <option value="">Semua Cabang</option>
+                        {uniqueBranches.map((cabang) => (
+                          <option key={cabang} value={cabang}>
+                            {cabang}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Kepemilikan Filter */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                        Jenis Badan Hukum
+                      </label>
+                      <select
+                        value={selectedKepemilikan}
+                        onChange={(e) => setSelectedKepemilikan(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      >
+                        <option value="">Semua Kepemilikan</option>
+                        <optgroup label="Perorangan">
+                          <option value="Perorangan">Perorangan</option>
+                          <option value="Waris">Waris</option>
+                          <option value="Hibah">Hibah</option>
+                          <option value="Kuasa">Kuasa</option>
+                        </optgroup>
+                        <optgroup label="Badan Hukum">
+                          <option value="PT">PT</option>
+                          <option value="Yayasan">Yayasan</option>
+                          <option value="Koperasi">Koperasi</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Date Range Filter */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                        Rentang Tanggal Dibuat
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] text-gray-400 block mb-0.5">Dari</span>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-400 block mb-0.5">Sampai</span>
+                          <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        onClick={() => setIsFilterOpen(false)}
+                        className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                      >
+                        Terapkan Filter
                       </button>
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -441,10 +631,6 @@ export default function AssessorFeedbackPage() {
                       return !isMyMessage && msgTime > lastReadTime;
                     }).length;
 
-                    const locationLabel = sub.namaCabang
-                      ? `${sub.nama_lokasi} - ${sub.namaCabang}`
-                      : sub.nama_lokasi
-
                     return (
                       <div
                         key={sub.id}
@@ -452,7 +638,7 @@ export default function AssessorFeedbackPage() {
                       >
                         {/* UNREAD COUNTER BADGE (TOP-LEFT) */}
                         {unreadCount > 0 && (
-                          <span className="absolute -top-1 -left-1 z-50 h-5 min-w-[20px] px-1.5 bg-red-500 text-white border-2 border-white dark:border-gray-900 rounded-full text-[9px] font-black flex items-center justify-center shadow-md animate-pulse">
+                          <span className="absolute -top-1 -left-1 z-20 h-5 min-w-[20px] px-1.5 bg-red-500 text-white border-2 border-white dark:border-gray-900 rounded-full text-[9px] font-black flex items-center justify-center shadow-md animate-pulse">
                             {unreadCount > 99 ? '99+' : unreadCount}
                           </span>
                         )}
@@ -467,9 +653,8 @@ export default function AssessorFeedbackPage() {
                         >
                           <div className="flex items-start justify-between gap-2 w-full">
                             <h4 className="font-bold text-sm truncate text-gray-900 dark:text-gray-100">
-                              {locationLabel}
+                              {sub.nama_lokasi}
                             </h4>
-
                             <span className="bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap shrink-0">
                               {sub.allCommentsSorted?.length || 0}
                               <span className="hidden sm:inline"> Pesan</span>
@@ -483,12 +668,16 @@ export default function AssessorFeedbackPage() {
                             {sub.lastComment?.message || ""}
                           </p>
 
-                          <p className="text-[10px] text-gray-500 flex items-center mt-0.5 font-medium">
-                            Status:{" "}
-                            <span className="font-bold ml-1 text-gray-700 dark:text-gray-300">
+                          {/* NEW: Cabang Name + Colored Status Badge */}
+                          <div className="flex items-center gap-1.5 mt-0.5 w-full overflow-hidden">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium truncate shrink-0">
+                              {sub.namaCabang || "Cabang Pusat"}
+                            </span>
+                            <span className="text-[10px] text-gray-300 dark:text-gray-600 shrink-0">•</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap shrink-0 ${getStatusColor(sub.status)}`}>
                               {sub.status}
                             </span>
-                          </p>
+                          </div>
                         </button>
                       </div>
                     );

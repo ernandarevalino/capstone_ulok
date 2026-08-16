@@ -1,10 +1,410 @@
 'use client'
 
-import React, { useEffect, useState, useTransition, useMemo } from 'react'
+import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
-import { Download, FilePlus, Clock, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
+import {
+  Download,
+  FilePlus,
+  Clock,
+  Sparkles,
+  AlertTriangle,
+  CheckSquare,
+  Search,
+  Filter,
+  RefreshCw,
+  Eye,
+  FileSearch,
+  X,
+  Check,
+  AlertCircle,
+  ClipboardList,
+  Inbox,
+  Loader2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+
+type TabId = 'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'
+
+const BADAN_HUKUM_OPTIONS = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
+const ITEMS_PER_PAGE = 10
+
+const TABS: {
+  id: TabId
+  label: string
+  subtitle: string
+  icon: React.ElementType
+}[] = [
+  { id: 'patutDilihat', label: 'Patut Dilihat', subtitle: 'Rekomendasi Prioritas', icon: Sparkles },
+  { id: 'baruMasuk', label: 'Baru Masuk', subtitle: 'Usulan Baru (Draft)', icon: FilePlus },
+  { id: 'antreanAktif', label: 'Antrean Aktif', subtitle: 'Sedang Proses Review', icon: Clock },
+  { id: 'perluRevisi', label: 'Perlu Revisi', subtitle: 'Dikembalikan ke Cabang', icon: AlertTriangle },
+  { id: 'selesai', label: 'Selesai Dinilai', subtitle: 'Approved & Rejected', icon: CheckSquare },
+]
+
+// ---------------------------------------------------------------------------
+// Small formatting / style helpers
+// ---------------------------------------------------------------------------
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  const datePart = formatDate(value)
+  const timePart = date
+    .toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+    .replace(/\./g, ':')
+  return `${datePart}, ${timePart} WIB`
+}
+
+function getProgressColorClass(persentase: number) {
+  if (persentase >= 100) return 'bg-emerald-500'
+  if (persentase >= 60) return 'bg-blue-600'
+  if (persentase >= 20) return 'bg-amber-500'
+  return 'bg-rose-500'
+}
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case 'Approved':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
+    case 'Revisi':
+      return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50'
+    case 'Rejected':
+      return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
+    case 'In Review':
+      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50'
+    case 'Draft':
+      return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50'
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+  }
+}
+
+function getTabColorClasses(id: TabId, active: boolean) {
+  const palette: Record<TabId, { border: string; text: string; bg: string; badge: string }> = {
+    baruMasuk: {
+      border: 'border-blue-600 dark:border-blue-500',
+      text: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+    },
+    antreanAktif: {
+      border: 'border-amber-600 dark:border-amber-500',
+      text: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-950/30',
+      badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+    },
+    patutDilihat: {
+      border: 'border-purple-600 dark:border-purple-500',
+      text: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-50 dark:bg-purple-950/30',
+      badge: 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
+    },
+    perluRevisi: {
+      border: 'border-rose-600 dark:border-rose-500',
+      text: 'text-rose-600 dark:text-rose-400',
+      bg: 'bg-rose-50 dark:bg-rose-950/30',
+      badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
+    },
+    selesai: {
+      border: 'border-emerald-600 dark:border-emerald-500',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+      badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    },
+  }
+  return palette[id]
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton components (replace all loading spinners)
+// ---------------------------------------------------------------------------
+
+function SkeletonBlock({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-gray-200 dark:bg-gray-800 ${className}`} />
+}
+
+function TableRowSkeleton({ showScoreColumn }: { showScoreColumn: boolean }) {
+  return (
+    <tr className="border-b border-gray-100 dark:border-gray-800">
+      <td className="p-4 pl-6">
+        <SkeletonBlock className="h-4 w-32 mb-2" />
+        <SkeletonBlock className="h-3 w-20" />
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-5 w-20 rounded-full" />
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-4 w-16" />
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-3 w-20" />
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-3 w-24" />
+      </td>
+      <td className="p-4">
+        {showScoreColumn ? (
+          <SkeletonBlock className="h-6 w-16 mx-auto" />
+        ) : (
+          <SkeletonBlock className="h-2 w-40 rounded-full" />
+        )}
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-5 w-24 mx-auto rounded-full" />
+      </td>
+      <td className="p-4">
+        <SkeletonBlock className="h-6 w-6 mx-auto rounded" />
+      </td>
+    </tr>
+  )
+}
+
+function CardSkeleton() {
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <SkeletonBlock className="h-4 w-40" />
+        <SkeletonBlock className="h-5 w-16 rounded-full" />
+      </div>
+      <SkeletonBlock className="h-3 w-24" />
+      <SkeletonBlock className="h-2 w-full rounded-full" />
+      <div className="flex gap-2">
+        <SkeletonBlock className="h-5 w-20 rounded-full" />
+        <SkeletonBlock className="h-5 w-16 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Checklist panel (shared by desktop accordion row + mobile card expansion)
+// ---------------------------------------------------------------------------
+
+function ChecklistList({
+  item,
+  downloadingDocName,
+  onDownload,
+}: {
+  item: any
+  downloadingDocName: string | null
+  onDownload: (url: string, filename: string) => void
+}) {
+  if (!item.checklistStatus || item.checklistStatus.length === 0) {
+    return (
+      <div className="col-span-full py-4 text-center text-xs text-gray-400 italic">
+        Tidak ada data checklist wajib untuk badan hukum ini.
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {item.checklistStatus.map((doc: any, idx: number) => {
+        const isUploaded = doc.is_uploaded
+        const isVerified = !!doc.is_verified
+
+        let rowClass = ''
+        let IconComponent = X
+        let iconWrapClass = ''
+        let textClass = ''
+        let badgeText = ''
+        let badgeClass = ''
+
+        if (!isUploaded) {
+          rowClass =
+            'bg-gray-50/40 dark:bg-gray-950/10 border-gray-150 dark:border-gray-900/40 hover:border-gray-250 dark:hover:border-gray-800'
+          IconComponent = X
+          iconWrapClass =
+            'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-900/60'
+          textClass = 'text-gray-400 dark:text-gray-500'
+          badgeText = 'BELUM TERUNGGAH'
+          badgeClass =
+            'bg-gray-100 dark:bg-gray-900/50 text-gray-500 dark:text-gray-450 border border-gray-200 dark:border-gray-800/80'
+        } else if (!isVerified) {
+          rowClass =
+            'bg-amber-50/30 dark:bg-amber-950/10 border-amber-100/80 dark:border-amber-900/30 hover:border-amber-250 dark:hover:border-amber-800'
+          IconComponent = AlertTriangle
+          iconWrapClass = 'text-amber-500 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40'
+          textClass = 'text-gray-800 dark:text-gray-205'
+          badgeText = 'BELUM SESUAI'
+          badgeClass =
+            'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
+        } else {
+          rowClass =
+            'bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-100/80 dark:border-emerald-900/30 hover:border-emerald-250 dark:hover:border-emerald-800'
+          IconComponent = Check
+          iconWrapClass = 'text-emerald-500 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/40'
+          textClass = 'text-gray-800 dark:text-gray-205'
+          badgeText = 'SUDAH SESUAI'
+          badgeClass =
+            'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-250 dark:border-emerald-900/50'
+        }
+
+        return (
+          <div
+            key={idx}
+            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${rowClass}`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${iconWrapClass}`}>
+                <IconComponent className="w-3 h-3" strokeWidth={3} />
+              </span>
+              <span className={`text-xs font-semibold truncate ${textClass}`} title={doc.nama_dokumen}>
+                {doc.nama_dokumen}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+              {doc.is_negotiable && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200/40 dark:border-amber-900/40 select-none">
+                  Opsional
+                </span>
+              )}
+
+              <div className="flex items-center gap-1.5 ml-2">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${badgeClass}`}
+                >
+                  {badgeText}
+                </span>
+                {isUploaded && doc.file_url && (
+                  <div className="flex gap-1">
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
+                      title="Lihat Berkas"
+                    >
+                      <Eye className="w-3 h-3" />
+                    </a>
+                    <button
+                      type="button"
+                      disabled={downloadingDocName === doc.nama_dokumen}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDownload(doc.file_url!, doc.nama_dokumen)
+                      }}
+                      className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                      title="Unduh Berkas"
+                    >
+                      {downloadingDocName === doc.nama_dokumen ? (
+                        <Loader2 className="w-3 h-3 animate-spin text-blue-900 dark:text-blue-500" />
+                      ) : (
+                        <Download className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+function ChecklistPanel({
+  item,
+  downloadingDocName,
+  onDownload,
+}: {
+  item: any
+  downloadingDocName: string | null
+  onDownload: (url: string, filename: string) => void
+}) {
+  return (
+    <div className="bg-white dark:bg-gray-950 rounded-2xl p-5 border border-gray-200/60 dark:border-gray-800/85 shadow-sm space-y-4">
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-850 pb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h4 className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white">
+            <ClipboardList className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            Status Checklist Dokumen ({item.persentase}% - {item.numerator}/{item.denominator} Terupload)
+          </h4>
+          <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            Terakhir direview oleh:{' '}
+            <strong className="font-semibold text-slate-800 dark:text-slate-100">
+              {item.reviewer_name || '-'}
+            </strong>
+          </span>
+        </div>
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          Jenis: {item.jenis_badan_hukum}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <ChecklistList item={item} downloadingDocName={downloadingDocName} onDownload={onDownload} />
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Progress / status cells shared by desktop table + mobile card
+// ---------------------------------------------------------------------------
+
+function ProgressCell({ item, activeTab }: { item: any; activeTab: TabId }) {
+  if (activeTab === 'selesai') {
+    return item.saw?.final_score !== undefined && item.saw?.final_score !== null ? (
+      <div className="inline-flex flex-col items-center">
+        <span className="font-mono text-base font-extrabold text-purple-700 dark:text-purple-400">
+          {item.saw.final_score.toFixed(3)}
+        </span>
+        <span className="text-[10px] text-gray-400 font-medium">SPK SAW Rank Score</span>
+      </div>
+    ) : (
+      <span className="text-xs text-gray-400 italic">Skor Belum Dihitung</span>
+    )
+  }
+
+  return (
+    <div className="space-y-1.5 w-full">
+      <div className="flex justify-between items-center text-[11px] font-semibold gap-1">
+        <span className="text-gray-500 dark:text-gray-400 font-medium text-[11px]">
+          {item.numerator}/{item.denominator} Dokumen Terupload
+        </span>
+        <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px]">
+          {item.persentase.toFixed(1)}%
+        </span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden shadow-inner">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${getProgressColorClass(item.persentase)}`}
+          style={{ width: `${item.persentase}%` }}
+        />
+      </div>
+      {activeTab === 'patutDilihat' && (
+        <div className="mt-2 bg-gradient-to-br from-purple-50 to-slate-50 dark:from-purple-950/20 dark:to-slate-900/20 border border-purple-100 dark:border-purple-900/50 shadow-sm rounded-xl p-2.5 space-y-1">
+          <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-semibold text-[10px]">
+            <Sparkles className="w-3 h-3" />
+            <span>{item.recommendation_reason || 'Alas hak aman & harga sewa ramah anggaran'}</span>
+          </div>
+          <div className="text-[9px] font-medium text-purple-800 dark:text-purple-300">
+            Sewa: {item.harga_sewa ? `Rp ${item.harga_sewa.toLocaleString('id-ID')}` : 'N/A'}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 
 export default function PengelompokanDashboard() {
   const router = useRouter()
@@ -17,28 +417,26 @@ export default function PengelompokanDashboard() {
     antreanAktif: [],
     patutDilihat: [],
     perluRevisi: [],
-    selesai: []
+    selesai: [],
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'>('baruMasuk')
+  const [activeTab, setActiveTab] = useState<TabId>('patutDilihat')
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const [selectedBadanHukum, setSelectedBadanHukum] = useState<string>('all')
   const [showFilterPopover, setShowFilterPopover] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
 
-  // Pagination states
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
   useEffect(() => {
     setMounted(true)
     fetchData()
   }, [])
-
-  const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
 
   const handleDownload = async (url: string, filename: string) => {
     if (!url) return
@@ -49,7 +447,7 @@ export default function PengelompokanDashboard() {
       const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = blobUrl
-      
+
       let actualFilename = filename
       try {
         const urlObj = new URL(url)
@@ -59,7 +457,7 @@ export default function PengelompokanDashboard() {
           actualFilename = `${filename}.${ext}`
         }
       } catch (e) {
-        // fallback
+        // fallback: keep original filename
       }
 
       a.download = actualFilename
@@ -68,8 +466,8 @@ export default function PengelompokanDashboard() {
       window.URL.revokeObjectURL(blobUrl)
       document.body.removeChild(a)
     } catch (error) {
-      console.error("Gagal mendownload file:", error)
-      alert("Gagal mengunduh berkas. Silakan coba lagi.")
+      console.error('Gagal mendownload file:', error)
+      alert('Gagal mengunduh berkas. Silakan coba lagi.')
     } finally {
       setDownloadingDocName(null)
     }
@@ -80,21 +478,21 @@ export default function PengelompokanDashboard() {
     try {
       const res = await exportUlokSubmissionsCSV('assessor')
       if (res.success && res.csvData && res.filename) {
-        const blob = new Blob([res.csvData], { type: "text/csv;charset=utf-8;" })
+        const blob = new Blob([res.csvData], { type: 'text/csv;charset=utf-8;' })
         const url = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.setAttribute("href", url)
-        link.setAttribute("download", res.filename)
+        const link = document.createElement('a')
+        link.setAttribute('href', url)
+        link.setAttribute('download', res.filename)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
       } else {
-        alert("Gagal mengekspor CSV: " + (res.error || 'Terjadi kesalahan'))
+        alert('Gagal mengekspor CSV: ' + (res.error || 'Terjadi kesalahan'))
       }
     } catch (error: any) {
-      console.error("Gagal mengekspor CSV:", error)
-      alert("Gagal mengekspor CSV. Silakan coba lagi.")
+      console.error('Gagal mengekspor CSV:', error)
+      alert('Gagal mengekspor CSV. Silakan coba lagi.')
     } finally {
       setIsExporting(false)
     }
@@ -117,7 +515,6 @@ export default function PengelompokanDashboard() {
     }
   }
 
-  // Helper routing function
   const handleViewDetail = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     const route = kelompokPerorangan.includes(jenisBadanHukum)
@@ -129,44 +526,48 @@ export default function PengelompokanDashboard() {
 
   const queryLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery])
 
-  // Helper to filter proposal items by all active filters
-  const applyAllFilters = React.useCallback((item: UlokGroupItem) => {
-    // 1. Search Query filter
-    let matchesSearch = true
-    if (queryLower) {
-      const namaLokasi = (item.nama_lokasi || '').toLowerCase()
-      const namaPemilik = (item.nama_pemegang_hak || '').toLowerCase()
-      const asalCabang = (item.profiles?.branches?.nama_cabang || '').toLowerCase()
-      const jenisBadanHukum = (item.jenis_badan_hukum || '').toLowerCase()
+  const applyAllFilters = useCallback(
+    (item: UlokGroupItem) => {
+      let matchesSearch = true
+      if (queryLower) {
+        const namaLokasi = (item.nama_lokasi || '').toLowerCase()
+        const namaPemilik = (item.nama_pemegang_hak || '').toLowerCase()
+        const asalCabang = (item.profiles?.branches?.nama_cabang || '').toLowerCase()
+        const jenisBadanHukum = (item.jenis_badan_hukum || '').toLowerCase()
 
-      matchesSearch = (
-        namaLokasi.includes(queryLower) ||
-        namaPemilik.includes(queryLower) ||
-        asalCabang.includes(queryLower) ||
-        jenisBadanHukum.includes(queryLower)
-      )
-    }
+        matchesSearch =
+          namaLokasi.includes(queryLower) ||
+          namaPemilik.includes(queryLower) ||
+          asalCabang.includes(queryLower) ||
+          jenisBadanHukum.includes(queryLower)
+      }
 
-    // 2. Branch filter
-    const matchesBranch = selectedBranch === 'all' || item.profiles?.branches?.nama_cabang === selectedBranch
+      const matchesBranch = selectedBranch === 'all' || item.profiles?.branches?.nama_cabang === selectedBranch
+      const matchesBadanHukum = selectedBadanHukum === 'all' || item.jenis_badan_hukum === selectedBadanHukum
 
-    // 3. Badan Hukum filter
-    const matchesBadanHukum = selectedBadanHukum === 'all' || item.jenis_badan_hukum === selectedBadanHukum
+      return matchesSearch && matchesBranch && matchesBadanHukum
+    },
+    [queryLower, selectedBranch, selectedBadanHukum]
+  )
 
-    return matchesSearch && matchesBranch && matchesBadanHukum
-  }, [queryLower, selectedBranch, selectedBadanHukum])
-
-  // Memoize filtered tab data
   const filteredBaruMasuk = useMemo(() => data.baruMasuk.filter(applyAllFilters), [data.baruMasuk, applyAllFilters])
-  const filteredAntreanAktif = useMemo(() => data.antreanAktif.filter(applyAllFilters), [data.antreanAktif, applyAllFilters])
-  const filteredPatutDilihat = useMemo(() => data.patutDilihat.filter(applyAllFilters), [data.patutDilihat, applyAllFilters])
-  const filteredPerluRevisi = useMemo(() => data.perluRevisi.filter(applyAllFilters), [data.perluRevisi, applyAllFilters])
+  const filteredAntreanAktif = useMemo(
+    () => data.antreanAktif.filter(applyAllFilters),
+    [data.antreanAktif, applyAllFilters]
+  )
+  const filteredPatutDilihat = useMemo(
+    () => data.patutDilihat.filter(applyAllFilters),
+    [data.patutDilihat, applyAllFilters]
+  )
+  const filteredPerluRevisi = useMemo(
+    () => data.perluRevisi.filter(applyAllFilters),
+    [data.perluRevisi, applyAllFilters]
+  )
   const filteredSelesai = useMemo(() => {
     const list = data.selesai.filter(applyAllFilters)
     return [...list].sort((a, b) => (b.saw?.final_score || 0) - (a.saw?.final_score || 0))
   }, [data.selesai, applyAllFilters])
 
-  // Memoize current active tab's filtered data
   const filteredData = useMemo(() => {
     switch (activeTab) {
       case 'baruMasuk':
@@ -184,68 +585,89 @@ export default function PengelompokanDashboard() {
     }
   }, [activeTab, filteredBaruMasuk, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
 
-  // Memoize count of filtered items per tab in real-time
-  const tabCounts = useMemo(() => ({
-    baruMasuk: filteredBaruMasuk.length,
-    antreanAktif: filteredAntreanAktif.length,
-    patutDilihat: filteredPatutDilihat.length,
-    perluRevisi: filteredPerluRevisi.length,
-    selesai: filteredSelesai.length
-  }), [filteredBaruMasuk, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai])
+  const tabCounts = useMemo(
+    () => ({
+      baruMasuk: filteredBaruMasuk.length,
+      antreanAktif: filteredAntreanAktif.length,
+      patutDilihat: filteredPatutDilihat.length,
+      perluRevisi: filteredPerluRevisi.length,
+      selesai: filteredSelesai.length,
+    }),
+    [filteredBaruMasuk, filteredAntreanAktif, filteredPatutDilihat, filteredPerluRevisi, filteredSelesai]
+  )
 
-  // Extract unique branch names from the dataset dynamically
   const allBranches = useMemo(() => {
     return Array.from(
       new Set(
-        [
-          ...data.baruMasuk,
-          ...data.antreanAktif,
-          ...data.patutDilihat,
-          ...data.perluRevisi,
-          ...data.selesai
-        ]
+        [...data.baruMasuk, ...data.antreanAktif, ...data.patutDilihat, ...data.perluRevisi, ...data.selesai]
           .map((item) => item.profiles?.branches?.nama_cabang)
           .filter(Boolean) as string[]
       )
     ).sort()
   }, [data])
 
-  const badanHukumOptions = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
-
-  // Pagination calculations
   const totalItems = filteredData.length
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1
-  const displayedItems = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1
+  const displayedItems = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   const activeFilterCount = (selectedBranch !== 'all' ? 1 : 0) + (selectedBadanHukum !== 'all' ? 1 : 0)
 
-  // Reset page on tab change
-  const handleTabChange = (tab: 'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai') => {
+  const handleTabChange = (tab: TabId) => {
     setActiveTab(tab)
     setCurrentPage(1)
     setExpandedRowId(null)
   }
 
+  const activeTabConfig = TABS.find((t) => t.id === activeTab)!
+  const ActiveTabIcon = activeTabConfig.icon
+  const showScoreColumn = activeTab === 'selesai'
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto mb-10">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
+        
+        {/* --- HEADER--- */}
+        {loading ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="h-7 md:h-8 w-56 md:w-72 bg-slate-200 dark:bg-slate-800 rounded-md" />
+            <div className="h-3.5 md:h-4 w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-md" />
+          </div>
+        ) : (
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-              Pengelompokan Progress ULOK
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+              Progress ULOK
             </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
               Evaluasi berkas usulan lokasi berdasarkan progress pengunggahan dokumen dan penilaian kelayakan.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* --- COMBINED FILTER POPOVER --- */}
+        )}
+
+        {/* --- SEARCH + ACTIONS --- */}
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari berdasarkan lokasi, pemilik, cabang, dll..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-2.5 pl-10 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Filter popover */}
             <div className="relative">
               <button
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition active:scale-95 cursor-pointer"
               >
-                <img src="/icons/icon-filter.svg" alt="Filter" className="w-4 h-4 dark:invert" />
+                <Filter className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <span className="hidden sm:inline">Filter</span>
                 {activeFilterCount > 0 && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-[10px] font-black text-white select-none">
                     {activeFilterCount}
@@ -255,20 +677,14 @@ export default function PengelompokanDashboard() {
 
               {showFilterPopover && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40 bg-transparent"
-                    onClick={() => setShowFilterPopover(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-gray-150 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shadow-xl z-50 space-y-4 animate-fadeIn">
+                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowFilterPopover(false)} />
+                  <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-150 dark:border-gray-800 bg-white dark:bg-gray-950 p-4 shadow-xl z-50 space-y-4">
                     <h4 className="text-sm font-bold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-gray-850">
                       Filter Usulan Lokasi
                     </h4>
 
-                    {/* Filter Cabang */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                        Asal Cabang
-                      </label>
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Asal Cabang</label>
                       <select
                         value={selectedBranch}
                         onChange={(e) => {
@@ -278,7 +694,7 @@ export default function PengelompokanDashboard() {
                         className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       >
                         <option value="all">Semua Cabang</option>
-                        {allBranches.map((br: any) => (
+                        {allBranches.map((br) => (
                           <option key={br} value={br}>
                             {br}
                           </option>
@@ -286,11 +702,8 @@ export default function PengelompokanDashboard() {
                       </select>
                     </div>
 
-                    {/* Filter Badan Hukum */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                        Jenis
-                      </label>
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Jenis Badan Hukum</label>
                       <select
                         value={selectedBadanHukum}
                         onChange={(e) => {
@@ -300,7 +713,7 @@ export default function PengelompokanDashboard() {
                         className="w-full px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       >
                         <option value="all">Semua Jenis</option>
-                        {badanHukumOptions.map((bh) => (
+                        {BADAN_HUKUM_OPTIONS.map((bh) => (
                           <option key={bh} value={bh}>
                             {bh}
                           </option>
@@ -308,7 +721,6 @@ export default function PengelompokanDashboard() {
                       </select>
                     </div>
 
-                    {/* Actions */}
                     <div className="pt-2 flex gap-2">
                       <button
                         onClick={() => {
@@ -334,333 +746,293 @@ export default function PengelompokanDashboard() {
               )}
             </div>
 
+            {/* Export */}
             <button
               onClick={handleExportCSV}
               disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition active:scale-95 cursor-pointer disabled:scale-100"
               title="Ekspor Data ke CSV"
+              className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition active:scale-95 cursor-pointer disabled:scale-100"
             >
               {isExporting ? (
-                <svg className="animate-spin h-4 w-4 text-slate-800 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
               ) : (
-                <Download className="w-4 h-4 text-slate-650 dark:text-slate-400" />
+                <Download className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               )}
-              <span>Export Data CSV</span>
+              <span className="hidden sm:inline">Export</span>
             </button>
 
+            {/* Refresh */}
             <button
               onClick={fetchData}
               disabled={mounted ? loading : false}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-850 disabled:opacity-50 transition active:scale-95 cursor-pointer"
+              title="Muat Ulang Data"
+              className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-850 disabled:opacity-50 transition active:scale-95 cursor-pointer"
             >
-              <img src="/icons/icon-refresh.svg" alt="Refresh" className="w-4 h-4 dark:invert" />
-              <span>Refresh</span>
+              <RefreshCw className={`w-4 h-4 text-slate-600 dark:text-slate-400 ${loading && mounted ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* --- TABS SYSTEM --- */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
-          <nav className="flex flex-wrap -mb-px gap-2" aria-label="Tabs">
-            {/* TABS BUTTONS */}
-            {[
-              {
-                id: 'baruMasuk',
-                label: 'Baru Masuk',
-                subtitle: 'Usulan Baru (Draft)',
-                color: 'blue',
-                count: tabCounts.baruMasuk,
-                icon: <FilePlus className="w-4 h-4" />
-              },
-              {
-                id: 'antreanAktif',
-                label: 'Antrean Aktif',
-                subtitle: 'Sedang Proses Review',
-                color: 'amber',
-                count: tabCounts.antreanAktif,
-                icon: <Clock className="w-4 h-4" />
-              },
-              {
-                id: 'patutDilihat',
-                label: 'Patut Dilihat',
-                subtitle: 'Rekomendasi Prioritas',
-                color: 'purple',
-                count: tabCounts.patutDilihat,
-                icon: <Sparkles className="w-4 h-4" />
-              },
-              {
-                id: 'perluRevisi',
-                label: 'Perlu Revisi',
-                subtitle: 'Dikembalikan ke Cabang',
-                color: 'rose',
-                count: tabCounts.perluRevisi,
-                icon: <AlertTriangle className="w-4 h-4" />
-              },
-              {
-                id: 'selesai',
-                label: 'Selesai Dinilai',
-                subtitle: 'Approved & Rejected',
-                color: 'emerald',
-                count: tabCounts.selesai,
-                icon: <CheckSquare className="w-4 h-4" />
-              }
-            ].map((tab) => {
+        {/* --- TABS --- */}
+        <div className="mb-5 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+          <div className="flex gap-2 sm:flex-wrap">
+            {TABS.map((tab) => {
               const isActive = activeTab === tab.id
-              const activeColorClass =
-                tab.id === 'baruMasuk' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-500' :
-                tab.id === 'antreanAktif' ? 'border-amber-600 text-amber-600 dark:text-amber-400 dark:border-amber-500' :
-                  tab.id === 'patutDilihat' ? 'border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-500' :
-                    tab.id === 'perluRevisi' ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-500' :
-                      'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-500'
-
-              const countBadgeBgClass =
-                tab.id === 'baruMasuk' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' :
-                tab.id === 'antreanAktif' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' :
-                  tab.id === 'patutDilihat' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300' :
-                    tab.id === 'perluRevisi' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' :
-                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+              const colors = getTabColorClasses(tab.id, isActive)
+              const TabIcon = tab.icon
+              const count = tabCounts[tab.id]
 
               return (
                 <button
                   key={tab.id}
-                  onClick={() => handleTabChange(tab.id as any)}
-                  className={`flex-1 min-w-[200px] py-4 px-4 text-left border-b-2 font-medium text-sm transition-all focus:outline-none ${isActive
-                    ? `${activeColorClass} bg-white dark:bg-gray-900/50 rounded-t-xl`
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'
-                    }`}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-shrink-0 w-[180px] sm:w-auto sm:flex-1 sm:min-w-[170px] rounded-xl border px-4 py-3 text-left transition-all focus:outline-none ${
+                    isActive
+                      ? `${colors.border} ${colors.bg} border-2 shadow-sm`
+                      : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {tab.icon}
-                      <span className="font-bold text-[15px]">{tab.label}</span>
+                    <div className={`flex items-center gap-1.5 ${isActive ? colors.text : 'text-gray-500 dark:text-gray-400'}`}>
+                      <TabIcon className="w-4 h-4" />
+                      <span className={`font-bold text-[13px] ${isActive ? colors.text : 'text-gray-700 dark:text-gray-200'}`}>
+                        {tab.label}
+                      </span>
                     </div>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black select-none ${countBadgeBgClass}`}>
-                      {tab.count}
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-black select-none ${colors.badge}`}>
+                      {count}
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-0.5 font-normal">{tab.subtitle}</p>
+                  <p className="text-[10.5px] text-gray-400 mt-0.5 font-normal truncate">{tab.subtitle}</p>
                 </button>
               )
             })}
-          </nav>
-        </div>
-
-        {/* --- SEARCH BAR --- */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-150 dark:border-gray-800/80 shadow-sm">
-          <div className="relative flex-1 max-w-md">
-            <img src="/icons/icon_sharp-search.svg" alt="Search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 dark:invert" />
-            <input
-              type="text"
-              placeholder="Cari berdasarkan lokasi, pemilik, cabang, dll..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-            />
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold self-center sm:self-auto">
-            Menampilkan {totalItems === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(currentPage * itemsPerPage, totalItems)}`} dari {totalItems} data
           </div>
         </div>
 
-        {/* --- ERROR MESSAGE --- */}
+        {/* --- ERROR --- */}
         {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 rounded-2xl flex items-center gap-3">
-            <span className="text-lg">⚠️</span>
+          <div className="mb-5 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 rounded-2xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <div className="font-medium text-sm">{error}</div>
           </div>
         )}
 
-        {/* --- MAIN CONTENT & TABLES --- */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* --- CONTENT CARD --- */}
+        <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800/80 bg-white dark:bg-gray-900 shadow-sm">
+          {/* Header bar */}
+          <div className="flex items-center justify-between gap-3 bg-[#142B4D] dark:bg-slate-900 px-4 py-3 sm:px-6 text-white">
+            <div className="flex items-center gap-2 min-w-0">
+              <ActiveTabIcon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate text-sm sm:text-base font-bold">
+                List Ulok - {activeTabConfig.label}
+              </span>
+            </div>
+            <span className="flex-shrink-0 text-xs font-semibold text-slate-300">{totalItems} usulan</span>
+          </div>
+
+          {/* Mobile: card list */}
+          <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
-              <div className="py-20 text-center text-gray-400 italic flex flex-col items-center justify-center gap-3">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-slate-300 border-t-slate-800 dark:border-slate-800 dark:border-t-slate-200"></div>
-                <span className="text-sm">Memuat data kelompok...</span>
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <CardSkeleton key={i} />
+                ))}
               </div>
             ) : displayedItems.length === 0 ? (
-              <div className="py-20 text-center text-gray-400 flex flex-col items-center justify-center gap-2">
-                <span className="text-3xl">📁</span>
+              <div className="py-16 px-4 text-center text-gray-400 flex flex-col items-center justify-center gap-2">
+                <Inbox className="w-8 h-8" />
                 <span className="text-sm font-semibold">Tidak ada usulan lokasi di kelompok ini.</span>
                 <span className="text-xs text-gray-500">Gunakan kata kunci pencarian lain atau sinkronkan data.</span>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
-                    <th className="p-4 pl-6">Nama ULOK</th>
-                    <th className="p-4">Asal Cabang</th>
-                    <th className="p-4">Jenis</th>
-                    <th className="p-4">Tanggal Dibuat</th>
-                    <th className="p-4">Last Review</th>
-                    {activeTab === 'selesai' ? (
-                      <th className="p-4 text-center font-bold text-slate-800 dark:text-white">Skor Rekomendasi SAW</th>
-                    ) : (
-                      <th className="p-4 w-52 text-left">Progress Upload Dokumen</th>
+              displayedItems.map((item: any) => {
+                const branchName = item.profiles?.branches?.nama_cabang || 'Cabang Pusat'
+                const isExpanded = expandedRowId === item.id
+
+                return (
+                  <div key={item.id} className="p-4">
+                    <button
+                      onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-bold text-gray-950 dark:text-white text-sm">
+                              {item.nama_lokasi}
+                            </span>
+                            {item.is_smart_recommended === true && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 select-none">
+                                HIGH POTENTIAL
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">a.n {item.nama_pemegang_hak || '-'}</div>
+                        </div>
+                        <ChevronDown
+                          className={`w-4 h-4 flex-shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        />
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-block px-2 py-0.5 text-[10.5px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md border border-slate-200/50 dark:border-slate-700/50">
+                          {branchName}
+                        </span>
+                        <span className="text-[10.5px] font-semibold text-gray-500 dark:text-gray-400">
+                          {item.jenis_badan_hukum}
+                        </span>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9.5px] font-black uppercase tracking-wider border ${getStatusBadgeClass(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between text-[10.5px] text-gray-400">
+                        <span>Dibuat: {formatDate(item.created_at)}</span>
+                        <span>{item.last_reviewed_at ? formatDateTime(item.last_reviewed_at) : 'Belum direview'}</span>
+                      </div>
+
+                      <div className="mt-3">
+                        <ProgressCell item={item} activeTab={activeTab} />
+                      </div>
+                    </button>
+
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewDetail(item.id, item.jenis_badan_hukum)
+                        }}
+                        disabled={isPending}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-95 disabled:opacity-50 transition"
+                      >
+                        <FileSearch className="w-3.5 h-3.5" />
+                        Detail
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-3">
+                        <ChecklistPanel item={item} downloadingDocName={downloadingDocName} onDownload={handleDownload} />
+                      </div>
                     )}
-                    <th className="p-4 text-center">Status</th>
-                    <th className="p-4 text-center w-28">Aksi</th>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+                  <th className="p-4 pl-6">Nama ULOK</th>
+                  <th className="p-4">Asal Cabang</th>
+                  <th className="p-4">Jenis</th>
+                  <th className="p-4">Tanggal Dibuat</th>
+                  <th className="p-4">Last Review</th>
+                  {showScoreColumn ? (
+                    <th className="p-4 text-center font-bold text-slate-800 dark:text-white">Skor Rekomendasi SAW</th>
+                  ) : (
+                    <th className="p-4 w-52 text-left">Progress Upload Dokumen</th>
+                  )}
+                  <th className="p-4 text-center">Status</th>
+                  <th className="p-4 text-center w-28">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRowSkeleton key={i} showScoreColumn={showScoreColumn} />
+                  ))
+                ) : displayedItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-20 text-center text-gray-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Inbox className="w-8 h-8" />
+                        <span className="text-sm font-semibold">Tidak ada usulan lokasi di kelompok ini.</span>
+                        <span className="text-xs text-gray-500">
+                          Gunakan kata kunci pencarian lain atau sinkronkan data.
+                        </span>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {displayedItems.map((item: any) => {
+                ) : (
+                  displayedItems.map((item: any) => {
                     const branchName = item.profiles?.branches?.nama_cabang || 'Cabang Pusat'
-                    const detailRouteLabel = isPending ? '⏳' : 'Detail 🔍'
-
-                    // Custom style/labels for progress percentage
-                    let progressColorClass = 'bg-blue-600'
-                    if (item.persentase >= 100) {
-                      progressColorClass = 'bg-emerald-500'
-                    } else if (item.persentase >= 60) {
-                      progressColorClass = 'bg-blue-600'
-                    } else if (item.persentase >= 20) {
-                      progressColorClass = 'bg-amber-500'
-                    } else {
-                      progressColorClass = 'bg-rose-500'
-                    }
-
-                    // Format Badge Status
-                    let statusBadgeStyles = 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                    if (item.status === 'Approved') {
-                      statusBadgeStyles = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
-                    } else if (item.status === 'Revisi') {
-                      statusBadgeStyles = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50'
-                    } else if (item.status === 'Rejected') {
-                      statusBadgeStyles = 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
-                    } else if (item.status === 'In Review') {
-                      statusBadgeStyles = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50'
-                    } else if (item.status === 'Draft') {
-                      statusBadgeStyles = 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50'
-                    }
-
                     const isExpanded = expandedRowId === item.id
 
                     return (
                       <React.Fragment key={item.id}>
                         <tr
-                          onClick={() => {
-                            setExpandedRowId(isExpanded ? null : item.id)
-                          }}
-                          className={`cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/40 select-none ${isExpanded ? 'bg-gray-50/50 dark:bg-gray-900/20' : ''} transition-colors duration-200`}
+                          onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
+                          className={`cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/40 select-none ${
+                            isExpanded ? 'bg-gray-50/50 dark:bg-gray-900/20' : ''
+                          } transition-colors duration-200`}
                         >
-                          {/* 1. Nama ULOK */}
                           <td className="p-4 pl-6">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-bold text-gray-950 dark:text-white text-[14px]">
-                                {item.nama_lokasi}
-                              </span>
-                              {item.is_smart_recommended === true && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 select-none">
-                                  HIGH POTENTIAL
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-gray-400 mt-0.5">
-                              a.n {item.nama_pemegang_hak || '-'}
+                            <div className="flex items-center gap-2">
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 flex-shrink-0 text-gray-400 transition-transform ${
+                                  isExpanded ? 'rotate-180' : ''
+                                }`}
+                              />
+                              <div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="font-bold text-gray-950 dark:text-white text-[14px]">
+                                    {item.nama_lokasi}
+                                  </span>
+                                  {item.is_smart_recommended === true && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 select-none">
+                                      HIGH POTENTIAL
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                  a.n {item.nama_pemegang_hak || '-'}
+                                </div>
+                              </div>
                             </div>
                           </td>
 
-                          {/* 2. Asal Cabang */}
                           <td className="p-4">
                             <span className="inline-block px-2.5 py-1 text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md border border-slate-200/50 dark:border-slate-700/50">
                               {branchName}
                             </span>
                           </td>
 
-                          {/* 3. Jenis */}
                           <td className="p-4">
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                               {item.jenis_badan_hukum}
                             </span>
                           </td>
 
-                          {/* Tanggal Dibuat */}
                           <td className="p-4 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                            {new Date(item.created_at).toLocaleDateString('id-ID', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
+                            {formatDate(item.created_at)}
                           </td>
 
-                          {/* Last Review */}
                           <td className="p-4 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                            {item.last_reviewed_at ? (
-                              `${new Date(item.last_reviewed_at).toLocaleDateString('id-ID', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                              })}, ${new Date(item.last_reviewed_at).toLocaleTimeString('id-ID', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              }).replace(/\./g, ':')} WIB`
-                            ) : (
-                              '-'
-                            )}
+                            {item.last_reviewed_at ? formatDateTime(item.last_reviewed_at) : '-'}
                           </td>
 
-                          {/* 4. Tab Specific Progress / SAW Columns */}
-                          {activeTab === 'selesai' ? (
-                            <td className="p-4 text-center">
-                              {item.saw?.final_score !== undefined && item.saw?.final_score !== null ? (
-                                <div className="inline-flex flex-col items-center">
-                                  <span className="font-mono text-base font-extrabold text-purple-700 dark:text-purple-400">
-                                    {item.saw.final_score.toFixed(3)}
-                                  </span>
-                                  <span className="text-[10px] text-gray-400 font-medium">
-                                    SPK SAW Rank Score
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-400 italic">Skor Belum Dihitung</span>
-                              )}
-                            </td>
-                          ) : (
-                            <td className="p-4 w-52">
-                              <div className="space-y-1.5 w-full max-w-[180px]">
-                                <div className="flex justify-between items-center text-[11px] font-semibold gap-1">
-                                  <span className="text-gray-500 dark:text-gray-400 font-medium text-[11px]">
-                                    {item.numerator}/{item.denominator} Dokumen Terupload
-                                  </span>
-                                  <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px]">
-                                    {item.persentase.toFixed(1)}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden shadow-inner">
-                                  <div
-                                    className={`h-full rounded-full transition-all duration-500 ${progressColorClass}`}
-                                    style={{ width: `${item.persentase}%` }}
-                                  ></div>
-                                </div>
-                                {activeTab === 'patutDilihat' && (
-                                  <div className="mt-2 bg-gradient-to-br from-purple-50 to-slate-50 dark:from-purple-950/20 dark:to-slate-900/20 border border-purple-100 dark:border-purple-900/50 shadow-sm rounded-xl p-2.5 space-y-1">
-                                    <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-semibold text-[10px]">
-                                      <span>✨</span>
-                                      <span>{item.recommendation_reason || "Alas hak aman & harga sewa ramah anggaran"}</span>
-                                    </div>
-                                    <div className="text-[9px] font-medium text-purple-800 dark:text-purple-300">
-                                      Sewa: {item.harga_sewa ? `Rp ${item.harga_sewa.toLocaleString('id-ID')}` : 'N/A'}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          )}
+                          <td className={showScoreColumn ? 'p-4 text-center' : 'p-4 w-52'}>
+                            <div className={showScoreColumn ? '' : 'w-full max-w-[180px]'}>
+                              <ProgressCell item={item} activeTab={activeTab} />
+                            </div>
+                          </td>
 
-                          {/* 5. Status Badge */}
                           <td className="p-4 text-center">
-                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${statusBadgeStyles}`}>
+                            <span
+                              className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusBadgeClass(
+                                item.status
+                              )}`}
+                            >
                               {item.status}
                             </span>
                           </td>
 
-                          {/* 6. Aksi (Detail) */}
                           <td className="p-4 text-center">
                             <button
                               onClick={(e) => {
@@ -668,172 +1040,43 @@ export default function PengelompokanDashboard() {
                                 handleViewDetail(item.id, item.jenis_badan_hukum)
                               }}
                               disabled={isPending}
-                              className="p-2 hover:scale-110 active:scale-95 disabled:opacity-50 transition inline-flex items-center justify-center"
+                              title="Lihat Detail"
+                              className="p-2 hover:scale-110 active:scale-95 disabled:opacity-50 transition inline-flex items-center justify-center text-slate-600 dark:text-slate-300"
                             >
-                              <img
-                                src="/icons/icon-form.svg"
-                                alt="Detail"
-                                className="w-6 h-6 dark:invert"
-                              />
+                              <FileSearch className="w-5 h-5" />
                             </button>
                           </td>
                         </tr>
 
-                        {/* Accordion Row Checklists */}
                         {isExpanded && (
                           <tr className="bg-gray-50/60 dark:bg-gray-900/30 transition-all duration-300">
                             <td colSpan={8} className="p-5 border-t border-gray-100 dark:border-gray-800">
-                              <div className="bg-white dark:bg-gray-950 rounded-2xl p-5 border border-gray-200/60 dark:border-gray-800/85 shadow-sm space-y-4">
-                                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-850 pb-3">
-                                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                                      📋 Status Checklist Dokumen ({item.persentase}% - {item.numerator}/{item.denominator} Terupload)
-                                    </h4>
-
-                                    <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                      Terakhir direview oleh:{" "}
-                                      <strong className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {item.reviewer_name || "-"}
-                                      </strong>
-                                    </span>
-                                  </div>
-                                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                    Jenis: {item.jenis_badan_hukum}
-                                  </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {item.checklistStatus && item.checklistStatus.length > 0 ? (
-                                    item.checklistStatus.map((doc: any, idx: number) => {
-                                      const isUploaded = doc.is_uploaded
-                                      const isVerified = !!doc.is_verified
-
-                                      let rowClass = ''
-                                      let iconElement = null
-                                      let textClass = ''
-                                      let badgeText = ''
-                                      let badgeClass = ''
-
-                                      if (!isUploaded) {
-                                        rowClass = 'bg-gray-50/40 dark:bg-gray-950/10 border-gray-150 dark:border-gray-900/40 hover:border-gray-250 dark:hover:border-gray-800'
-                                        iconElement = (
-                                          <span className="text-gray-400 dark:text-gray-605 flex-shrink-0 text-xs font-bold bg-gray-100 dark:bg-gray-900/60 w-5 h-5 rounded-full flex items-center justify-center">
-                                            ✕
-                                          </span>
-                                        )
-                                        textClass = 'text-gray-400 dark:text-gray-500'
-                                        badgeText = 'BELUM TERUNGGAH'
-                                        badgeClass = 'bg-gray-100 dark:bg-gray-900/50 text-gray-500 dark:text-gray-450 border border-gray-200 dark:border-gray-800/80'
-                                      } else if (!isVerified) {
-                                        rowClass = 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-100/80 dark:border-amber-900/30 hover:border-amber-250 dark:hover:border-amber-800'
-                                        iconElement = (
-                                          <span className="text-amber-500 dark:text-amber-400 flex-shrink-0 text-xs font-bold bg-amber-100/60 dark:bg-amber-950/40 w-5 h-5 rounded-full flex items-center justify-center">
-                                            !
-                                          </span>
-                                        )
-                                        textClass = 'text-gray-800 dark:text-gray-205'
-                                        badgeText = 'BELUM SESUAI'
-                                        badgeClass = 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
-                                      } else {
-                                        rowClass = 'bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-100/80 dark:border-emerald-900/30 hover:border-emerald-250 dark:hover:border-emerald-800'
-                                        iconElement = (
-                                          <span className="text-emerald-500 dark:text-emerald-400 flex-shrink-0 text-xs font-bold bg-emerald-100/60 dark:bg-emerald-950/40 w-5 h-5 rounded-full flex items-center justify-center">
-                                            ✓
-                                          </span>
-                                        )
-                                        textClass = 'text-gray-800 dark:text-gray-205'
-                                        badgeText = 'SUDAH SESUAI'
-                                        badgeClass = 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-250 dark:border-emerald-900/50'
-                                      }
-
-                                      return (
-                                        <div
-                                          key={idx}
-                                          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${rowClass}`}
-                                        >
-                                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                            {iconElement}
-                                            <span
-                                              className={`text-xs font-semibold truncate ${textClass}`}
-                                              title={doc.nama_dokumen}
-                                            >
-                                              {doc.nama_dokumen}
-                                            </span>
-                                          </div>
-
-                                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                            {doc.is_negotiable && (
-                                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200/40 dark:border-amber-900/40 select-none">
-                                                Opsional
-                                              </span>
-                                            )}
-
-                                            <div className="flex items-center gap-1.5 ml-2">
-                                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${badgeClass}`}>
-                                                {badgeText}
-                                              </span>
-                                              {isUploaded && doc.file_url && (
-                                                <div className="flex gap-1">
-                                                  <a 
-                                                    href={doc.file_url} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center"
-                                                    title="View File"
-                                                  >
-                                                    <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
-                                                  </a>
-                                                  <button
-                                                    type="button"
-                                                    disabled={downloadingDocName === doc.nama_dokumen}
-                                                    onClick={(e) => {
-                                                      e.stopPropagation()
-                                                      handleDownload(doc.file_url!, doc.nama_dokumen)
-                                                    }}
-                                                    className="p-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
-                                                    title="Download File"
-                                                  >
-                                                    {downloadingDocName === doc.nama_dokumen ? (
-                                                      <span className="w-3 h-3 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-                                                    ) : (
-                                                      <Download className="w-3 h-3" />
-                                                    )}
-                                                  </button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )
-                                    })
-                                  ) : (
-                                    <div className="col-span-full py-4 text-center text-xs text-gray-400 italic">
-                                      Tidak ada data checklist wajib untuk badan hukum ini.
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                              <ChecklistPanel
+                                item={item}
+                                downloadingDocName={downloadingDocName}
+                                onDownload={handleDownload}
+                              />
                             </td>
                           </tr>
                         )}
                       </React.Fragment>
                     )
-                  })}
-                </tbody>
-              </table>
-            )}
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
 
-          {/* --- PAGINATION CONTROLS --- */}
+          {/* --- PAGINATION --- */}
           {totalPages > 1 && !loading && (
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition text-xs font-semibold"
               >
-                Prev
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Prev</span>
               </button>
               <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
                 Halaman {currentPage} dari {totalPages}
@@ -841,9 +1084,10 @@ export default function PengelompokanDashboard() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition text-xs font-semibold"
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
