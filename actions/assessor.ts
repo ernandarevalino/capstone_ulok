@@ -201,6 +201,48 @@ export async function getAssessorHistoriSubmissions() {
   }
 }
 
+export async function getAssessorFeedbackSubmissions() {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data: rawData, error } = await supabase
+      .from('ulok_submissions')
+      .select(`
+        *,
+        comments (
+          *,
+          profiles:user_id (
+            full_name,
+            role
+          )
+        ),
+        profiles!ulok_submissions_admin_id_fkey (
+          branch_id,
+          branches (
+            nama_cabang
+          )
+        ),
+        metode_saw(*)
+      `)
+      .not('status', 'eq', 'Draft')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    const data = (rawData || []).map((item: any) => ({
+      ...item,
+      ...item.metode_saw,
+    }))
+
+    return { success: true, data }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
 export async function toggleDocumentVerification(documentId: string, currentStatus: boolean) {
   try {
     const supabase = await createClient()

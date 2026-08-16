@@ -285,7 +285,7 @@ export default function AdminCabangPage() {
       {/* =====================================================
           WELCOME BANNER
       ====================================================== */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#0f203a] to-[#1a365d] p-5 sm:p-6 text-white shadow-lg border border-[#142B4D] dark:border-slate-800 transition-all duration-300 hover:shadow-xl">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#0f203a] to-[#1a365d] p-5 sm:p-6 text-white shadow-lg transition-all duration-300 hover:shadow-xl">
 
         <div className="absolute -right-6 -bottom-6 sm:-right-10 sm:-bottom-10 opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500">
           <Layers className="w-40 h-40 sm:w-64 sm:h-64 text-white" />
@@ -294,7 +294,7 @@ export default function AdminCabangPage() {
         <div className="relative z-10 space-y-1.5 sm:space-y-2">
 
           <h1 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent leading-snug">
-            Selamat Datang Kembali, {fullName}!
+            Hallo Selamat Datang, {fullName}!
           </h1>
 
           <p className="text-blue-100/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
@@ -416,7 +416,7 @@ export default function AdminCabangPage() {
       ====================================================== */}
       <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
 
-        <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
+        <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
 
           <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#142B4D] dark:text-blue-400 shrink-0" />
@@ -474,7 +474,7 @@ export default function AdminCabangPage() {
             {displayChartData.map((entry, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg"
+                className="flex items-center justify-between text-xs font-semibold py-2 transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg"
               >
 
                 <div className="flex items-center gap-2 min-w-0">
@@ -513,7 +513,7 @@ export default function AdminCabangPage() {
         ==================================================== */}
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
 
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
 
             <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
 
@@ -597,7 +597,7 @@ export default function AdminCabangPage() {
         ==================================================== */}
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
 
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
 
             <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
 
@@ -621,7 +621,7 @@ export default function AdminCabangPage() {
 
               <thead>
 
-                <tr className="bg-gray-50 dark:bg-slate-800/50 border-b dark:border-slate-800 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
+                <tr className="bg-gray-50 dark:bg-slate-800/50 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
 
                   <th className="p-2.5 sm:p-3 pl-4 sm:pl-5">
                     Nama ULOK

@@ -143,7 +143,7 @@ export default function NotificationPage() {
           <div className="bg-[#142B4D] dark:bg-slate-900 p-4 md:p-5 flex items-center justify-between gap-2 transition-colors">
             <h3 className="text-white font-bold text-sm md:text-base flex items-center gap-2">
               <Bell className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
-              Aktivitas Masuk
+              Aktivitas
             </h3>
             <div className="flex items-center gap-2">
               <span className="bg-white/20 text-white text-[10px] md:text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap">

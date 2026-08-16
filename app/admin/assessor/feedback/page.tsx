@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getFeedbackSubmissions, createComment } from '@/actions/cabang'
+import { getAssessorFeedbackSubmissions } from '@/actions/assessor'
+import { createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
-export default function FeedbackPage() {
+export default function AssessorFeedbackPage() {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [loading, setLoading] = useState(true)
@@ -25,7 +26,7 @@ export default function FeedbackPage() {
 
   // Load read timestamps from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('ulok_feedback_read_times')
+    const saved = localStorage.getItem('ulok_assessor_feedback_read_times')
     if (saved) {
       try {
         setReadTimestamps(JSON.parse(saved))
@@ -42,7 +43,7 @@ export default function FeedbackPage() {
     const now = new Date().toISOString()
     setReadTimestamps((prev) => {
       const updated = { ...prev, [sub.id]: now }
-      localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+      localStorage.setItem('ulok_assessor_feedback_read_times', JSON.stringify(updated))
       return updated
     })
   }
@@ -56,8 +57,6 @@ export default function FeedbackPage() {
     }
   }
 
-
-
   const fetchSubmissions = React.useCallback(async () => {
     setLoading(true)
     // Fetch current user profile
@@ -65,8 +64,8 @@ export default function FeedbackPage() {
     if (profileRes.success && profileRes.profile) {
       setCurrentUser(profileRes.profile)
     }
-    // Fetch submissions
-    const res = await getFeedbackSubmissions()
+    // Fetch ALL submissions across all branches
+    const res = await getAssessorFeedbackSubmissions()
     if (res.success && res.data) {
       setSubmissions(res.data)
     } else {
@@ -85,11 +84,11 @@ export default function FeedbackPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Step 2: Realtime subscription — bypass Next.js cache by directly injecting new comments
+  // Realtime subscription — bypass Next.js cache by directly injecting new comments
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
-      .channel('realtime-feedback-comments')
+      .channel('realtime-assessor-feedback-comments')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'comments' },
@@ -136,7 +135,7 @@ export default function FeedbackPage() {
     }
   }, [])
 
-  // Step 2: Fixed processedSubmissions — show ALL submissions with at least 1 comment, sort by newest comment
+  // processedSubmissions — show ALL submissions with at least 1 comment, sort by newest comment
   const processedSubmissions = React.useMemo(() => {
     return submissions
       .map((sub) => {
@@ -147,10 +146,14 @@ export default function FeedbackPage() {
         )
         const lastComment = allCommentsSorted[allCommentsSorted.length - 1]
 
+        // Resolve branch name from nested profiles relation
+        const namaCabang = sub.profiles?.branches?.nama_cabang || null
+
         return {
           ...sub,
           allCommentsSorted,
           lastComment,
+          namaCabang,
         }
       })
       .filter((sub) => sub.allCommentsSorted.length > 0) // MUST have at least 1 comment from anyone
@@ -164,7 +167,10 @@ export default function FeedbackPage() {
 
   const filteredTabSubmissions = React.useMemo(() => {
     return processedSubmissions.filter((sub) => {
-      const matchSearch = sub.nama_lokasi?.toLowerCase().includes(searchQuery.toLowerCase())
+      const locationLabel = sub.namaCabang
+        ? `${sub.nama_lokasi} - ${sub.namaCabang}`
+        : sub.nama_lokasi
+      const matchSearch = locationLabel?.toLowerCase().includes(searchQuery.toLowerCase())
       const matchStatus =
         statusFilter === 'all' || sub.status?.toLowerCase() === statusFilter.toLowerCase()
       return matchSearch && matchStatus
@@ -185,7 +191,7 @@ export default function FeedbackPage() {
         const now = new Date().toISOString()
         setReadTimestamps((prev) => {
           const updated = { ...prev, [initialSub.id]: now }
-          localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+          localStorage.setItem('ulok_assessor_feedback_read_times', JSON.stringify(updated))
           return updated
         })
       }
@@ -193,7 +199,6 @@ export default function FeedbackPage() {
     }
 
     // Keep the currently selected chat synced with the newest fetched data.
-    // This fixes messages from other users only appearing after switching tabs.
     const freshActive = filteredTabSubmissions.find(
       (sub) => sub.id === activeUlok.id
     )
@@ -208,7 +213,7 @@ export default function FeedbackPage() {
         const now = new Date().toISOString()
         setReadTimestamps((prev) => {
           const updated = { ...prev, [initialSub.id]: now }
-          localStorage.setItem('ulok_feedback_read_times', JSON.stringify(updated))
+          localStorage.setItem('ulok_assessor_feedback_read_times', JSON.stringify(updated))
           return updated
         })
       }
@@ -225,7 +230,7 @@ export default function FeedbackPage() {
     return { tag: null, text: message }
   }
 
-  // Step 5: Fixed send logic — re-fetches all submissions and updates activeUlok + sorts tabs
+  // Send logic — re-fetches all submissions and updates activeUlok + sorts tabs
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatInput.trim() || !activeUlok || !currentUser) return
@@ -236,7 +241,7 @@ export default function FeedbackPage() {
       if (res.success) {
         setChatInput('')
         // Re-fetch to update all submissions and trigger sorting
-        const freshRes = await getFeedbackSubmissions()
+        const freshRes = await getAssessorFeedbackSubmissions()
         if (freshRes.success && freshRes.data) {
           setSubmissions(freshRes.data)
           // Find the updated active ulok to refresh the chat window
@@ -250,6 +255,7 @@ export default function FeedbackPage() {
               ...updatedActive,
               allCommentsSorted,
               lastComment: allCommentsSorted[allCommentsSorted.length - 1],
+              namaCabang: updatedActive.profiles?.branches?.nama_cabang || null,
             })
           }
         }
@@ -276,10 +282,10 @@ export default function FeedbackPage() {
         ) : (
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-              Feedback Admin Cabang
+              Feedback Assessor
             </h1>
             <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
-              Daftar feedback, catatan revisi, dan pesan dari Assessor untuk usulan lokasi cabang Anda.
+              Daftar percakapan feedback antara Assessor dan seluruh Admin Cabang untuk semua usulan lokasi.
             </p>
           </div>
         )}
@@ -354,7 +360,7 @@ export default function FeedbackPage() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Cari nama lokasi..."
+                  placeholder="Cari nama lokasi atau cabang..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10"
@@ -378,7 +384,6 @@ export default function FeedbackPage() {
 
                 {isFilterOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-xl z-30 py-2">
-                    {/* Draft removed from options */}
                     {['all', 'In Review', 'Revisi', 'Approved'].map((status) => (
                       <button
                         key={status}
@@ -436,6 +441,10 @@ export default function FeedbackPage() {
                       return !isMyMessage && msgTime > lastReadTime;
                     }).length;
 
+                    const locationLabel = sub.namaCabang
+                      ? `${sub.nama_lokasi} - ${sub.namaCabang}`
+                      : sub.nama_lokasi
+
                     return (
                       <div
                         key={sub.id}
@@ -458,7 +467,7 @@ export default function FeedbackPage() {
                         >
                           <div className="flex items-start justify-between gap-2 w-full">
                             <h4 className="font-bold text-sm truncate text-gray-900 dark:text-gray-100">
-                              {sub.nama_lokasi}
+                              {locationLabel}
                             </h4>
 
                             <span className="bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap shrink-0">
@@ -519,8 +528,8 @@ export default function FeedbackPage() {
                         ].includes(activeUlok.jenis_badan_hukum)
 
                         router.push(
-                          `/admin/cabang/usulan-lokasi/form/${
-                            isPerorangan ? "perorangan" : "badanhukum"
+                          `/admin/assessor/penilaian/${
+                            isPerorangan ? "ulok-perorangan" : "ulok-badanhukum"
                           }?id=${activeUlok.id}`,
                         )
                       }}
@@ -528,6 +537,11 @@ export default function FeedbackPage() {
                       title="Klik untuk masuk ke detail usulan"
                     >
                       {activeUlok.nama_lokasi}
+                      {activeUlok.namaCabang && (
+                        <span className="text-blue-300/80 font-normal ml-1">
+                          — {activeUlok.namaCabang}
+                        </span>
+                      )}
                     </span>
                   </h3>
 

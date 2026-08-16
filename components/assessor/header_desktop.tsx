@@ -84,14 +84,14 @@ export default function HeaderDesktop() {
         </Link>
 
         <Link
-          href="/admin/assessor/histori"
+          href="/admin/assessor/feedback"
           className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isActive('/admin/assessor/histori')
+            isActive('/admin/assessor/feedback')
               ? 'text-white after:w-full after:bg-white'
               : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
           }`}
         >
-          Histori
+          Feedback
         </Link>
 
         <Link

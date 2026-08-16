@@ -263,13 +263,13 @@ export default function AssessorDashboardPage() {
     <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* WELCOME BANNER */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#10223d] to-[#1d3c6a] p-5 sm:p-6 text-white shadow-lg border border-[#142B4D] dark:border-slate-800 transition-all duration-300 hover:shadow-xl">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#10223d] to-[#1d3c6a] p-5 sm:p-6 text-white shadow-lg transition-all duration-300 hover:shadow-xl">
         <div className="absolute -right-6 -bottom-6 sm:-right-10 sm:-bottom-10 opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500">
           <ClipboardCheck className="w-40 h-40 sm:w-64 sm:h-64 text-white" />
         </div>
         <div className="relative z-10 space-y-1.5 sm:space-y-2">
           <h1 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent leading-snug">
-            Panel Assessor Nasional, {fullName}!
+            Hallo Selamat Datang, {fullName}!
           </h1>
           <p className="text-blue-100/80 dark:text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
             Anda memegang kendali penilaian seluruh cabang. Periksa antrean review usulan lokasi (ULOK), berikan catatan revisi, dan pantau perangkingan nilai SAW terbaik secara terpusat.
@@ -381,8 +381,8 @@ export default function AssessorDashboardPage() {
       {/* CHARTS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
-          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
             <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
               <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#FE9A00] shrink-0" />
               Persentase Status Review Nasional
@@ -398,7 +398,7 @@ export default function AssessorDashboardPage() {
               </div>
               <div className="w-full sm:w-1/2 flex flex-col gap-2 sm:gap-3">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="flex items-center justify-between py-1.5 sm:py-2 border-b border-gray-50 dark:border-slate-800/50 px-2">
+                  <div key={n} className="flex items-center justify-between py-1.5 sm:py-2 px-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse" />
                       <div className="w-24 sm:w-28 h-3.5 sm:h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
@@ -432,7 +432,7 @@ export default function AssessorDashboardPage() {
               </div>
               <div className="w-full sm:w-1/2 flex flex-col gap-2">
                 {displayPieData.map((entry, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 border-b border-gray-50 dark:border-slate-800/50 px-2 rounded-lg">
+                  <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 px-2 rounded-lg">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
                       <span className="text-gray-600 dark:text-slate-300 truncate">{entry.name}</span>
@@ -445,8 +445,8 @@ export default function AssessorDashboardPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-all duration-300 hover:shadow-md">
-          <div className="border-b border-gray-100 dark:border-slate-800/80 pb-3 sm:pb-4 mb-3 sm:mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
             <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
               <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-[#142B4D] dark:text-blue-400 shrink-0" />
               Top 5 Cabang Teraktif (Volume Usulan)
@@ -492,8 +492,8 @@ export default function AssessorDashboardPage() {
       {/* BOTTOM CONTENT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
             <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
               <Clock className="w-4 h-4 text-[#FE9A00] shrink-0" />
               <span className="truncate">Antrean Berkas Masuk Terbaru</span>
@@ -546,8 +546,8 @@ export default function AssessorDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2 border-b dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
             <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
               <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
               <span className="truncate">Peringkat Kebijakan ULOK Terbaik (Nasional)</span>
@@ -560,7 +560,7 @@ export default function AssessorDashboardPage() {
           <div className="overflow-x-auto flex-1 scrollbar-thin">
             <table className="w-full text-left border-collapse text-xs min-w-[420px]">
               <thead>
-                <tr className="bg-gray-50 dark:bg-slate-800/50 border-b dark:border-slate-800 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
+                <tr className="bg-gray-50 dark:bg-slate-800/50 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
                   <th className="p-2.5 sm:p-3 pl-4 sm:pl-5">Nama ULOK</th>
                   <th className="p-2.5 sm:p-3">Asal Cabang</th>
                   <th className="p-2.5 sm:p-3 text-center">Status</th>
