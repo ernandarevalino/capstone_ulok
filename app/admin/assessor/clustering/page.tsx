@@ -1,163 +1,167 @@
 'use client'
 
-import React, { useEffect, useState, useTransition, useMemo, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import {
   AlertCircle, Download, Clock, AlertTriangle, RotateCcw,
-  Layers, RefreshCw, Filter, Search, FileText,
+  Layers, RefreshCw, Filter, Search,
   LayoutDashboard, TrendingUp, BarChart3, ClipboardCheck,
   ClipboardList, Check, X, CheckCircle2, Activity, XCircle,
   FileSearch
 } from 'lucide-react'
-import {
-  ResponsiveContainer,
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceArea,
-  ReferenceLine
-} from 'recharts'
+
+// Chart di-code-split & cuma di-load di client (recharts+d3 lumayan berat).
+// Ini yang paling kerasa dampaknya buat mobile: JS chart gak nge-block
+// render awal (header, tabs, dsb), dan baru di-fetch pas tab Dashboard
+// beneran ditampilkan.
+const ClusterScatterChart = dynamic(() => import('./ClusterScatterChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[480px] w-full bg-slate-100 dark:bg-gray-800 animate-pulse rounded-xl" />
+  )
+})
 
 // === TAB SYSTEM TYPES & COLOR HELPER ===
 type TabId = 'dashboard' | 'c3' | 'c2' | 'c1' | 'c4'
 
-function getTabColorClasses(id: TabId, active: boolean) {
-  const palette: Record<TabId, { border: string; text: string; bg: string; badge: string; dot: string }> = {
-    dashboard: {
-      border: 'border-[#3365A6] dark:border-blue-500',
-      text: 'text-[#3365A6] dark:text-blue-400',
-      bg: 'bg-blue-50/60 dark:bg-blue-950/20',
-      badge: 'bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-slate-300 border border-slate-200 dark:border-gray-700',
-      dot: 'bg-[#3365A6]'
-    },
-    c3: {
-      border: 'border-emerald-600 dark:border-emerald-500',
-      text: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50/60 dark:bg-emerald-950/20',
-      badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/60',
-      dot: 'bg-emerald-500'
-    },
-    c2: {
-      border: 'border-blue-600 dark:border-blue-500',
-      text: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-50/60 dark:bg-blue-950/20',
-      badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60',
-      dot: 'bg-blue-500'
-    },
-    c1: {
-      border: 'border-amber-600 dark:border-amber-500',
-      text: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50/60 dark:bg-amber-950/20',
-      badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/60',
-      dot: 'bg-amber-500'
-    },
-    c4: {
-      border: 'border-rose-600 dark:border-rose-500',
-      text: 'text-rose-600 dark:text-rose-400',
-      bg: 'bg-rose-50/60 dark:bg-rose-950/20',
-      badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900/60',
-      dot: 'bg-rose-500'
-    },
-  }
-  if (!active) {
-    return {
-      border: 'border-gray-200 dark:border-gray-800',
-      text: 'text-gray-500 dark:text-gray-400',
-      bg: 'bg-white dark:bg-gray-900',
-      badge: palette[id].badge,
-      dot: 'bg-gray-300 dark:bg-gray-700'
-    }
-  }
-  return palette[id]
+// Dipindah ke module scope (di luar function) biar object-nya cuma
+// dibikin SEKALI pas file di-load, bukan tiap kali getTabColorClasses
+// dipanggil (5 tab x tiap render = lumayan alokasi sia-sia).
+const TAB_COLOR_PALETTE: Record<TabId, { border: string; text: string; bg: string; badge: string; dot: string }> = {
+  dashboard: {
+    border: 'border-[#3365A6] dark:border-blue-500',
+    text: 'text-[#3365A6] dark:text-blue-400',
+    bg: 'bg-blue-50/60 dark:bg-blue-950/20',
+    badge: 'bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-slate-300 border border-slate-200 dark:border-gray-700',
+    dot: 'bg-[#3365A6]'
+  },
+  c3: {
+    border: 'border-emerald-600 dark:border-emerald-500',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50/60 dark:bg-emerald-950/20',
+    badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/60',
+    dot: 'bg-emerald-500'
+  },
+  c2: {
+    border: 'border-blue-600 dark:border-blue-500',
+    text: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-50/60 dark:bg-blue-950/20',
+    badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60',
+    dot: 'bg-blue-500'
+  },
+  c1: {
+    border: 'border-amber-600 dark:border-amber-500',
+    text: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-50/60 dark:bg-amber-950/20',
+    badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/60',
+    dot: 'bg-amber-500'
+  },
+  c4: {
+    border: 'border-rose-600 dark:border-rose-500',
+    text: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-rose-50/60 dark:bg-rose-950/20',
+    badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-900/60',
+    dot: 'bg-rose-500'
+  },
 }
 
-// === SKELETON LOADER 
+const INACTIVE_TAB_COLORS = {
+  border: 'border-gray-200 dark:border-gray-800',
+  text: 'text-gray-500 dark:text-gray-400',
+  bg: 'bg-white dark:bg-gray-900',
+  dot: 'bg-gray-300 dark:bg-gray-700'
+}
+
+function getTabColorClasses(id: TabId, active: boolean) {
+  if (!active) {
+    return { ...INACTIVE_TAB_COLORS, badge: TAB_COLOR_PALETTE[id].badge }
+  }
+  return TAB_COLOR_PALETTE[id]
+}
+
+const BADAN_HUKUM_OPTIONS = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
+
+// === SKELETON LOADER ===
+// Struktur & breakpoint-nya sengaja disamain persis sama layout asli
+// (header sejajar dari mobile, tab scroll horizontal di mobile, dst)
+// biar gak ada "lompatan" layout pas skeleton berubah jadi konten asli.
 function DashboardSkeleton() {
   return (
-    <div className="max-w-7xl mx-auto md:p-6 lg:p-8">
-      <div className="space-y-6 animate-pulse">
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-3">
-            <div className="h-8 w-64 bg-slate-200 dark:bg-gray-800 rounded-lg" />
-            <div className="h-4 w-96 max-w-full bg-slate-200 dark:bg-gray-800 rounded-md" />
-          </div>
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
 
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-24 bg-slate-200 dark:bg-gray-800 rounded-xl" />
-            <div className="h-10 w-24 bg-slate-200 dark:bg-gray-800 rounded-xl" />
-          </div>
-        </div>
-
-        {/* SEARCH / FILTER */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 h-11 bg-slate-200 dark:bg-gray-800 rounded-xl" />
-          <div className="h-11 w-full sm:w-28 bg-slate-200 dark:bg-gray-800 rounded-xl" />
-          <div className="h-11 w-full sm:w-28 bg-slate-200 dark:bg-gray-800 rounded-xl" />
-        </div>
-
-        {/* TABS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {Array.from({ length: 5 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="h-[76px] bg-slate-200 dark:bg-gray-800 rounded-xl"
-            />
-          ))}
-        </div>
-
-        {/* MAIN CONTENT */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* MAIN PANEL */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="space-y-3">
-              <div className="h-5 w-56 bg-slate-200 dark:bg-gray-800 rounded-md" />
-              <div className="h-4 w-80 max-w-full bg-slate-200 dark:bg-gray-800 rounded-md" />
+        {/* HEADER: judul + tombol Filter/Refresh (persis kayak tab Dashboard asli) */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-2.5 min-w-0">
+              <div className="h-7 sm:h-8 w-48 sm:w-64 bg-slate-200 dark:bg-gray-800 rounded-lg" />
+              <div className="h-3.5 w-full max-w-xs sm:max-w-md bg-slate-200 dark:bg-gray-800 rounded-md" />
             </div>
 
-            <div className="h-[420px] w-full bg-slate-200 dark:bg-gray-800 rounded-xl" />
-          </div>
-
-          {/* SIDE PANEL */}
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <div className="h-5 w-32 bg-slate-200 dark:bg-gray-800 rounded-md" />
-
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="h-16 w-full bg-slate-200 dark:bg-gray-800 rounded-xl"
-                />
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              <div className="h-5 w-40 bg-slate-200 dark:bg-gray-800 rounded-md" />
-
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="h-6 w-full bg-slate-200 dark:bg-gray-800 rounded-full"
-                />
-              ))}
+            <div className="flex flex-col-reverse sm:flex-row items-center gap-2 shrink-0">
+              <div className="h-11 w-11 sm:h-10 sm:w-24 bg-slate-200 dark:bg-gray-800 rounded-xl" />
+              <div className="h-11 w-11 sm:h-10 sm:w-24 bg-slate-200 dark:bg-gray-800 rounded-xl" />
             </div>
           </div>
         </div>
 
-        {/* BOTTOM SECTION */}
-        <div className="space-y-4">
-          <div className="h-5 w-56 bg-slate-200 dark:bg-gray-800 rounded-md" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, idx) => (
+        {/* TABS: scroll horizontal di mobile, wrap di desktop - sama kayak asli */}
+        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+          <div className="flex gap-2 sm:flex-wrap">
+            {Array.from({ length: 5 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-24 bg-slate-200 dark:bg-gray-800 rounded-xl"
+                className="flex-shrink-0 w-[180px] sm:w-auto sm:flex-1 sm:min-w-[170px] h-[92px] bg-slate-200 dark:bg-gray-800 rounded-xl"
               />
+            ))}
+          </div>
+        </div>
+
+        {/* MAIN CONTENT: chart + sidebar ringkasan (tab Dashboard, default aktif) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chart panel */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 md:p-6 rounded-2xl shadow-sm space-y-4">
+            <div className="space-y-2">
+              <div className="h-5 w-64 max-w-full bg-slate-200 dark:bg-gray-800 rounded-md" />
+              <div className="h-3.5 w-full max-w-md bg-slate-200 dark:bg-gray-800 rounded-md" />
+            </div>
+            <div className="h-[300px] sm:h-[420px] lg:h-[480px] w-full bg-slate-100 dark:bg-gray-800 rounded-xl" />
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Ringkasan Cepat */}
+            <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm space-y-4">
+              <div className="h-4 w-32 bg-slate-200 dark:bg-gray-800 rounded-md" />
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="h-16 w-full bg-slate-100 dark:bg-gray-800 rounded-xl" />
+              ))}
+            </div>
+
+            {/* Distribusi per Cluster */}
+            <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm space-y-4">
+              <div className="h-4 w-40 bg-slate-200 dark:bg-gray-800 rounded-md" />
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <div className="h-3 w-full bg-slate-100 dark:bg-gray-800 rounded" />
+                  <div className="h-2.5 w-full bg-slate-100 dark:bg-gray-800 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM: Interpretasi Matriks Kuadran */}
+        <div className="bg-white dark:bg-gray-900 p-5 md:p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="space-y-2">
+            <div className="h-4 w-52 bg-slate-200 dark:bg-gray-800 rounded-md" />
+            <div className="h-3 w-72 max-w-full bg-slate-200 dark:bg-gray-800 rounded-md" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="h-28 bg-slate-100 dark:bg-gray-800 rounded-xl" />
             ))}
           </div>
         </div>
@@ -169,34 +173,6 @@ function DashboardSkeleton() {
 export default function ClusteringDashboardPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [isMounted, setIsMounted] = useState(false)
-
-  const chartContainerRef = useRef<HTMLDivElement>(null)
-  const [quadrantHover, setQuadrantHover] = useState<{
-    label: string
-    subtitle: string
-    x: number
-    y: number
-  } | null>(null)
-
-  const quadrantInfo = {
-    c3: { label: 'Cluster 1', subtitle: 'Lengkap & Cepat (≥80%, ≤7 Hari)' },
-    c2: { label: 'Cluster 2', subtitle: 'Belum Lengkap & Cepat (<80%, ≤7 Hari)' },
-    c1: { label: 'Cluster 3', subtitle: 'Lengkap & Lambat (≥80%, >7 Hari)' },
-    c4: { label: 'Cluster 4', subtitle: 'Belum Lengkap & Lambat (<80%, >7 Hari)' }
-  }
-
-  const handleQuadrantHover = (key: keyof typeof quadrantInfo) => (e: any) => {
-    const rect = chartContainerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    setQuadrantHover({
-      ...quadrantInfo[key],
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    })
-  }
-
-  const handleQuadrantLeave = () => setQuadrantHover(null)
 
   // State
   const [data, setData] = useState<ClusteringResult>({
@@ -214,6 +190,9 @@ export default function ClusteringDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard')
 
   // Filter & Search states
+  // searchInput = langsung ke-update tiap ketikan (biar input responsif)
+  // searchQuery = versi debounced, ini yang dipakai buat filtering berat
+  const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBranch, setSelectedBranch] = useState<string>('all')
   const [selectedBadanHukum, setSelectedBadanHukum] = useState<string>('all')
@@ -227,7 +206,7 @@ export default function ClusteringDashboardPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -243,15 +222,23 @@ export default function ClusteringDashboardPage() {
       setIsLoading(false)
       setHasLoadedOnce(true)
     }
-  }
-
-  useEffect(() => {
-    setIsMounted(true)
-    loadData()
   }, [])
 
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  // Debounce: filtering baru jalan 300ms setelah user berhenti ngetik,
+  // bukan tiap 1 huruf diketik. Ini yang paling kerasa pas data-nya
+  // udah ratusan baris - tiap keystroke sebelumnya nge-filter ULANG
+  // 4 array cluster sekaligus.
+  useEffect(() => {
+    const timeout = setTimeout(() => setSearchQuery(searchInput), 300)
+    return () => clearTimeout(timeout)
+  }, [searchInput])
+
   // File download handler
-  const handleDownload = async (url: string, filename: string) => {
+  const handleDownload = useCallback(async (url: string, filename: string) => {
     if (!url) return
     setDownloadingDocName(filename)
     try {
@@ -284,17 +271,17 @@ export default function ClusteringDashboardPage() {
     } finally {
       setDownloadingDocName(null)
     }
-  }
+  }, [])
 
   // Detail View Navigation
-  const handleViewDetail = (id: string, jenisBadanHukum: string) => {
+  const handleViewDetail = useCallback((id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa']
     const route = kelompokPerorangan.includes(jenisBadanHukum)
       ? '/admin/assessor/penilaian/ulok-perorangan'
       : '/admin/assessor/penilaian/ulok-badanhukum'
 
     router.push(`${route}?id=${id}`)
-  }
+  }, [router])
 
   // Filter Helper
   const queryLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery])
@@ -345,17 +332,23 @@ export default function ClusteringDashboardPage() {
     }
   }, [activeTab, filteredC3, filteredC2, filteredC1, filteredC4])
 
+  // Semua array digabung SEKALI di sini (dulu ada 3 tempat beda yang
+  // masing-masing nge-spread ulang [...c1,...c2,...c3,...c4] sendiri-sendiri
+  // tiap kali data berubah - boros, apalagi kalau datanya ratusan baris).
+  const allItems = useMemo(
+    () => [...data.c1, ...data.c2, ...data.c3, ...data.c4],
+    [data]
+  )
+
   // Extract unique branch list
   const allBranches = useMemo(() => {
-    const combined = [...data.c1, ...data.c2, ...data.c3, ...data.c4]
     return Array.from(
       new Set(
-        combined.map((item) => item.profiles?.branches?.nama_cabang).filter(Boolean) as string[]
+        allItems.map((item) => item.profiles?.branches?.nama_cabang).filter(Boolean) as string[]
       )
     ).sort()
-  }, [data])
+  }, [allItems])
 
-  const badanHukumOptions = ['PT', 'Koperasi', 'Yayasan', 'Perorangan', 'Kuasa', 'Waris', 'Hibah']
   const activeFilterCount = (selectedBranch !== 'all' ? 1 : 0) + (selectedBadanHukum !== 'all' ? 1 : 0)
 
   // Pagination for cluster table
@@ -363,31 +356,31 @@ export default function ClusteringDashboardPage() {
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1
   const displayedItems = activeClusterData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  const handleTabChange = (tab: TabId) => {
+  const handleTabChange = useCallback((tab: TabId) => {
     setActiveTab(tab)
     setCurrentPage(1)
     setExpandedRowId(null)
-  }
+  }, [])
 
   // Dashboard calculations
-  const totalUsulan = data.c1.length + data.c2.length + data.c3.length + data.c4.length
-  const avgCompleteness = useMemo(() => {
-    if (totalUsulan === 0) return 0
-    const sum = [...data.c1, ...data.c2, ...data.c3, ...data.c4].reduce((sum, item) => sum + (item.persentase || 0), 0)
-    return sum / totalUsulan
-  }, [data, totalUsulan])
+  const totalUsulan = allItems.length
 
-  const avgDuration = useMemo(() => {
-    if (totalUsulan === 0) return 0
-    const sum = [...data.c1, ...data.c2, ...data.c3, ...data.c4].reduce((sum, item) => sum + (item.durasi_hari || 0), 0)
-    return sum / totalUsulan
-  }, [data, totalUsulan])
-
-  const maxX = useMemo(() => {
-    const combined = [...data.c1, ...data.c2, ...data.c3, ...data.c4]
-    const maxVal = combined.reduce((max, item) => Math.max(max, item.durasi_hari || 0), 0)
-    return Math.max(14, maxVal + 4)
-  }, [data])
+  const { avgCompleteness, avgDuration, maxX } = useMemo(() => {
+    if (totalUsulan === 0) return { avgCompleteness: 0, avgDuration: 0, maxX: 14 }
+    let sumPersentase = 0
+    let sumDurasi = 0
+    let maxDurasi = 0
+    for (const item of allItems) {
+      sumPersentase += item.persentase || 0
+      sumDurasi += item.durasi_hari || 0
+      if ((item.durasi_hari || 0) > maxDurasi) maxDurasi = item.durasi_hari || 0
+    }
+    return {
+      avgCompleteness: sumPersentase / totalUsulan,
+      avgDuration: sumDurasi / totalUsulan,
+      maxX: Math.max(14, maxDurasi + 4)
+    }
+  }, [allItems, totalUsulan])
 
   // === TAB DEFINITIONS (icons follow the wireframe: box + lucide icon, no emoji) ===
   const tabs: { id: TabId; label: string; subtitle: string; icon: React.ReactNode; count?: number }[] = [
@@ -427,27 +420,6 @@ export default function ClusteringDashboardPage() {
       count: tabCounts.c4
     }
   ]
-
-  // Custom Scatter Tooltip
-  const CustomScatterTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload
-      return (
-        <div className="bg-white dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl space-y-2 text-xs max-w-xs transition-colors duration-200">
-          <div className="font-bold text-gray-900 dark:text-gray-100 text-[13px]">{item.nama_lokasi}</div>
-          <div className="text-[10px] text-gray-400">a.n {item.nama_pemegang_hak || '-'}</div>
-          <hr className="border-gray-100 dark:border-gray-800" />
-          <div className="space-y-1 text-gray-600 dark:text-gray-300">
-            <p><span className="text-gray-400">Cabang:</span> <strong className="font-bold text-gray-700 dark:text-gray-200">{item.profiles?.branches?.nama_cabang || '-'}</strong></p>
-            <p><span className="text-gray-400">Kelengkapan:</span> <strong className="font-bold text-[#F28705]">{item.persentase?.toFixed(1)}%</strong> ({item.numerator}/{item.denominator} Dokumen)</p>
-            <p><span className="text-gray-400">Durasi:</span> <strong className="font-bold text-gray-700 dark:text-gray-200">{item.durasi_hari} Hari</strong></p>
-            <p><span className="text-gray-400">Status:</span> <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-gray-800 text-slate-800 dark:text-slate-200">{item.status}</span></p>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
 
   // Initial load -> full page skeleton (no spinner)
   if (isLoading && !hasLoadedOnce) {
@@ -603,7 +575,7 @@ export default function ClusteringDashboardPage() {
                           >
                             <option value="all">Semua Jenis</option>
 
-                            {badanHukumOptions.map((bh) => (
+                            {BADAN_HUKUM_OPTIONS.map((bh) => (
                               <option key={bh} value={bh}>
                                 {bh}
                               </option>
@@ -650,9 +622,9 @@ export default function ClusteringDashboardPage() {
                 <input
                   type="text"
                   placeholder="Cari berdasarkan lokasi, pemilik, cabang..."
-                  value={searchQuery}
+                  value={searchInput}
                   onChange={(e) => {
-                    setSearchQuery(e.target.value)
+                    setSearchInput(e.target.value)
                     setCurrentPage(1)
                   }}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10"
@@ -773,7 +745,7 @@ export default function ClusteringDashboardPage() {
                               Semua Jenis
                             </option>
 
-                            {badanHukumOptions.map((bh) => (
+                            {BADAN_HUKUM_OPTIONS.map((bh) => (
                               <option key={bh} value={bh}>
                                 {bh}
                               </option>
@@ -821,7 +793,6 @@ export default function ClusteringDashboardPage() {
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               const colors = getTabColorClasses(tab.id, isActive);
-              const TabIcon = () => tab.icon;
 
               return (
                 <button
@@ -837,7 +808,7 @@ export default function ClusteringDashboardPage() {
                     <div
                       className={`flex items-center gap-1.5 ${isActive ? colors.text : "text-gray-500 dark:text-gray-400"}`}
                     >
-                      <TabIcon />
+                      {tab.icon}
                       <span
                         className={`font-bold text-[13px] ${isActive ? colors.text : "text-gray-700 dark:text-gray-200"}`}
                       >
@@ -880,150 +851,14 @@ export default function ClusteringDashboardPage() {
                     </p>
                   </div>
 
-                  <div className="w-full mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
-                    {isMounted ? (
-                      <ResponsiveContainer width="100%" height={480}>
-                        <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" className="hidden dark:block" />
-
-                          <XAxis
-                            type="number"
-                            dataKey="durasi_hari"
-                            name="Durasi"
-                            unit=" Hari"
-                            domain={[0, maxX]}
-                            stroke="#94A3B8"
-                            fontSize={11}
-                            fontWeight={600}
-                            label={{ value: 'Durasi Pengumpulan (Hari)', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
-                            allowDataOverflow={true}
-                          />
-                          <YAxis
-                            type="number"
-                            dataKey="persentase"
-                            name="Kelengkapan"
-                            unit="%"
-                            domain={[0, 100]}
-                            stroke="#94A3B8"
-                            fontSize={11}
-                            fontWeight={600}
-                            label={{ value: 'Kelengkapan Dokumen (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' }, fontSize: 12, fontWeight: 700, fill: '#64748B' }}
-                            allowDataOverflow={true}
-                          />
-
-                          {/* Shading Areas for Quadrants */}
-                          <ReferenceArea
-                            x1={0} x2={7} y1={80} y2={100}
-                            fill="rgba(16, 185, 129, 0.08)"
-                            stroke="none"
-                            onMouseEnter={handleQuadrantHover('c3')}
-                            onMouseMove={handleQuadrantHover('c3')}
-                            onMouseLeave={handleQuadrantLeave}
-                            cursor="pointer"
-                          />
-                          <ReferenceArea
-                            x1={0} x2={7} y1={0} y2={80}
-                            fill="rgba(59, 130, 246, 0.08)"
-                            stroke="none"
-                            onMouseEnter={handleQuadrantHover('c2')}
-                            onMouseMove={handleQuadrantHover('c2')}
-                            onMouseLeave={handleQuadrantLeave}
-                            cursor="pointer"
-                          />
-                          <ReferenceArea
-                            x1={7} x2={maxX} y1={80} y2={100}
-                            fill="rgba(245, 158, 11, 0.08)"
-                            stroke="none"
-                            onMouseEnter={handleQuadrantHover('c1')}
-                            onMouseMove={handleQuadrantHover('c1')}
-                            onMouseLeave={handleQuadrantLeave}
-                            cursor="pointer"
-                          />
-                          <ReferenceArea
-                            x1={7} x2={maxX} y1={0} y2={80}
-                            fill="rgba(239, 68, 68, 0.08)"
-                            stroke="none"
-                            onMouseEnter={handleQuadrantHover('c4')}
-                            onMouseMove={handleQuadrantHover('c4')}
-                            onMouseLeave={handleQuadrantLeave}
-                            cursor="pointer"
-                          />
-
-                          {/* Quad Dividers */}
-                          <ReferenceLine x={7} stroke="#94A3B8" strokeDasharray="3 3" />
-                          <ReferenceLine y={80} stroke="#94A3B8" strokeDasharray="3 3" />
-
-                          <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-
-                          <Scatter
-                            name="Cluster 1 (Ideal)"
-                            data={data.c3}
-                            fill="#10B981"
-                            line={false}
-                            cursor="pointer"
-                            onClick={(e: any) => {
-                              if (e && e.payload && e.payload.id) {
-                                handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
-                              }
-                            }}
-                          />
-                          <Scatter
-                            name="Cluster 2 (Aktif)"
-                            data={data.c2}
-                            fill="#3B82F6"
-                            line={false}
-                            cursor="pointer"
-                            onClick={(e: any) => {
-                              if (e && e.payload && e.payload.id) {
-                                handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
-                              }
-                            }}
-                          />
-                          <Scatter
-                            name="Cluster 3 (Review)"
-                            data={data.c1}
-                            fill="#F28705"
-                            line={false}
-                            cursor="pointer"
-                            onClick={(e: any) => {
-                              if (e && e.payload && e.payload.id) {
-                                handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
-                              }
-                            }}
-                          />
-                          <Scatter
-                            name="Cluster 4 (Stagnan)"
-                            data={data.c4}
-                            fill="#D91E2E"
-                            line={false}
-                            cursor="pointer"
-                            onClick={(e: any) => {
-                              if (e && e.payload && e.payload.id) {
-                                handleViewDetail(e.payload.id, e.payload.jenis_badan_hukum)
-                              }
-                            }}
-                          />
-                        </ScatterChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[480px] w-full bg-slate-100 dark:bg-gray-800 animate-pulse rounded-xl" />
-                    )}
-
-                    {/* Quadrant Hover Tooltip */}
-                    {quadrantHover && (
-                      <div
-                        className="absolute z-20 pointer-events-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg px-3 py-2 text-xs"
-                        style={{
-                          left: quadrantHover.x + 12,
-                          top: quadrantHover.y + 12
-                        }}
-                      >
-                        <p className="font-bold text-gray-900 dark:text-white">{quadrantHover.label}</p>
-                        <p className="text-gray-500 dark:text-gray-400 mt-0.5">{quadrantHover.subtitle}</p>
-                      </div>
-                    )}
-                  </div>
+                  <ClusterScatterChart
+                    c1={data.c1}
+                    c2={data.c2}
+                    c3={data.c3}
+                    c4={data.c4}
+                    maxX={maxX}
+                    onViewDetail={handleViewDetail}
+                  />
                 </div>
 
                 {/* Sidebar Rincian */}
