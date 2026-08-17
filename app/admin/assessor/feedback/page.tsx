@@ -728,7 +728,7 @@ export default function AssessorFeedbackPage() {
                       {activeUlok.nama_lokasi}
                       {activeUlok.namaCabang && (
                         <span className="text-blue-300/80 font-normal ml-1">
-                          — {activeUlok.namaCabang}
+                          - {activeUlok.namaCabang}
                         </span>
                       )}
                     </span>

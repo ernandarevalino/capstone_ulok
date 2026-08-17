@@ -6,6 +6,7 @@ import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/acti
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import {
   Download,
+  RotateCcw,
   FilePlus,
   Clock,
   Sparkles,
@@ -736,7 +737,7 @@ export default function PengelompokanDashboard() {
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              className="w-full h-11 sm:h-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10"
             />
           </div>
 
@@ -744,112 +745,150 @@ export default function PengelompokanDashboard() {
           <div className="relative shrink-0">
             <button
               onClick={() => setShowFilterPopover(!showFilterPopover)}
-              className={`relative flex h-11 w-11 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl border transition-all active:scale-95 shadow-sm sm:px-4 ${
+              className={`relative w-11 h-11 sm:w-auto sm:h-10 sm:px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-95 ${
                 activeFilterCount > 0
-                  ? 'border-[#142B4D] bg-blue-50/50 text-[#142B4D] dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                  ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
               title="Filter Data"
             >
               <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-semibold">Filter</span>
+
+              <span className="hidden sm:inline">
+                Filter
+              </span>
+
               {activeFilterCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0"></span>
+                <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0" />
               )}
             </button>
 
             {showFilterPopover && (
-              <>
-                <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowFilterPopover(false)} />
-                <div className="absolute -right-13 mt-2 w-74 -mr-13 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
-                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <h4 className="flex items-center gap-2 text-sm font-bold text-gray-950 dark:text-white">
-                      <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" /> Filter Usulan
-                    </h4>
-                    {activeFilterCount > 0 && (
-                      <button
-                        onClick={handleResetFilters}
-                        className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
-                      >
-                        Reset
-                      </button>
-                    )}
-                  </div>
+              <div className="absolute -right-13 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Asal Cabang</label>
-                    <select
-                      value={selectedBranch}
-                      onChange={(e) => {
-                        setSelectedBranch(e.target.value)
-                        setCurrentPage(1)
-                      }}
-                      className="w-full px-3 py-2 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                  <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
+                    Filter Usulan
+                  </h4>
+
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={handleResetFilters}
+                      className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
                     >
-                      <option value="all">Semua Cabang</option>
-                      {allBranches.map((br) => (
-                        <option key={br} value={br}>{br}</option>
-                      ))}
-                    </select>
-                  </div>
+                      <RotateCcw className="w-3 h-3" />
+                      Reset
+                    </button>
+                  )}
+                </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Jenis Badan Hukum</label>
-                    <select
-                      value={selectedBadanHukum}
-                      onChange={(e) => {
-                        setSelectedBadanHukum(e.target.value)
-                        setCurrentPage(1)
-                      }}
-                      className="w-full px-3 py-2 text-xs font-semibold border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
-                    >
-                      <option value="all">Semua Jenis</option>
-                      {BADAN_HUKUM_OPTIONS.map((bh) => (
-                        <option key={bh} value={bh}>{bh}</option>
-                      ))}
-                    </select>
-                  </div>
+                {/* Asal Cabang */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                    Asal Cabang
+                  </label>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Terakhir Direview (Last Review)</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="text-[10px] text-gray-400 block mb-0.5">Dari</span>
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => {
-                            setStartDate(e.target.value)
-                            setCurrentPage(1)
-                          }}
-                          className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-gray-400 block mb-0.5">Sampai</span>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => {
-                            setEndDate(e.target.value)
-                            setCurrentPage(1)
-                          }}
-                          className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500"
-                        />
-                      </div>
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => {
+                      setSelectedBranch(e.target.value)
+                      setCurrentPage(1)
+                    }}
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                  >
+                    <option value="all">
+                      Semua Cabang
+                    </option>
+
+                    {allBranches.map((br) => (
+                      <option key={br} value={br}>
+                        {br}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Jenis Badan Hukum */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                    Jenis Badan Hukum
+                  </label>
+
+                  <select
+                    value={selectedBadanHukum}
+                    onChange={(e) => {
+                      setSelectedBadanHukum(e.target.value)
+                      setCurrentPage(1)
+                    }}
+                    className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                  >
+                    <option value="all">
+                      Semua Jenis
+                    </option>
+
+                    {BADAN_HUKUM_OPTIONS.map((bh) => (
+                      <option key={bh} value={bh}>
+                        {bh}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Terakhir Direview */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                    Terakhir Direview (Last Review)
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Dari */}
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">
+                        Dari
+                      </span>
+
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => {
+                          setStartDate(e.target.value)
+                          setCurrentPage(1)
+                        }}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* Sampai */}
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">
+                        Sampai
+                      </span>
+
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => {
+                          setEndDate(e.target.value)
+                          setCurrentPage(1)
+                        }}
+                        className="w-full border border-gray-200 dark:border-gray-800 p-2 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                      />
                     </div>
                   </div>
-
-                  <div className="pt-2 flex justify-end">
-                    <button
-                      onClick={() => setShowFilterPopover(false)}
-                      className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
-                    >
-                      Terapkan Filter
-                    </button>
-                  </div>
                 </div>
-              </>
+
+                {/* Terapkan Filter */}
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => setShowFilterPopover(false)}
+                    className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                  >
+                    Terapkan Filter
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
