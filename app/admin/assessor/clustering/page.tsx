@@ -7,7 +7,8 @@ import {
   AlertCircle, Download, Clock, AlertTriangle, RotateCcw,
   Layers, RefreshCw, Filter, Search, FileText,
   LayoutDashboard, TrendingUp, BarChart3, ClipboardCheck,
-  ClipboardList, Check, X, CheckCircle2, Activity, XCircle
+  ClipboardList, Check, X, CheckCircle2, Activity, XCircle,
+  FileSearch
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -479,19 +480,19 @@ export default function ClusteringDashboardPage() {
 
         {/* === HEADER: TITLE === */}
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
                 Clustering ULOK
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-3xl">
-                Analisis kuadran usulan lokasi berdasarkan persentase kelengkapan berkas dan durasi pengumpulan.
+                Analisis usulan lokasi berdasarkan persentase kelengkapan berkas dan  durasi pengumpulan.
               </p>
             </div>
 
             {/* Dashboard Actions: Filter & Refresh only visible on Dashboard tab */}
             {activeTab === 'dashboard' && (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-col-reverse sm:flex-row items-center gap-2 shrink-0">
                 {/* Filter */}
                 <div className="relative shrink-0">
                   <button
@@ -519,8 +520,27 @@ export default function ClusteringDashboardPage() {
                         onClick={() => setShowFilterPopover(false)}
                       />
 
-                      <div className="absolute -right-13 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
-                        
+                      <div
+                        className="
+                          fixed left-4 right-4 top-82 -translate-y-1/2
+                          w-auto max-w-none max-h-[calc(100vh-2rem)] overflow-y-auto
+                          bg-white dark:bg-gray-900
+                          border border-gray-200 dark:border-gray-800
+                          rounded-2xl shadow-xl p-5 z-50
+                          space-y-4
+                          animate-[fadeIn_0.15s_ease-out]
+                          sm:absolute
+                          sm:left-auto
+                          sm:right-[-52px]
+                          sm:top-auto
+                          sm:translate-y-0
+                          sm:mt-2
+                          sm:w-96
+                          sm:max-w-none
+                          sm:max-h-none
+                          sm:overflow-visible
+                        "
+                      >
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                           <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
@@ -626,7 +646,7 @@ export default function ClusteringDashboardPage() {
             <div className="flex flex-row items-center gap-2 w-full mt-2">
               {/* Search */}
               <div className="relative flex-1 w-full min-w-0">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Cari berdasarkan lokasi, pemilik, cabang..."
@@ -640,7 +660,7 @@ export default function ClusteringDashboardPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {/* Filter */}
                 <div className="relative shrink-0">
                   <button
@@ -664,92 +684,114 @@ export default function ClusteringDashboardPage() {
                   </button>
 
                   {showFilterPopover && (
-                    <div className="absolute -right-13 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+                    <>
+                      <div
+                        className="fixed inset-0 z-40 bg-transparent"
+                        onClick={() => setShowFilterPopover(false)}
+                      />
 
-                      {/* Header */}
-                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-                        <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
-                          <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
-                          Filter Cluster ULOK
-                        </h4>
+                      <div
+                        className="
+                          absolute -right-13 top-full mt-2
+                          w-[calc(100vw-2rem)] max-w-[380px] max-h-[calc(100vh-2rem)] overflow-y-auto
+                          bg-white dark:bg-gray-900
+                          border border-gray-200 dark:border-gray-800
+                          rounded-2xl shadow-xl p-5 z-50
+                          space-y-4
+                          animate-[fadeIn_0.15s_ease-out]
 
-                        {activeFilterCount > 0 && (
-                          <button
-                            onClick={() => {
-                              setSelectedBranch('all')
-                              setSelectedBadanHukum('all')
+                          sm:right-[-52px]
+                          sm:w-96
+                          sm:max-w-none
+                          sm:max-h-none
+                          sm:overflow-visible
+                        "
+                      >
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                          <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
+                            Filter Cluster ULOK
+                          </h4>
+
+                          {activeFilterCount > 0 && (
+                            <button
+                              onClick={() => {
+                                setSelectedBranch('all')
+                                setSelectedBadanHukum('all')
+                                setCurrentPage(1)
+                              }}
+                              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Reset
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Asal Cabang Filter */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                            Asal Cabang
+                          </label>
+
+                          <select
+                            value={selectedBranch}
+                            onChange={(e) => {
+                              setSelectedBranch(e.target.value)
                               setCurrentPage(1)
                             }}
-                            className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                            className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
                           >
-                            <RotateCcw className="w-3 h-3" />
-                            Reset
+                            <option value="all">
+                              Semua Cabang
+                            </option>
+
+                            {allBranches.map((br: any) => (
+                              <option key={br} value={br}>
+                                {br}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Jenis Badan Hukum Filter */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                            Jenis Badan Hukum
+                          </label>
+
+                          <select
+                            value={selectedBadanHukum}
+                            onChange={(e) => {
+                              setSelectedBadanHukum(e.target.value)
+                              setCurrentPage(1)
+                            }}
+                            className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                          >
+                            <option value="all">
+                              Semua Jenis
+                            </option>
+
+                            {badanHukumOptions.map((bh) => (
+                              <option key={bh} value={bh}>
+                                {bh}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Apply Filter */}
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            onClick={() => setShowFilterPopover(false)}
+                            className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                          >
+                            Terapkan Filter
                           </button>
-                        )}
+                        </div>
                       </div>
-
-                      {/* Asal Cabang Filter */}
-                      <div>
-                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
-                          Asal Cabang
-                        </label>
-
-                        <select
-                          value={selectedBranch}
-                          onChange={(e) => {
-                            setSelectedBranch(e.target.value)
-                            setCurrentPage(1)
-                          }}
-                          className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
-                        >
-                          <option value="all">
-                            Semua Cabang
-                          </option>
-
-                          {allBranches.map((br: any) => (
-                            <option key={br} value={br}>
-                              {br}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Jenis Badan Hukum Filter */}
-                      <div>
-                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
-                          Jenis Badan Hukum
-                        </label>
-
-                        <select
-                          value={selectedBadanHukum}
-                          onChange={(e) => {
-                            setSelectedBadanHukum(e.target.value)
-                            setCurrentPage(1)
-                          }}
-                          className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
-                        >
-                          <option value="all">
-                            Semua Jenis
-                          </option>
-
-                          {badanHukumOptions.map((bh) => (
-                            <option key={bh} value={bh}>
-                              {bh}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Apply Filter */}
-                      <div className="pt-2 flex justify-end">
-                        <button
-                          onClick={() => setShowFilterPopover(false)}
-                          className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
-                        >
-                          Terapkan Filter
-                        </button>
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
 
@@ -1278,7 +1320,7 @@ export default function ClusteringDashboardPage() {
                               }}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-95 transition"
                             >
-                              <FileText className="w-3.5 h-3.5"/>
+                              <FileSearch className="w-3.5 h-3.5"/>
                               Detail
                             </button>
                           </div>
@@ -1432,7 +1474,7 @@ export default function ClusteringDashboardPage() {
                                     className="p-2 hover:scale-110 active:scale-95 disabled:opacity-50 transition inline-flex items-center justify-center cursor-pointer"
                                     title="Lihat Detail"
                                   >
-                                    <FileText className="w-5 h-5 text-[#3365A6]" />
+                                    <FileSearch className="w-5 h-5 text-[#3365A6]" />
                                   </button>
                                 </td>
                               </tr>

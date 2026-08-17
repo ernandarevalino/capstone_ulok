@@ -26,6 +26,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Layers,
 } from 'lucide-react'
 
 type TabId = 'baruMasuk' | 'antreanAktif' | 'patutDilihat' | 'perluRevisi' | 'selesai'
@@ -764,7 +765,7 @@ export default function PengelompokanDashboard() {
             </button>
 
             {showFilterPopover && (
-              <div className="absolute -right-13 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+              <div className="absolute -right-26 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
 
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
@@ -1183,7 +1184,7 @@ export default function PengelompokanDashboard() {
                   <tr>
                     <td colSpan={8} className="py-20 text-center text-gray-400">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <Inbox className="w-8 h-8" />
+                        <Layers className="w-8 h-8" />
                         <span className="text-sm font-semibold">Tidak ada usulan lokasi di kelompok ini.</span>
                         <span className="text-xs text-gray-500">
                           Gunakan kata kunci pencarian lain atau sinkronkan data.
