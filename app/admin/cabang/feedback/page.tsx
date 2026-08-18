@@ -3,17 +3,18 @@
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getFeedbackSubmissions, createComment } from '@/actions/cabang'
-import { getCurrentProfile } from '@/actions/auth'
+import { useCabangProfile } from '@/context/CabangProfileContext'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import { createClient, getRealtimeClient } from '@/utils/supabase/client'
 
 export default function FeedbackPage() {
   const router = useRouter()
+  const profile = useCabangProfile()
+  const currentUser = profile
   const [, startTransition] = useTransition()
   const [loading, setLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null)
 
   // New states for Tab-Based Chat UI
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,15 +90,8 @@ export default function FeedbackPage() {
     }
   }
 
-
-
   const fetchSubmissions = React.useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
-    // Fetch current user profile
-    const profileRes = await getCurrentProfile()
-    if (profileRes.success && profileRes.profile) {
-      setCurrentUser(profileRes.profile)
-    }
     // Fetch submissions
     const res = await getFeedbackSubmissions()
     if (res.success && res.data) {

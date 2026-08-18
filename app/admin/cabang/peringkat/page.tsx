@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useEffect, useState, useMemo } from 'react'
-import { getSAWLeaderboard, getCurrentUserBranchId } from '@/actions/saw'
+import { getSAWLeaderboard } from '@/actions/saw'
+import { useCabangProfile } from '@/context/CabangProfileContext'
 import { Trophy, Medal, AlertCircle, Calendar, ChevronDown, ChevronUp, MapPin, Award, UserCheck, Star, Sparkles } from 'lucide-react'
 
 export default function PeringkatCabangPage() {
+  const profile = useCabangProfile()
+  const userBranchId = profile?.branch_id ? String(profile.branch_id) : null
   const [leaderboard, setLeaderboard] = useState<any[]>([])
-  const [userBranchId, setUserBranchId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [openCardId, setOpenCardId] = useState<string | null>(null)
@@ -14,10 +16,7 @@ export default function PeringkatCabangPage() {
 
   const loadData = async () => {
     setIsLoading(true)
-    const [resLeaderboard, resBranchId] = await Promise.all([
-      getSAWLeaderboard(),
-      getCurrentUserBranchId()
-    ])
+    const resLeaderboard = await getSAWLeaderboard()
 
     if (resLeaderboard.success && resLeaderboard.data) {
       setLeaderboard(resLeaderboard.data)
@@ -25,7 +24,6 @@ export default function PeringkatCabangPage() {
       setError(resLeaderboard.error || 'Gagal memuat data peringkat')
     }
 
-    setUserBranchId(resBranchId)
     setIsLoading(false)
   }
 
@@ -38,7 +36,8 @@ export default function PeringkatCabangPage() {
   }
 
   const filteredLeaderboard = useMemo(() => {
-    return leaderboard.filter(item => item.profiles?.branch_id === userBranchId)
+    if (!userBranchId) return leaderboard
+    return leaderboard.filter(item => String(item.profiles?.branch_id) === String(userBranchId))
   }, [leaderboard, userBranchId])
 
   const top3Data = useMemo(() => filteredLeaderboard.slice(0, 3), [filteredLeaderboard])

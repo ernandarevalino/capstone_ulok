@@ -23,7 +23,7 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
-import { getCurrentUserBranchId } from '@/actions/saw'
+import { useCabangProfile } from '@/context/CabangProfileContext'
 
 const formatLastReviewedShort = (dateStr: string | null | undefined) => {
   if (!dateStr) return 'Belum direview'
@@ -534,6 +534,8 @@ const TableGroup = React.memo(function TableGroup({
 
 export default function UsulanLokasiPage() {
   const router = useRouter()
+  const profile = useCabangProfile()
+  const userBranchId = profile?.branch_id ? Number(profile.branch_id) : undefined
   const [isPending, startTransition] = useTransition()
 
   const [isLoading, setIsLoading] = useState(true)
@@ -544,7 +546,6 @@ export default function UsulanLokasiPage() {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
   const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const [userBranchId, setUserBranchId] = useState<number | undefined>(undefined)
 
   // Filter Popover States
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -669,7 +670,11 @@ export default function UsulanLokasiPage() {
   const fetchSubmissions = async () => {
     setIsLoading(true)
     try {
-      const res = await getUlokSubmissions()
+      const [res, countRes] = await Promise.all([
+        getUlokSubmissions(),
+        getDeletedUlokCount()
+      ])
+
       if (res.success && res.data) {
         setSubmissions(res.data)
       } else {
@@ -680,7 +685,6 @@ export default function UsulanLokasiPage() {
         }
       }
 
-      const countRes = await getDeletedUlokCount()
       if (countRes.success && countRes.count !== undefined) {
         setDeletedCount(countRes.count)
       }
@@ -694,14 +698,6 @@ export default function UsulanLokasiPage() {
   useEffect(() => {
     router.refresh()
     fetchSubmissions()
-
-    async function loadBranchId() {
-      const branchId = await getCurrentUserBranchId()
-      if (branchId) {
-        setUserBranchId(Number(branchId))
-      }
-    }
-    loadBranchId()
   }, [router])
 
   const handleCreateLocation = async (e: React.FormEvent) => {

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getCurrentProfile } from '@/actions/auth';
+import dynamic from 'next/dynamic';
+import { useCabangProfile } from '@/context/CabangProfileContext';
 import { getUlokSubmissions, getNotificationsAction } from '@/actions/cabang';
 import { calculateULOKSAW } from '@/actions/saw';
 import { 
@@ -14,33 +15,19 @@ import {
   Layers,
   Bell
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Tooltip
-} from 'recharts';
 
-const CustomChartTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 shadow-xl backdrop-blur-sm animate-fade-in">
-        <p className="text-xs font-bold text-gray-800 dark:text-slate-100">
-          {payload[0].name}
-        </p>
-        <p className="text-xs text-[#142B4D] dark:text-blue-400 font-black mt-0.5">
-          {payload[0].value} Usulan
-        </p>
-      </div>
-    );
-  }
-
-  return null;
-};
+const SubmissionsPieChart = dynamic(() => import('./SubmissionsPieChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[14px] sm:border-[16px] border-slate-200 dark:border-slate-800 animate-pulse" />
+    </div>
+  ),
+});
 
 export default function AdminCabangPage() {
-  const [fullName, setFullName] = useState<string>("Loading...");
+  const profile = useCabangProfile();
+  const fullName = profile?.full_name || "Pengguna";
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,15 +37,10 @@ export default function AdminCabangPage() {
       setLoading(true);
 
       try {
-        const profileRes = await getCurrentProfile();
-
-        if (profileRes && profileRes.success && profileRes.profile) {
-          setFullName(profileRes.profile.full_name);
-        } else {
-          setFullName("Pengguna");
-        }
-
-        const submissionsRes = await getUlokSubmissions();
+        const [submissionsRes, notificationsRes] = await Promise.all([
+          getUlokSubmissions(),
+          getNotificationsAction()
+        ]);
 
         if (submissionsRes && submissionsRes.success && submissionsRes.data) {
           setSubmissions(submissionsRes.data);
@@ -92,8 +74,6 @@ export default function AdminCabangPage() {
               );
           }
         }
-
-        const notificationsRes = await getNotificationsAction();
 
         if (
           notificationsRes &&
@@ -433,35 +413,7 @@ export default function AdminCabangPage() {
 
           <div className="w-full lg:w-1/2 h-52 sm:h-60 md:h-64">
 
-            <ResponsiveContainer width="100%" height="100%">
-
-              <PieChart>
-
-                <Pie
-                  data={displayChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-
-                  {displayChartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      className="transition-all duration-300 hover:opacity-80 outline-none"
-                    />
-                  ))}
-
-                </Pie>
-
-                <Tooltip content={<CustomChartTooltip />} />
-
-              </PieChart>
-
-            </ResponsiveContainer>
+            <SubmissionsPieChart displayChartData={displayChartData} />
 
           </div>
 

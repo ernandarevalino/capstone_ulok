@@ -5,9 +5,13 @@ import { getCurrentProfile, updateAvatarAction, logoutAction } from '@/actions/a
 import { useRouter } from 'next/navigation'; 
 import { User, Shield, MapPin, Building, Info, LogOut, Camera, Bell, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
-export default function ProfileGlobal() {
-  const [profile, setProfile] = useState<any>(null);          
-  const [loading, setLoading] = useState(true);               
+interface ProfileGlobalProps {
+  initialProfile?: any;
+}
+
+export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {}) {
+  const [profile, setProfile] = useState<any>(initialProfile || null);          
+  const [loading, setLoading] = useState(initialProfile ? false : true);               
   const [uploading, setUploading] = useState(false);           
   const fileInputRef = useRef<HTMLInputElement>(null);        
   const router = useRouter();                                
@@ -18,8 +22,13 @@ export default function ProfileGlobal() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    fetchProfileData();
-  }, []);
+    if (initialProfile) {
+      setProfile(initialProfile);
+      setLoading(false);
+    } else {
+      fetchProfileData();
+    }
+  }, [initialProfile]);
 
   async function fetchProfileData() {
     setLoading(true);

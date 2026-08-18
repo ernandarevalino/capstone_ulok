@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { getNotificationsAction, deleteNotificationAction, clearAllNotificationsAction, markAllNotificationsAsReadAction } from '@/actions/cabang';
-import { getCurrentProfile } from '@/actions/auth';
+import { useCabangProfile } from '@/context/CabangProfileContext';
 import { Trash2, Bell, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function NotificationPage() {
+  const profile = useCabangProfile();
+  const userId = profile?.id || null;
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -22,13 +23,16 @@ export default function NotificationPage() {
 
   async function initPage() {
     setLoading(true);
-    const profileRes = await getCurrentProfile();
-    if (profileRes && profileRes.success && profileRes.profile) {
-      const uId = profileRes.profile.id;
-      setUserId(uId);
+    const [res] = await Promise.all([
+      getNotificationsAction(),
+      markAllNotificationsAsReadAction()
+    ]);
+
+    if (res && res.success) {
+      setNotifications(res.data);
+      setVisibleCount(5);
     }
-    await fetchNotifications();
-    await markAllAsRead();
+    setLoading(false);
   }
 
   async function fetchNotifications() {
