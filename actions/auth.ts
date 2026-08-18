@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { sendResetPasswordEmail } from '@/utils/email'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 
 // === ACTIONS: LOGIN ===
 export async function loginAction(formData: FormData) {
@@ -28,6 +28,32 @@ export async function loginAction(formData: FormData) {
 
     if (profileError) throw new Error(`Gagal memuat profil pengguna: ${profileError.message}`)
     
+    const cookieStore = await cookies()
+    const isProduction = process.env.NODE_ENV === 'production'
+
+    let defaultPath = '/admin/cabang'
+    if (profile.role === 'super_admin') {
+      defaultPath = '/admin/super-admin'
+    } else if (profile.role === 'assessor') {
+      defaultPath = '/admin/assessor'
+    } else if (profile.role === 'admin_cabang') {
+      defaultPath = '/admin/cabang'
+    }
+
+    cookieStore.set('session_login_at', Date.now().toString(), {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      secure: isProduction,
+    })
+
+    cookieStore.set('last_visited_path', defaultPath, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      secure: isProduction,
+    })
+
     return { success: true, role: profile.role }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -41,6 +67,10 @@ export async function logoutAction() {
     
     const { error } = await supabase.auth.signOut()
     if (error) throw error
+
+    const cookieStore = await cookies()
+    cookieStore.delete('session_login_at')
+    cookieStore.delete('last_visited_path')
 
     return { success: true }
   } catch (error: any) {
