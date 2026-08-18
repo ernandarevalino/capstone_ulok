@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName } from '@/actions/cabang'
 import { updateUlokStatus } from '@/actions/assessor'
 import { supabase } from '@/lib/supabaseClient'
+import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
@@ -217,27 +218,48 @@ export function DetailPenilaianPeroranganClient({
 
   // Real-time comments subscription
   useEffect(() => {
-    const channel = supabase
-      .channel(`comments-ulok-po-assessor-${ulokId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments',
-          filter: `ulok_id=eq.${ulokId}`,
-        },
-        async () => {
-          const commentsRes = await getComments(ulokId)
-          if (commentsRes.success && commentsRes.data) {
-            setComments(commentsRes.data)
+    let channel: any = null
+    let activeClient: any = null
+    let cancelled = false
+
+    const initRealtime = async () => {
+      const client = await getRealtimeClient()
+      if (cancelled) return
+      activeClient = client
+
+      channel = client
+        .channel(`comments-ulok-po-assessor-${ulokId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'comments',
+            filter: `ulok_id=eq.${ulokId}`,
+          },
+          async () => {
+            const commentsRes = await getComments(ulokId)
+            if (commentsRes.success && commentsRes.data) {
+              setComments(commentsRes.data)
+            }
           }
-        }
-      )
-      .subscribe()
+        )
+
+      if (cancelled) {
+        activeClient.removeChannel(channel)
+        return
+      }
+
+      channel.subscribe()
+    }
+
+    initRealtime()
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      if (channel && activeClient) {
+        activeClient.removeChannel(channel)
+      }
     }
   }, [ulokId])
 

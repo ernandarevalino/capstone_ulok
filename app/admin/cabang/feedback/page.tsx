@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getFeedbackSubmissions, createComment } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
-import { createClient } from '@/utils/supabase/client'
+import { createClient, getRealtimeClient } from '@/utils/supabase/client'
 
 export default function FeedbackPage() {
   const router = useRouter()
@@ -91,8 +91,8 @@ export default function FeedbackPage() {
 
 
 
-  const fetchSubmissions = React.useCallback(async () => {
-    setLoading(true)
+  const fetchSubmissions = React.useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     // Fetch current user profile
     const profileRes = await getCurrentProfile()
     if (profileRes.success && profileRes.profile) {
@@ -109,7 +109,7 @@ export default function FeedbackPage() {
         alert('Gagal memuat feedback: ' + res.error)
       }
     }
-    setLoading(false)
+    if (!silent) setLoading(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -118,56 +118,69 @@ export default function FeedbackPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Step 2: Realtime subscription — bypass Next.js cache by directly injecting new comments
+  // === 1. SYNC ACTIVE CHAT (activeUlok) ===
+  // Safely update the active chat window whenever submissions change in the background
   useEffect(() => {
-    const supabase = createClient()
-    const channel = supabase
-      .channel('realtime-feedback-comments')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments' },
-        async (payload) => {
-          console.log('Realtime payload received:', payload)
+    if (activeUlok) {
+      const updatedUlok = submissions.find((s: any) => s.id === activeUlok.id)
+      if (updatedUlok) {
+        // Deep compare to prevent infinite loops, works regardless of relation name
+        if (JSON.stringify(updatedUlok) !== JSON.stringify(activeUlok)) {
+          setActiveUlok(updatedUlok)
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissions]) // Intentionally omitting activeUlok to prevent loops
 
-          // Fetch the exact new comment with its profile directly from Supabase (bypassing Next.js cache)
-          const { data: newComment } = await supabase
-            .from('comments')
-            .select('*, profiles(*)')
-            .eq('id', payload.new.id)
-            .single()
+  // === 2. REALTIME WEBSOCKET ===
+  useEffect(() => {
+    let channel: any = null
+    let activeClient: any = null
+    let cancelled = false
 
-          if (newComment) {
-            setSubmissions((prevSubmissions) => {
-              // Find the submission this comment belongs to
-              const targetSub = prevSubmissions.find((s) => s.id === newComment.ulok_id)
-              if (!targetSub) return prevSubmissions // Ignore if submission isn't currently loaded
+    const initRealtime = async () => {
+      const supabase = await getRealtimeClient()
+      if (cancelled) return
+      activeClient = supabase
 
-              // Prevent duplication if the sender already appended it via handleSendMessage
-              const isDuplicate = targetSub.comments?.some((c: any) => c.id === newComment.id)
-              if (isDuplicate) return prevSubmissions
+      // Unique channel to prevent cross-tab conflicts
+      const channelName = `realtime-comments-${Date.now()}`
 
-              // Inject the new comment into the specific submission's comments array
-              return prevSubmissions.map((sub) => {
-                if (sub.id === newComment.ulok_id) {
-                  return {
-                    ...sub,
-                    comments: [...(sub.comments || []), newComment],
-                  }
-                }
-                return sub
-              })
-            })
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'comments' },
+          (payload: any) => {
+            console.log('✅ Realtime Payload Received:', payload)
+            // Trigger silent refresh
+            if (typeof fetchSubmissions === 'function') {
+              fetchSubmissions(true)
+            }
           }
-        },
-      )
-      .subscribe((status) => {
-        console.log('Supabase Realtime Status:', status)
+        )
+
+      if (cancelled) {
+        activeClient.removeChannel(channel)
+        return
+      }
+
+      channel.subscribe((status: any) => {
+        console.log('📡 Supabase Realtime Status:', status)
       })
+    }
+
+    initRealtime()
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      if (channel && activeClient) {
+        activeClient.removeChannel(channel)
+      }
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array ensures we only subscribe once on mount
 
   // Step 2: Fixed processedSubmissions — show ALL submissions with at least 1 comment, sort by newest comment
   const processedSubmissions = React.useMemo(() => {
