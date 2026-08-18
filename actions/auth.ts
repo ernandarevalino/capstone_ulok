@@ -40,7 +40,7 @@ export async function loginAction(formData: FormData) {
       defaultPath = '/admin/cabang'
     }
 
-    cookieStore.set('session_login_at', Date.now().toString(), {
+    cookieStore.set('last_activity_at', Date.now().toString(), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
@@ -69,7 +69,7 @@ export async function logoutAction() {
     if (error) throw error
 
     const cookieStore = await cookies()
-    cookieStore.delete('session_login_at')
+    cookieStore.delete('last_activity_at')
     cookieStore.delete('last_visited_path')
 
     return { success: true }

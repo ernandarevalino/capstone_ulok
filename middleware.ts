@@ -64,12 +64,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Jika ADA session valid
-  const sessionLoginAtStr = request.cookies.get('session_login_at')?.value
+  const lastActivityAtStr = request.cookies.get('last_activity_at')?.value
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // a & b. Jika cookie session_login_at TIDAK ADA (sesi lama / race condition) -> set baseline sekarang
-  if (!sessionLoginAtStr) {
-    response.cookies.set('session_login_at', Date.now().toString(), {
+  // a & b. Jika cookie last_activity_at TIDAK ADA (sesi lama / race condition) -> set baseline sekarang
+  if (!lastActivityAtStr) {
+    response.cookies.set('last_activity_at', Date.now().toString(), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
@@ -91,18 +91,22 @@ export async function middleware(request: NextRequest) {
       if (!targetPath || targetPath === '/' || targetPath === '/login') {
         targetPath = await getDefaultPathForUser(supabase, user.id)
       }
-      return NextResponse.redirect(new URL(targetPath, request.url))
+      const redirectRes = NextResponse.redirect(new URL(targetPath, request.url))
+      response.cookies.getAll().forEach((cookie) => {
+        redirectRes.cookies.set(cookie.name, cookie.value, cookie)
+      })
+      return redirectRes
     }
 
     return response
   }
 
-  // c. Jika cookie session_login_at ADA -> hitung selisih waktu
-  const sessionLoginAt = parseInt(sessionLoginAtStr, 10)
-  const diff = Date.now() - sessionLoginAt
+  // c. Jika cookie last_activity_at ADA -> hitung selisih waktu
+  const lastActivityAt = parseInt(lastActivityAtStr, 10)
+  const diff = Date.now() - lastActivityAt
 
   // Jika selisih > SESSION_TIMEOUT_MS (Session Expired)
-  if (isNaN(sessionLoginAt) || diff > SESSION_TIMEOUT_MS) {
+  if (isNaN(lastActivityAt) || diff > SESSION_TIMEOUT_MS) {
     await supabase.auth.signOut()
     const redirectRes = NextResponse.redirect(new URL('/login?reason=session_expired', request.url))
     
@@ -110,12 +114,19 @@ export async function middleware(request: NextRequest) {
     response.cookies.getAll().forEach((cookie) => {
       redirectRes.cookies.set(cookie.name, cookie.value, cookie)
     })
-    redirectRes.cookies.delete('session_login_at')
+    redirectRes.cookies.delete('last_activity_at')
     redirectRes.cookies.delete('last_visited_path')
     return redirectRes
   }
 
-  // Jika selisih <= SESSION_TIMEOUT_MS (Session Still Valid)
+  // Jika selisih <= SESSION_TIMEOUT_MS (Session Still Valid) -> Refresh last_activity_at (Sliding Window Inactivity Timeout)
+  response.cookies.set('last_activity_at', Date.now().toString(), {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: isProduction,
+  })
+
   if (isProtected) {
     const currentPath = pathname + request.nextUrl.search
     response.cookies.set('last_visited_path', currentPath, {
@@ -131,7 +142,11 @@ export async function middleware(request: NextRequest) {
     if (!targetPath || targetPath === '/' || targetPath === '/login') {
       targetPath = await getDefaultPathForUser(supabase, user.id)
     }
-    return NextResponse.redirect(new URL(targetPath, request.url))
+    const redirectRes = NextResponse.redirect(new URL(targetPath, request.url))
+    response.cookies.getAll().forEach((cookie) => {
+      redirectRes.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectRes
   }
 
   return response

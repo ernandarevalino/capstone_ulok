@@ -15,8 +15,10 @@ import {
   Loader2,
   Clock,
   Database,
-  RefreshCw
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react'
+
 import {
   getSuperAdminBackupItems,
   restoreToCabangRecycleBin,
@@ -486,7 +488,7 @@ export default function SuperAdminRecycleBinPage() {
       {successModal.isOpen && (
         <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-slate-800 z-50 animate-[fadeIn_0.2s_ease-out] max-w-md">
           <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded-full">
-            <span className="text-sm font-bold flex items-center justify-center w-4 h-4">✓</span>
+            <CheckCircle2 className="w-4 h-4" />
           </div>
           <span className="text-sm font-semibold">{successModal.message}</span>
         </div>

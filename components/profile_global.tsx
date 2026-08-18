@@ -11,7 +11,7 @@ interface ProfileGlobalProps {
 
 export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {}) {
   const [profile, setProfile] = useState<any>(initialProfile || null);          
-  const [loading, setLoading] = useState(initialProfile ? false : true);               
+  const [loading, setLoading] = useState(true);               
   const [uploading, setUploading] = useState(false);           
   const fileInputRef = useRef<HTMLInputElement>(null);        
   const router = useRouter();                                
@@ -22,22 +22,38 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
+    let active = true;
+    let timer: NodeJS.Timeout;
+
     if (initialProfile) {
       setProfile(initialProfile);
-      setLoading(false);
+      // Give a small delay (600ms) for consistent UX skeleton loader representation
+      timer = setTimeout(() => {
+        if (active) setLoading(false);
+      }, 600);
     } else {
-      fetchProfileData();
-    }
-  }, [initialProfile]);
+      const fetchWithDelay = async () => {
+        setLoading(true);
+        const startTime = Date.now();
+        const res = await getCurrentProfile();
+        if (active && res && res.success) {
+          setProfile(res.profile);
+        }
+        const elapsedTime = Date.now() - startTime;
+        const delay = Math.max(0, 600 - elapsedTime);
+        timer = setTimeout(() => {
+          if (active) setLoading(false);
+        }, delay);
+      };
 
-  async function fetchProfileData() {
-    setLoading(true);
-    const res = await getCurrentProfile();
-    if (res && res.success) {
-      setProfile(res.profile);
+      fetchWithDelay();
     }
-    setLoading(false);
-  }
+
+    return () => {
+      active = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [initialProfile]);
 
   const handleAvatarClick = () => {
     if (fileInputRef.current) {
@@ -93,9 +109,9 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
 
   if (loading) {
     return (
-      <>
+      <div className="space-y-6">
         {/* Page Header Title/Subtitle */}
-        <div className="mb-6">
+        <div>
           <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
           <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
         </div>
@@ -146,7 +162,7 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
 
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -160,8 +176,8 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
   };
 
   return (
-    <>
-      <div className="mb-6">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
           Profil Pengguna
         </h1>
@@ -382,6 +398,6 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
       )}
 
     </div>
-    </>
+  </div>
   );
 }

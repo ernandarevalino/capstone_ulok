@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getNotificationsAction, deleteNotificationAction, markAllNotificationsAsReadAction } from '@/actions/superadmin';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Bell, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 
 export default function NotificationPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -56,7 +56,7 @@ export default function NotificationPage() {
       setNotifications([]);
       setShowDeleteAllConfirm(false);
 
-      setSuccessMessage('Semua notifikasi berhasil dibersihkan! 🎉');
+      setSuccessMessage('Semua notifikasi berhasil dibersihkan!');
       setShowSuccessModal(true);
 
       setTimeout(() => {
@@ -72,12 +72,47 @@ export default function NotificationPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
+        {/* Page Header Skeleton */}
+        <div className="mb-6">
+          <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+        </div>
+
+        {/* List Card Skeleton */}
+        <div className="shadow-sm bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800/80">
+          <div className="bg-slate-200 dark:bg-slate-800 p-4 md:p-5 flex items-center justify-between gap-2 animate-pulse border-b border-gray-100 dark:border-gray-800/60">
+            <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-6 w-16 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-3.5 sm:p-5 sm:pl-6 sm:pr-6 flex justify-between items-start gap-4">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0"></span>
+                    <div className="h-4 w-1/3 md:w-1/4 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                  </div>
+                  <div className="h-3.5 w-3/4 md:w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse pl-4"></div>
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse pl-4"></div>
+                </div>
+                <div className="h-9 w-9 sm:h-11 sm:w-11 md:h-10 md:w-10 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse shrink-0"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
 
         {/* === HEADER PAGE === */}
-        <div className="max-w-255 mx-auto mb-10">
+        <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
             Notifikasi Sistem
           </h1>
@@ -90,29 +125,25 @@ export default function NotificationPage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
 
           {/* === HEADER PANEL === */}
-          <div className="bg-[#142B4D] dark:bg-slate-900 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
-            <h3 className="text-white font-bold text-base flex items-center gap-2.5">
-              <img
-                src="/icons/icon-notification.svg"
-                alt="Notification Icon"
-                className="w-5 h-5 object-contain brightness-0 invert"
-              />
+          <div className="bg-[#142B4D] dark:bg-slate-900 p-4 md:p-5 flex items-center justify-between gap-2 transition-colors">
+            <h3 className="text-white font-bold text-sm md:text-base flex items-center gap-2">
+              <Bell className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
               Aktivitas
             </h3>
 
-            <div className="flex items-center gap-2.5 self-end sm:self-auto">
-              <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold">
-                {notifications.length} Notifications
+            <div className="flex items-center gap-2">
+              <span className="bg-white/20 text-white text-[10px] md:text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap">
+                {notifications.length} <span className="hidden sm:inline">Notifications</span>
               </span>
               {notifications.length > 0 && (
                 <button
                   onClick={handleDeleteAllTrigger}
                   disabled={isDeletingAll}
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg font-bold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm"
-                  title="Hapus semua notifikasi"
+                  className="bg-red-600 hover:bg-red-700 text-white text-[10px] md:text-xs px-2 sm:px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all h-6 md:h-7 shadow-sm disabled:opacity-50"
+                  title="Clear All Notifications"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Clear All
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Clear All</span>
                 </button>
               )}
             </div>
@@ -120,14 +151,9 @@ export default function NotificationPage() {
 
           {/* === LIST NOTIFIKASI === */}
           <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-            {loading ? (
-              <div className="p-12 text-center text-gray-400 dark:text-gray-500 italic text-sm">
-                <div className="w-6 h-6 border-2 border-blue-900 dark:border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                Memuat daftar pemberitahuan sistem...
-              </div>
-            ) : notifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <div className="p-12 text-center text-gray-400 dark:text-gray-500">
-                <span className="text-4xl block mb-2 opacity-60">🔔</span>
+                <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p className="font-bold text-gray-500 dark:text-gray-400">Tidak ada notifikasi baru!</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   Seluruh riwayat aktivitas masuk akun Anda bersih saat ini.
@@ -137,7 +163,7 @@ export default function NotificationPage() {
               notifications.slice(0, visibleCount).map((notif) => (
                 <div
                   key={notif.id}
-                  className="p-5 pl-6 pr-6 hover:bg-blue-50/20 dark:hover:bg-gray-800/40 transition-all duration-300 ease-in-out flex justify-between items-start gap-4"
+                  className="p-3.5 sm:p-5 sm:pl-6 sm:pr-6 hover:bg-blue-50/20 dark:hover:bg-gray-800/40 transition-all duration-300 ease-in-out flex justify-between items-start gap-4"
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -147,11 +173,11 @@ export default function NotificationPage() {
                       </h4>
                     </div>
 
-                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 pl-4 leading-relaxed font-medium">
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 pl-3.5 sm:pl-4 leading-relaxed font-medium">
                       {notif.message}
                     </p>
 
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold pl-4 uppercase tracking-wider">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold pl-3.5 sm:pl-4 uppercase tracking-wider">
                       {new Date(notif.created_at).toLocaleString('id-ID', {
                         dateStyle: 'medium',
                         timeStyle: 'short'
@@ -161,10 +187,10 @@ export default function NotificationPage() {
 
                   <button
                     onClick={() => handleDelete(notif.id)}
-                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-xs md:text-sm p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all active:scale-90 font-bold shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 h-9 w-9 sm:h-11 sm:w-11 md:h-10 md:w-10 flex items-center justify-center"
                     title="Hapus notifikasi"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ))
@@ -172,11 +198,11 @@ export default function NotificationPage() {
           </div>
 
           {/* === LOAD MORE BUTTON === */}
-          {!loading && visibleCount < notifications.length && (
+          {visibleCount < notifications.length && (
             <div className="p-4 flex justify-center border-t border-gray-100 dark:border-gray-800/60">
               <button
                 onClick={() => setVisibleCount(prev => prev + 5)}
-                className="px-5 py-2 text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer"
+                className="px-5 text-xs md:text-sm font-bold text-[#142B4D] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all active:scale-95 cursor-pointer h-11 md:h-10 flex items-center justify-center"
               >
                 Load More ({notifications.length - visibleCount} lagi)
               </button>
@@ -191,7 +217,7 @@ export default function NotificationPage() {
       {showDeleteAllConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-hand.svg" alt="Confirm Delete All" className="w-16 h-16 mx-auto mb-2" />
+            <AlertTriangle className="w-16 h-16 mx-auto mb-2 text-amber-500" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               Apakah Anda yakin ingin menghapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.
             </p>
@@ -199,21 +225,17 @@ export default function NotificationPage() {
               <button
                 onClick={() => setShowDeleteAllConfirm(false)}
                 disabled={isDeletingAll}
-                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+                className="bg-[#142B4D] hover:bg-[#1a3863] text-white px-5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50 h-11 md:h-10 flex items-center justify-center"
               >
                 No
               </button>
               <button
                 onClick={executeDeleteAll}
                 disabled={isDeletingAll}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 py-2 text-sm transition-all flex items-center gap-1.5"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 font-bold px-4 text-xs md:text-sm transition-all flex items-center justify-center gap-1.5 h-11 md:h-10"
               >
                 {isDeletingAll ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="animate-spin h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                  <span className="flex items-center gap-1 animate-pulse">
                     Proses...
                   </span>
                 ) : (
@@ -229,7 +251,7 @@ export default function NotificationPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-16 h-16 mx-auto mb-2 text-emerald-500" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-sm md:text-base leading-relaxed">
               {successMessage}
             </p>
@@ -239,4 +261,4 @@ export default function NotificationPage() {
 
     </div>
   );
-}
+}
