@@ -22,7 +22,8 @@ import {
   UserPlus,
   ArrowUpDown,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  RotateCcw
 } from 'lucide-react';
 
 export default function DaftarAdminCabangPage() {
@@ -62,6 +63,13 @@ export default function DaftarAdminCabangPage() {
 
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [showFilterPopover, setShowFilterPopover] = useState(false);
+
+  const activeFilterCount = branchFilter !== '' ? 1 : 0;
+  const handleResetFilters = () => {
+    setBranchFilter('');
+    setPage(1);
+  };
 
   useEffect(() => {
     fetchBranches();
@@ -100,11 +108,17 @@ export default function DaftarAdminCabangPage() {
     e.preventDefault();
     if (!formData.nik || !formData.password || !formData.fullName || !formData.branchId) return;
 
+    const parsedNik = parseInt(formData.nik, 10);
+    if (isNaN(parsedNik)) {
+      alert("Gagal menyimpan: NIK harus berupa angka murni!");
+      return;
+    }
+
     startTransition(async () => {
       const res = await createUserAction({ 
         password: formData.password,
         fullName: formData.fullName,
-        nik: parseInt(formData.nik, 10),
+        nik: parsedNik,
         role: 'admin_cabang', 
         branchId: formData.branchId ? parseInt(formData.branchId) : null 
       });
@@ -125,12 +139,18 @@ export default function DaftarAdminCabangPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editData.id || !editData.fullName || !editData.nik) return;
+
+    const parsedNik = parseInt(String(editData.nik), 10);
+    if (isNaN(parsedNik)) {
+      alert("Gagal memperbarui: NIK harus berupa angka murni!");
+      return;
+    }
     
     startTransition(async () => {
       const res = await updateUserAction({ 
         id: editData.id, 
         fullName: editData.fullName,
-        nik: parseInt(editData.nik, 10), 
+        nik: parsedNik, 
         deleteAvatar: editData.deleteAvatar, 
         branchId: editData.branchId ? parseInt(editData.branchId) : null, 
         password: editData.password || undefined,
@@ -205,9 +225,15 @@ export default function DaftarAdminCabangPage() {
   const displayUsers = [...users];
   if (sortColumn && sortDirection) {
     displayUsers.sort((a, b) => {
-      let valA = sortColumn === 'nama' ? a.full_name : sortColumn === 'nik' ? a.nik : (a.branches?.nama_cabang || '');
-      let valB = sortColumn === 'nama' ? b.full_name : sortColumn === 'nik' ? b.nik : (b.branches?.nama_cabang || '');
-      return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      let valA = sortColumn === 'nama' ? (a.full_name || '') : sortColumn === 'nik' ? (a.nik || '') : (a.branches?.nama_cabang || '');
+      let valB = sortColumn === 'nama' ? (b.full_name || '') : sortColumn === 'nik' ? (b.nik || '') : (b.branches?.nama_cabang || '');
+      
+      const strA = String(valA);
+      const strB = String(valB);
+
+      return sortDirection === 'asc' 
+        ? strA.localeCompare(strB, undefined, { numeric: true }) 
+        : strB.localeCompare(strA, undefined, { numeric: true });
     });
   }
 
@@ -215,61 +241,120 @@ export default function DaftarAdminCabangPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       
       {/* === HEADER SECTION === */}
-      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Admin Cabang</h1>
-          <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Total terdaftar: <span className="font-bold text-[#142B4D] dark:text-blue-400">{totalCount} pengguna</span> Admin Cabang
-          </p>
+      <div className="max-w-7xl mx-auto mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Admin Cabang</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
+          Total terdaftar: <span className="font-bold text-[#142B4D] dark:text-blue-400">{totalCount} pengguna</span> Admin Cabang
+        </p>
+      </div>
+
+      {/* === SEARCH + ACTIONS === */}
+      <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2 relative z-50">
+        {/* Search */}
+        <div className="relative flex-1 min-w-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Cari Nama / NIK Admin..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10"
+          />
         </div>
-        
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:shrink-0">
-          {/* === INPUT PENCARIAN === */}
-          <div className="relative flex items-center w-full sm:w-60">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
-            <input 
-              type="text" 
-              placeholder="Search Nama / NIK Admin" 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10"
-            />
-          </div>
 
-          {/* === DROPDOWN FILTER WILAYAH === */}
-          <div className="relative flex items-center w-full sm:w-60">
-            <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
-            <select
-              value={branchFilter}
-              onChange={(e) => { setBranchFilter(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-8 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#142B4D] dark:focus:ring-blue-500 transition-all shadow-sm h-11 md:h-10 appearance-none cursor-pointer"
-            >
-              <option value="">Semua Wilayah Kantor Cabang</option>
-              {branches.map((br) => (
-                <option key={br.id} value={br.id}>{br.nama_cabang} ({br.kabupaten_kota})</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* === TOMBOL TAMBAH ADMIN === */}
-          <button 
-            onClick={() => setIsCreateOpen(true)}
-            className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:shadow-md flex items-center gap-2 w-full sm:w-auto justify-center h-11 md:h-10"
+        {/* Filter */}
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setShowFilterPopover(!showFilterPopover)}
+            className={`relative w-11 h-11 sm:w-auto sm:h-10 sm:px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-95 ${
+              activeFilterCount > 0
+                ? 'border-[#142B4D] text-[#142B4D] dark:border-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+            title="Filter Data"
           >
-            <Plus className="w-4 h-4" />
-            <span>Tambah Admin</span>
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filter</span>
+            {activeFilterCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 md:relative md:top-0 md:right-0" />
+            )}
           </button>
+
+          {showFilterPopover && (
+            <div className="absolute right-0 mt-2 w-74 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-5 z-50 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
+                  Filter Admin
+                </h4>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset
+                  </button>
+                )}
+              </div>
+
+              {/* Asal Cabang */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">
+                  Asal Cabang
+                </label>
+                <select
+                  value={branchFilter}
+                  onChange={(e) => {
+                    setBranchFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#142B4D] dark:focus:border-blue-500"
+                >
+                  <option value="">Semua Wilayah Kantor Cabang</option>
+                  {branches.map((br) => (
+                    <option key={br.id} value={br.id}>
+                      {br.nama_cabang} ({br.kabupaten_kota})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Terapkan Filter */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={() => setShowFilterPopover(false)}
+                  className="w-full py-2 bg-[#142B4D] hover:bg-[#1a3863] text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                >
+                  Terapkan Filter
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Tambah Admin */}
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white flex h-11 w-11 shrink-0 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:shadow-md sm:px-4"
+          title="Tambah Admin"
+        >
+          <Plus className="w-4 h-4 text-white" />
+          <span className="hidden sm:inline text-sm font-semibold">Tambah Admin</span>
+        </button>
       </div>
 
       {/* === TABEL DATA UTAMA === */}
-      <div className="max-w-5xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#142B4D] dark:bg-slate-900 text-white font-semibold text-xs border-b border-gray-100 dark:border-gray-800">
-                <th className="p-4 pl-6 w-16">Foto</th>
+              <tr className="bg-[#142B4D] dark:bg-slate-900 text-white font-semibold text-[12px] border-b border-gray-100 dark:border-gray-800">
+                <th className="p-6 pl-6 w-16">Foto</th>
                 <th className="p-4"><div className="flex items-center">Nama Admin {renderSortButton('nama')}</div></th>
                 <th className="p-4"><div className="flex items-center">NIK / Email {renderSortButton('nik')}</div></th>
                 <th className="p-4"><div className="flex items-center">Kantor Cabang {renderSortButton('cabang')}</div></th>
@@ -616,4 +701,4 @@ export default function DaftarAdminCabangPage() {
       )}
     </div>
   );
-}
+}

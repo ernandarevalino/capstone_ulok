@@ -89,21 +89,10 @@ export default function ProfileGlobal({ initialProfile }: ProfileGlobalProps = {
 
   const executeLogout = async () => {
     setIsLoggingOut(true);
-    
-    const res = await logoutAction();
-    if (res && res.success) {
-      setShowLogoutConfirm(false);
-      setSuccessMessage(`Berhasil keluar. Sampai jumpa kembali, ${profile?.full_name || 'User'}!`);
-      setShowSuccessModal(true);
-
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        router.push('/');
-        router.refresh();
-      }, 1800);
-    } else {
-      alert(`Gagal logout: ${res.error}`);
-      setIsLoggingOut(false);
+    try {
+      await logoutAction();
+    } catch {
+      // Handled by server-side redirect
     }
   };
 

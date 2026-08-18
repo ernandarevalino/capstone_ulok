@@ -853,6 +853,57 @@ export async function hardDeleteSuperAdminItem(id: string, type: 'ulok' | 'docum
   }
 }
 
+export async function bulkRestoreToCabangRecycleBin(items: { id: string; type: 'ulok' | 'document' }[]) {
+  try {
+    for (const item of items) {
+      const res = await restoreToCabangRecycleBin(item.id, item.type)
+      if (!res.success) throw new Error(res.error)
+    }
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('bulkRestoreToCabangRecycleBin error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function bulkHardDeleteSuperAdminItems(items: { id: string; type: 'ulok' | 'document' }[]) {
+  try {
+    for (const item of items) {
+      const res = await hardDeleteSuperAdminItem(item.id, item.type)
+      if (!res.success) throw new Error(res.error)
+    }
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/recyclebin')
+    revalidatePath('/admin/super-admin/recyclebin')
+    return { success: true }
+  } catch (error: any) {
+    console.error('bulkHardDeleteSuperAdminItems error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function emptySuperAdminBackup() {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    await checkSuperAdmin(supabase, user.id)
+
+    const backupRes = await getSuperAdminBackupItems({})
+    if (!backupRes.success || !backupRes.data) throw new Error(backupRes.error || 'Gagal memuat data backup')
+
+    const items = backupRes.data.map(item => ({ id: item.id, type: item.type }))
+    return await bulkHardDeleteSuperAdminItems(items)
+  } catch (error: any) {
+    console.error('emptySuperAdminBackup error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 export async function autoCleanExpiredBackupItems() {
   try {
     const supabase = await createClient()

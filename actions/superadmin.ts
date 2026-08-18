@@ -257,6 +257,16 @@ interface CreateUserParams {
 // === ACTIONS: TAMBAH USER BARU ===
 export async function createUserAction({ password, fullName, nik, role, branchId }: CreateUserParams) {
   try {
+    console.log("[createUserAction] Parameters received:", { password: password ? "***" : "empty", fullName, nik, role, branchId });
+
+    if (nik === undefined || nik === null || isNaN(nik)) {
+      return { success: false, error: "NIK tidak valid atau bernilai NaN! Pastikan NIK diisi dengan angka murni." };
+    }
+
+    if (branchId !== undefined && branchId !== null && isNaN(branchId)) {
+      return { success: false, error: "Branch ID tidak valid atau bernilai NaN!" };
+    }
+
     const supabaseAdmin = getSupabaseAdmin(); // Panggilan Dinamis
     const { data: existingNik, error: checkError } = await supabaseAdmin
       .from('profiles')

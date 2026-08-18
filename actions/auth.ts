@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { sendResetPasswordEmail } from '@/utils/email'
 import { headers, cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 // === ACTIONS: LOGIN ===
 export async function loginAction(formData: FormData) {
@@ -64,18 +65,20 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   try {
     const supabase = await createClient()
-    
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    await supabase.auth.signOut()
+  } catch (error) {
+    console.error('[logoutAction] Error during signOut:', error)
+  }
 
+  try {
     const cookieStore = await cookies()
     cookieStore.delete('last_activity_at')
     cookieStore.delete('last_visited_path')
-
-    return { success: true }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    console.error('[logoutAction] Error deleting cookies:', error)
   }
+
+  redirect('/login')
 }
 
 // === ACTIONS: AMBIL PROFIL AKTIF ===
