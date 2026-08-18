@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAssessorProfile } from '@/context/AssessorProfileContext'
 import { getPengelompokanData, UlokGroupItem, PengelompokanResult } from '@/actions/pengelompokan'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import {
@@ -444,6 +445,7 @@ function ProgressCell({ item, activeTab }: { item: any; activeTab: TabId }) {
 
 export default function PengelompokanDashboard() {
   const router = useRouter()
+  const profile = useAssessorProfile()
   const [isPending, startTransition] = useTransition()
 
   // State

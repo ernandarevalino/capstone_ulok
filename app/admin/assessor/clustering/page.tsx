@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { useAssessorProfile } from '@/context/AssessorProfileContext'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import {
   AlertCircle, Download, Clock, AlertTriangle, RotateCcw,
@@ -172,6 +173,7 @@ function DashboardSkeleton() {
 
 export default function ClusteringDashboardPage() {
   const router = useRouter()
+  const profile = useAssessorProfile()
   const [isPending, startTransition] = useTransition()
 
   // State

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getCurrentProfile } from '@/actions/auth';
+import dynamic from 'next/dynamic';
+import { useAssessorProfile } from '@/context/AssessorProfileContext';
 import { getAssessorSubmissions } from '@/actions/assessor';
 import { 
   ClipboardCheck, 
@@ -14,37 +15,25 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid
-} from 'recharts';
 import { useRouter } from 'next/navigation';
 
-const CustomChartTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 shadow-xl backdrop-blur-sm">
-        <p className="text-xs font-bold text-gray-800 dark:text-slate-100">{payload[0].name}</p>
-        <p className="text-xs text-[#142B4D] dark:text-blue-400 font-black mt-0.5">
-          {payload[0].value} Usulan
-        </p>
+const AssessorDashboardCharts = dynamic(
+  () => import('./AssessorDashboardCharts'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 animate-pulse">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm h-64 sm:h-80" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm h-64 sm:h-80" />
       </div>
-    );
+    ),
   }
-  return null;
-};
+);
 
 export default function AssessorDashboardPage() {
   const router = useRouter();
-  const [fullName, setFullName] = useState<string>("Assessor");
+  const profile = useAssessorProfile();
+  const fullName = profile?.full_name || 'Assessor';
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -52,11 +41,6 @@ export default function AssessorDashboardPage() {
     async function initAssessorDashboard() {
       setLoading(true);
       try {
-        const profileRes = await getCurrentProfile();
-        if (profileRes && profileRes.success && profileRes.profile) {
-          setFullName(profileRes.profile.full_name);
-        }
-
         const res = await getAssessorSubmissions();
         if (res.success && res.data) {
           setSubmissions(res.data);
@@ -379,115 +363,17 @@ export default function AssessorDashboardPage() {
       </div>
 
       {/* CHARTS GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
-            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#FE9A00] shrink-0" />
-              Persentase Status Review Nasional
-            </h3>
-            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 mt-0.5">Komposisi tumpukan pekerjaan review saat ini</p>
-          </div>
-          {loading ? (
-            <div className="h-52 sm:h-60 md:h-64 flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
-              <div className="w-full sm:w-1/2 flex justify-center items-center">
-                <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full border-[10px] sm:border-[12px] border-gray-200 dark:border-slate-850 animate-pulse flex items-center justify-center">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-900 border border-dashed border-gray-100 dark:border-slate-800" />
-                </div>
-              </div>
-              <div className="w-full sm:w-1/2 flex flex-col gap-2 sm:gap-3">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="flex items-center justify-between py-1.5 sm:py-2 px-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-slate-800 animate-pulse" />
-                      <div className="w-24 sm:w-28 h-3.5 sm:h-4 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
-                    </div>
-                    <div className="w-10 sm:w-12 h-4.5 sm:h-5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row items-center justify-around gap-4 sm:gap-6">
-              <div className="w-full sm:w-1/2 h-52 sm:h-60 md:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={displayPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {displayPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} className="outline-none transition-all duration-300 hover:opacity-80" />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomChartTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="w-full sm:w-1/2 flex flex-col gap-2">
-                {displayPieData.map((entry, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs font-semibold py-2 px-2 rounded-lg">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-                      <span className="text-gray-600 dark:text-slate-300 truncate">{entry.name}</span>
-                    </div>
-                    <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md shrink-0 ml-2">{entry.value} Data</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 animate-pulse">
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm h-64 sm:h-80" />
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm h-64 sm:h-80" />
         </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
-            <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-[#142B4D] dark:text-blue-400 shrink-0" />
-              Top 5 Cabang Teraktif (Volume Usulan)
-            </h3>
-            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 mt-0.5">Cabang penyuplai usulan lokasi terbanyak di luar tipe draf</p>
-          </div>
-          {loading ? (
-            <div className="h-52 sm:h-60 md:h-64 flex items-end justify-between gap-2.5 sm:gap-4 px-1 sm:px-4 pt-6 sm:pt-8 pb-2">
-              {[70, 45, 85, 55, 65].map((h, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 sm:gap-2.5 w-full">
-                  <div 
-                    className="w-full bg-gray-200 dark:bg-slate-800 animate-pulse rounded-t-lg" 
-                    style={{ height: `${h}%` }} 
-                  />
-                  <div className="w-8 sm:w-10 h-3 sm:h-3.5 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-md" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-52 sm:h-60 md:h-64 w-full">
-              {branchDistribution.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-xs text-gray-400 italic">Tidak ada data distribusi cabang</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={branchDistribution} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" className="dark:stroke-slate-800" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fontWeight: 500 }} stroke="#94A3B8" allowDecimals={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: 'rgba(20, 43, 77, 0.04)' }} />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                      {branchDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#142B4D" className="fill-[#142B4D] dark:fill-blue-600 transition-all duration-300 hover:opacity-80" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      ) : (
+        <AssessorDashboardCharts
+          displayPieData={displayPieData}
+          branchDistribution={branchDistribution}
+        />
+      )}
 
       {/* BOTTOM CONTENT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

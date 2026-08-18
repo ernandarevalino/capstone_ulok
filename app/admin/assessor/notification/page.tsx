@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { getNotificationsAction, deleteNotificationAction, markAllNotificationsAsReadAction } from '@/actions/superadmin';
-import { getCurrentProfile } from '@/actions/auth';
+import { useAssessorProfile } from '@/context/AssessorProfileContext';
 import { Trash2, Bell, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function NotificationPage() {
+  const profile = useAssessorProfile();
+  const userId = profile?.id || null;
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -22,26 +23,20 @@ export default function NotificationPage() {
 
   async function initPage() {
     setLoading(true);
-    const profileRes = await getCurrentProfile();
-    if (profileRes && profileRes.success && profileRes.profile) {
-      const uId = profileRes.profile.id;
-      setUserId(uId);
+    try {
+      const [res] = await Promise.all([
+        getNotificationsAction(),
+        markAllNotificationsAsReadAction()
+      ]);
+      if (res.success) {
+        setNotifications(res.data);
+        setVisibleCount(5);
+      }
+    } catch (err) {
+      console.error("Gagal memuat notifikasi:", err);
+    } finally {
+      setLoading(false);
     }
-    await fetchNotifications();
-    await markAllAsRead();
-  }
-
-  async function fetchNotifications() {
-    const res = await getNotificationsAction();
-    if (res.success) {
-      setNotifications(res.data);
-      setVisibleCount(5); // reset ke 5 tiap fetch baru
-    }
-    setLoading(false);
-  }
-
-  async function markAllAsRead() {
-    await markAllNotificationsAsReadAction();
   }
 
   const handleDelete = async (id: number) => {

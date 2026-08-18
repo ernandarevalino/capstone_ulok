@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
+import { useAssessorProfile } from '@/context/AssessorProfileContext'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import {
@@ -39,6 +40,7 @@ const renderAnalysisNotes = (notes: string, fallback: string) => {
 }
 
 export default function PeringkatPage() {
+  const profile = useAssessorProfile()
   const [isPending, startTransition] = useTransition()
 
   // State

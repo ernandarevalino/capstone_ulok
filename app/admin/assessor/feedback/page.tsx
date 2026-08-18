@@ -4,17 +4,18 @@ import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAssessorFeedbackSubmissions } from '@/actions/assessor'
 import { createComment } from '@/actions/cabang'
-import { getCurrentProfile } from '@/actions/auth'
+import { useAssessorProfile } from '@/context/AssessorProfileContext'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import { createClient, getRealtimeClient } from '@/utils/supabase/client'
 
 export default function AssessorFeedbackPage() {
   const router = useRouter()
+  const profile = useAssessorProfile()
+  const currentUser = profile
   const [, startTransition] = useTransition()
   const [loading, setLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null)
 
   // New states for Tab-Based Chat UI
   const [searchQuery, setSearchQuery] = useState('')
@@ -96,11 +97,6 @@ export default function AssessorFeedbackPage() {
 
   const fetchSubmissions = React.useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
-    // Fetch current user profile
-    const profileRes = await getCurrentProfile()
-    if (profileRes.success && profileRes.profile) {
-      setCurrentUser(profileRes.profile)
-    }
     // Fetch ALL submissions across all branches
     const res = await getAssessorFeedbackSubmissions()
     if (res.success && res.data) {
