@@ -103,7 +103,7 @@ export default function AssessorDashboardPage() {
   const handleGoToReview = (id: string, jenisBadanHukum: string) => {
     const kelompokPerorangan = ['Perorangan', 'Waris', 'Hibah', 'Kuasa'];
     const path = kelompokPerorangan.includes(jenisBadanHukum) ? 'ulok-perorangan' : 'ulok-badanhukum';
-    router.push(`/admin/assessor/penilaian/${path}?id=${id}`);
+    router.push(`/admin/assessor/penilaian/${path}?id=${id}&from=dashboard`);
   };
 
   if (loading) {

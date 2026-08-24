@@ -13,6 +13,22 @@ export default function Section2PeroranganAssessorPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
+  const fromSource = searchParams.get('from')
+
+  const getAssessorOriginInfo = (source: string | null) => {
+    switch (source) {
+      case 'dashboard':
+        return { backPath: '/admin/assessor', label: 'Dashboard' }
+      case 'clustering':
+        return { backPath: '/admin/assessor/clustering', label: 'Clustering' }
+      case 'feedback':
+        return { backPath: '/admin/assessor/feedback', label: 'Feedback' }
+      case 'pengelompokan':
+      default:
+        return { backPath: '/admin/assessor/pengelompokan', label: 'Pengelompokan' }
+    }
+  }
+  const { backPath, label: originLabel } = getAssessorOriginInfo(fromSource)
 
   const [isLoading, setIsLoading] = useState(true)
   const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
@@ -213,7 +229,7 @@ export default function Section2PeroranganAssessorPage() {
   const handleReplyDocument = (docName: string, fileName?: string) => {
     const fileDetail = fileName ? ` (${fileName})` : ''
     const prefix = `⚠️ [Catatan Assessor - Dokumen: ${docName}${fileDetail}]: `
-    router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}&prefill=${encodeURIComponent(prefix)}`)
+    router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}&prefill=${encodeURIComponent(prefix)}${fromSource ? `&from=${fromSource}` : ''}`)
   }
 
   const handleSelesaiPenilaian = () => {
@@ -222,7 +238,7 @@ export default function Section2PeroranganAssessorPage() {
     
     setTimeout(() => {
       setShowSuccessModal(false)
-      router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)
+      router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)
     }, 1500)
   }
 
@@ -499,21 +515,21 @@ export default function Section2PeroranganAssessorPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/assessor/pengelompokan')} 
+            onClick={() => router.push(backPath)} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
-            Penilaian Usulan
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Detail Usulan Perorangan
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Section 1: Identitas
@@ -760,7 +776,7 @@ export default function Section2PeroranganAssessorPage() {
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Prev

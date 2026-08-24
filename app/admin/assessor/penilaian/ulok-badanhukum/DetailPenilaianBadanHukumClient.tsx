@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName } from '@/actions/cabang'
 import { updateUlokStatus } from '@/actions/assessor'
 import { supabase } from '@/lib/supabaseClient'
@@ -9,6 +9,20 @@ import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
+
+const getAssessorOriginInfo = (source: string | null) => {
+  switch (source) {
+    case 'dashboard':
+      return { backPath: '/admin/assessor', label: 'Dashboard' }
+    case 'clustering':
+      return { backPath: '/admin/assessor/clustering', label: 'Clustering' }
+    case 'feedback':
+      return { backPath: '/admin/assessor/feedback', label: 'Feedback' }
+    case 'pengelompokan':
+    default:
+      return { backPath: '/admin/assessor/pengelompokan', label: 'Pengelompokan' }
+  }
+}
 
 interface DetailPenilaianBadanHukumClientProps {
   ulokId: string
@@ -120,6 +134,9 @@ export function DetailPenilaianBadanHukumClient({
   initialUserId
 }: DetailPenilaianBadanHukumClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromSource = searchParams.get('from')
+  const { backPath, label: originLabel } = getAssessorOriginInfo(fromSource)
   const [isPending, startTransition] = useTransition()
 
   const [namaLokasi] = useState(initialDetail?.nama_lokasi || '')
@@ -334,10 +351,10 @@ export function DetailPenilaianBadanHukumClient({
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/assessor/pengelompokan')} 
+            onClick={() => router.push(backPath)} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
-            Penilaian Usulan
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span className="text-gray-800 dark:text-gray-200 font-extrabold">Detail Usulan Badan Hukum</span>
@@ -347,7 +364,7 @@ export function DetailPenilaianBadanHukumClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => router.push('/admin/assessor/pengelompokan')}
+              onClick={() => router.push(backPath)}
               className="text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition bg-white dark:bg-gray-900 p-2.5 rounded-full shadow-xs border border-gray-200 dark:border-gray-800 active:scale-90 flex items-center justify-center"
               title="Kembali"
             >
@@ -366,7 +383,7 @@ export function DetailPenilaianBadanHukumClient({
           {/* === ACTION: GO TO PENILAIAN === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
-              onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1?id=${ulokId}`)}
+              onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
               className="w-full sm:w-auto bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
             >
               <img 

@@ -282,7 +282,7 @@ export default function ClusteringDashboardPage() {
       ? '/admin/assessor/penilaian/ulok-perorangan'
       : '/admin/assessor/penilaian/ulok-badanhukum'
 
-    router.push(`${route}?id=${id}`)
+    router.push(`${route}?id=${id}&from=clustering`)
   }, [router])
 
   // Filter Helper

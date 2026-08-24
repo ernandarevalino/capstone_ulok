@@ -561,7 +561,7 @@ export default function PengelompokanDashboard() {
       ? '/admin/assessor/penilaian/ulok-perorangan'
       : '/admin/assessor/penilaian/ulok-badanhukum'
 
-    router.push(`${route}?id=${id}`)
+    router.push(`${route}?id=${id}&from=pengelompokan`)
   }
 
   const queryLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery])

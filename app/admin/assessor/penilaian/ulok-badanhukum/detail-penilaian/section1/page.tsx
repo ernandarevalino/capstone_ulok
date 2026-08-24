@@ -12,6 +12,22 @@ export default function Section1BadanHukumAssessorPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
+  const fromSource = searchParams.get('from')
+
+  const getAssessorOriginInfo = (source: string | null) => {
+    switch (source) {
+      case 'dashboard':
+        return { backPath: '/admin/assessor', label: 'Dashboard' }
+      case 'clustering':
+        return { backPath: '/admin/assessor/clustering', label: 'Clustering' }
+      case 'feedback':
+        return { backPath: '/admin/assessor/feedback', label: 'Feedback' }
+      case 'pengelompokan':
+      default:
+        return { backPath: '/admin/assessor/pengelompokan', label: 'Pengelompokan' }
+    }
+  }
+  const { backPath, label: originLabel } = getAssessorOriginInfo(fromSource)
   
   const [isLoading, setIsLoading] = useState(true)
   const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
@@ -362,14 +378,14 @@ export default function Section1BadanHukumAssessorPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/assessor/pengelompokan')} 
+            onClick={() => router.push(backPath)} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
-            Penilaian Usulan
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Detail Usulan Badan Hukum
@@ -497,14 +513,14 @@ export default function Section1BadanHukumAssessorPage() {
         <div className="flex justify-between items-center bg-white dark:bg-[#111827] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
           <button 
             type="button" 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Back
           </button>
           <button 
             type="button" 
-            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="bg-blue-950 dark:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 dark:hover:bg-blue-500 transition shadow-sm"
           >
             Next

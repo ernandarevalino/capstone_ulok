@@ -728,7 +728,7 @@ export default function AssessorFeedbackPage() {
                         router.push(
                           `/admin/assessor/penilaian/${
                             isPerorangan ? "ulok-perorangan" : "ulok-badanhukum"
-                          }?id=${activeUlok.id}`,
+                          }?id=${activeUlok.id}&from=feedback`,
                         )
                       }}
                       className="truncate max-w-[150px] md:max-w-md cursor-pointer text-white hover:text-blue-300 transition-all duration-200"
