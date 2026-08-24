@@ -12,6 +12,9 @@ export default function Section1BadanHukumPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id') || ''
+  const fromSource = searchParams.get('from')
+  const backPath = fromSource === 'feedback' ? '/admin/cabang/feedback' : '/admin/cabang/usulan-lokasi'
+  const originLabel = fromSource === 'feedback' ? 'Feedback' : 'Usulan Lokasi'
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -70,7 +73,7 @@ export default function Section1BadanHukumPage() {
 
   useEffect(() => {
     if (!ulokId) {
-      router.push('/admin/cabang/usulan-lokasi')
+      router.push(backPath)
       return
     }
     loadDataDanDokumen()
@@ -158,14 +161,14 @@ export default function Section1BadanHukumPage() {
         {/* === BREADCRUMB NAVIGATION === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
+            onClick={() => router.push(backPath)} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
-            Usulan Lokasi
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}`)} 
+            onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Form Badan Hukum
@@ -256,7 +259,7 @@ export default function Section1BadanHukumPage() {
           <button 
             type="button" 
             disabled={isPending} 
-            onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}`)} 
+            onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition"
           >
             Back
@@ -264,7 +267,7 @@ export default function Section1BadanHukumPage() {
           <button 
             type="button" 
             disabled={isPending} 
-            onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/badanhukum/section2?id=${ulokId}`)} 
+            onClick={() => handleNavigation(`/admin/cabang/usulan-lokasi/form/badanhukum/section2?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)} 
             className="bg-blue-950 dark:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 dark:hover:bg-blue-500 transition disabled:opacity-50 shadow-sm"
           >
             {isPending ? 'Saving...' : 'Next'}

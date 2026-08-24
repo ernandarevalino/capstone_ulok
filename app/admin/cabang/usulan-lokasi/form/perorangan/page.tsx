@@ -104,6 +104,10 @@ export default function DetailUlokPeroranganPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id')
+  const fromSource = searchParams.get('from')
+  const backPath = fromSource === 'feedback' ? '/admin/cabang/feedback' : '/admin/cabang/usulan-lokasi'
+  const originLabel = fromSource === 'feedback' ? 'Feedback' : 'Usulan Lokasi'
+
   const [isPending, startTransition] = useTransition()
 
   const [isLoading, setIsLoading] = useState(true)
@@ -255,7 +259,7 @@ export default function DetailUlokPeroranganPage() {
 
   useEffect(() => {
     if (!ulokId) {
-      router.push('/admin/cabang/usulan-lokasi')
+      router.push(backPath)
       return
     }
 
@@ -289,7 +293,7 @@ export default function DetailUlokPeroranganPage() {
         }
       } else {
         alert('Gagal memuat data: ' + res.error)
-        router.push('/admin/cabang/usulan-lokasi')
+        router.push(backPath)
       }
       setIsLoading(false)
     }
@@ -424,10 +428,10 @@ export default function DetailUlokPeroranganPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
           <span 
-            onClick={() => router.push('/admin/cabang/usulan-lokasi')} 
+            onClick={() => router.push(backPath)} 
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
-            Usulan Lokasi
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span className="text-gray-800 dark:text-gray-200 font-extrabold">Form Perorangan</span>
@@ -437,7 +441,7 @@ export default function DetailUlokPeroranganPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-gray-200 dark:border-gray-800 pb-5">
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => router.push('/admin/cabang/usulan-lokasi')}
+              onClick={() => router.push(backPath)}
               className="text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition bg-white dark:bg-gray-900 p-2.5 rounded-full shadow-xs border border-gray-200 dark:border-gray-800 active:scale-90 flex items-center justify-center"
               title="Kembali"
             >
@@ -456,7 +460,7 @@ export default function DetailUlokPeroranganPage() {
           {/* === ACTION BUTTONS === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
-              onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`)}
+              onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
               className="bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
             >
               <img 

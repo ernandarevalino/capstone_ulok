@@ -685,7 +685,7 @@ export default function FeedbackPage() {
                         router.push(
                           `/admin/cabang/usulan-lokasi/form/${
                             isPerorangan ? "perorangan" : "badanhukum"
-                          }?id=${activeUlok.id}`,
+                          }?id=${activeUlok.id}&from=feedback`,
                         )
                       }}
                       className="truncate max-w-[150px] md:max-w-md cursor-pointer text-white hover:text-blue-300 transition-all duration-200"

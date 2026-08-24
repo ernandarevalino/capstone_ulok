@@ -12,6 +12,9 @@ export default function Section2PeroranganPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ulokId = searchParams.get('id') || ''
+  const fromSource = searchParams.get('from')
+  const backPath = fromSource === 'feedback' ? '/admin/cabang/feedback' : '/admin/cabang/usulan-lokasi'
+  const originLabel = fromSource === 'feedback' ? 'Feedback' : 'Usulan Lokasi'
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -103,7 +106,7 @@ export default function Section2PeroranganPage() {
 
   useEffect(() => {
     if (!ulokId) {
-      router.push('/admin/cabang/usulan-lokasi')
+      router.push(backPath)
       return
     }
     loadDataDanDokumen()
@@ -265,21 +268,21 @@ export default function Section2PeroranganPage() {
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 mt-2 uppercase tracking-wider">
           <span 
-            onClick={() => !isPending && handleFinalSave('/admin/cabang/usulan-lokasi', false)} 
+            onClick={() => !isPending && handleFinalSave(backPath, false)} 
             className={`cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
-            Usulan Lokasi
+            {originLabel}
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`, false)} 
+            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`, false)} 
             className={`cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Form Perorangan
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
           <span 
-            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
+            onClick={() => !isPending && handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`, false)} 
             className={`cursor-pointer hover:text-blue-950 dark:hover:text-blue-400 transition ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Section 1: Identitas
@@ -671,7 +674,7 @@ export default function Section2PeroranganPage() {
           <button 
             type="button" 
             disabled={isPending}
-            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}`, false)} 
+            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`, false)} 
             className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition disabled:opacity-50"
           >
             Prev
@@ -680,7 +683,7 @@ export default function Section2PeroranganPage() {
           <button 
             type="button"
             disabled={isPending}
-            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}`, true)}
+            onClick={() => handleFinalSave(`/admin/cabang/usulan-lokasi/form/perorangan?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`, true)}
             className="bg-blue-950 dark:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-900 dark:hover:bg-blue-500 transition disabled:opacity-50 shadow-sm"
           >
             {isPending ? 'Saving...' : 'Selesai'}
