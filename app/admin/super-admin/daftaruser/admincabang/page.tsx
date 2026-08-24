@@ -38,6 +38,7 @@ export default function DaftarAdminCabangPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -72,11 +73,20 @@ export default function DaftarAdminCabangPage() {
   };
 
   useEffect(() => {
-    fetchBranches();
+    async function init() {
+      await Promise.all([
+        fetchBranches(),
+        fetchUsers()
+      ]);
+      setInitialLoading(false);
+    }
+    init();
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    if (!initialLoading) {
+      fetchUsers();
+    }
   }, [page, search, branchFilter]);
 
   async function fetchBranches() {
@@ -237,8 +247,63 @@ export default function DaftarAdminCabangPage() {
     });
   }
 
+  if (initialLoading) {
+    return (
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
+        {/* Page Header Skeleton */}
+        <div className="mb-6">
+          <div className="h-8 md:h-9 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+        </div>
+
+        {/* Search + Actions Skeleton */}
+        <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2">
+          <div className="h-11 md:h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+          <div className="h-11 md:h-10 w-11 sm:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+          <div className="h-11 md:h-10 w-11 sm:w-36 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+        </div>
+
+        {/* Table Container Skeleton */}
+        <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+          {/* Table Header Skeleton */}
+          <div className="bg-slate-200 dark:bg-slate-800 p-5 flex items-center justify-between animate-pulse border-b border-gray-100 dark:border-gray-800/60">
+            <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-5 w-32 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-5 w-28 bg-slate-300 dark:bg-slate-700 rounded"></div>
+            <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
+          </div>
+
+          {/* Table Rows Skeleton */}
+          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="p-4 flex items-center justify-between gap-4 animate-pulse">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="h-8 w-8 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-1/3 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                    <div className="h-3.5 w-1/2 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                  </div>
+                </div>
+                <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded hidden md:block"></div>
+                <div className="h-5 w-20 bg-slate-200 dark:bg-slate-800 rounded hidden sm:block"></div>
+                <div className="h-8 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination Skeleton */}
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center animate-pulse">
+            <div className="h-7 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            <div className="h-7 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* === HEADER SECTION === */}
       <div className="max-w-7xl mx-auto mb-6">
@@ -364,7 +429,38 @@ export default function DaftarAdminCabangPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60 text-gray-700">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat data...</td></tr>
+                [...Array(7)].map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/60 animate-pulse">
+                    {/* Foto */}
+                    <td className="p-4 pl-6">
+                      <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                    </td>
+                    {/* Nama Admin */}
+                    <td className="p-4">
+                      <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </td>
+                    {/* NIK / Email */}
+                    <td className="p-4 space-y-1.5">
+                      <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                      <div className="h-3.5 w-36 bg-slate-150 dark:bg-slate-800 rounded"></div>
+                    </td>
+                    {/* Kantor Cabang */}
+                    <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
+                      <div className="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </td>
+                    {/* Provinsi */}
+                    <td className="p-4">
+                      <div className="h-5 w-20 bg-slate-150 dark:bg-slate-800 rounded"></div>
+                    </td>
+                    {/* Aksi */}
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="h-8 w-8 bg-slate-150 dark:bg-slate-800 rounded-lg"></div>
+                        <div className="h-8 w-8 bg-slate-150 dark:bg-slate-800 rounded-lg"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : displayUsers.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Tidak ada admin cabang ditemukan.</td></tr>
               ) : (
