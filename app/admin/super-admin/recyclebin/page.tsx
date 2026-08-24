@@ -357,7 +357,6 @@ export default function SuperAdminRecycleBinPage() {
 
           {/* SKELETON ACTION BAR */}
           <div className="flex flex-row items-center gap-2 sm:gap-3">
-            <div className="h-11 w-11 md:h-10 md:w-10 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shrink-0"></div>
             <div className="h-11 md:h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
             <div className="h-11 md:h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shrink-0"></div>
             <div className="h-11 md:h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shrink-0"></div>
@@ -365,7 +364,7 @@ export default function SuperAdminRecycleBinPage() {
 
           {/* SKELETON TABLE */}
           <div className="bg-white dark:bg-gray-900 shadow-sm rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
-            <div className="h-14 w-full bg-[#142B4D] dark:bg-slate-900 animate-pulse"></div>
+            <div className="h-14 w-full bg-slate-300 dark:bg-slate-800 animate-pulse"></div>
             <div className="p-4 space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div
@@ -406,15 +405,6 @@ export default function SuperAdminRecycleBinPage() {
 
         {/* ACTION BAR */}
         <div className="flex flex-row items-center gap-2 sm:gap-3">
-
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/admin/super-admin')}
-            className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-500 hover:text-[#142B4D] dark:hover:text-blue-400 transition-all hover:scale-105 shrink-0 shadow-sm cursor-pointer"
-            title="Kembali ke Dashboard"
-          >
-            <ArrowLeftCircle className="w-5 h-5" />
-          </button>
 
           {/* Search Box */}
           <div className="relative flex-1 md:min-w-[240px]">
@@ -750,7 +740,7 @@ export default function SuperAdminRecycleBinPage() {
                             <button
                               onClick={() => triggerRestoreSingle(item.id, item.type, item.name)}
                               disabled={isPending}
-                              className="p-2 text-[#142B4D] hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg active:scale-95 transition shrink-0 border border-gray-150 dark:border-gray-800 cursor-pointer"
+                              className=" dark:invert p-2 text-[#142B4D] hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg active:scale-95 transition shrink-0 border border-gray-150 dark:border-gray-800 cursor-pointer"
                               title="Pulihkan ke Recycle Bin Cabang"
                             >
                               <RotateCcw className="w-4 h-4" />
@@ -758,7 +748,7 @@ export default function SuperAdminRecycleBinPage() {
                             <button
                               onClick={() => triggerDeleteSingle(item.id, item.type, item.name)}
                               disabled={isPending}
-                              className="p-2 text-[#D91E2E] hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg active:scale-95 transition shrink-0 border border-gray-150 dark:border-gray-800 cursor-pointer"
+                              className="p-2 text-[#D91E2E] hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg active:scale-95 transition shrink-0 border border-gray-150 dark:border-gray-150 cursor-pointer"
                               title="Hapus Permanen dari Sistem"
                             >
                               <Trash2 className="w-4 h-4" />
