@@ -225,10 +225,6 @@ export default function WelcomePage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#3365A6]/10 dark:bg-[#F28705]/5 blur-[80px] sm:blur-[120px] rounded-full -z-10 animate-pulse transform-gpu will-change-transform" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10 my-auto">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-[#3365A6]/10 dark:bg-[#F28705]/10 text-[#3365A6] dark:text-[#F28705] border border-[#3365A6]/20 dark:border-[#F28705]/20 tracking-wide uppercase mx-auto shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#F28705] animate-spin" style={{ animationDuration: '8s' }} />
-            Sistem Penunjang Keputusan
-          </span>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0D0D0D] dark:text-[#F2F2F2] leading-[1.15] max-w-4xl mx-auto">
             Pemrosesan Dokumen
@@ -252,7 +248,7 @@ export default function WelcomePage() {
             </Link>
             <a
               href="#metodologi"
-              className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-[#141414] text-[#0D0D0D] dark:text-[#F2F2F2] border border-slate-300 dark:border-slate-700 font-bold text-sm rounded-xl transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-center hover:scale-105 active:scale-95"
+              className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-[#141414] text-[#0D0D0D] dark:text-[#F2F2F2] font-bold text-sm rounded-xl transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-center hover:scale-105 active:scale-95"
             >
               Pelajari Kriteria Kelayakan
             </a>
