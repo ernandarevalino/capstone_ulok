@@ -615,15 +615,8 @@ export default function DaftarAdminCabangPage() {
             <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-white shrink-0" />
-                <span>Tambah Admin Baru</span>
+                <span>Tambah Admin</span>
               </div>
-              <button 
-                onClick={() => setIsCreateOpen(false)} 
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors"
-                title="Tutup"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
             </div>
             
             {/* Form Input */}
