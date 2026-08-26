@@ -345,7 +345,7 @@ export default function SuperAdminRecycleBinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* SKELETON HEADER */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -380,8 +380,8 @@ export default function SuperAdminRecycleBinPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
 
         {/* HEADER TOOLBAR */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
