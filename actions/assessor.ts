@@ -174,7 +174,14 @@ export async function getAssessorHistoriSubmissions() {
           profiles:user_id (
             full_name,
             role,
-            avatar_url
+            avatar_url,
+            nik,
+            branch_id,
+            email,
+            phone_number,
+            branches:branch_id (
+              nama_cabang
+            )
           )
         ),
         metode_saw(*)
@@ -218,7 +225,14 @@ export async function getAssessorFeedbackSubmissions() {
           profiles:user_id (
             full_name,
             role,
-            avatar_url
+            avatar_url,
+            nik,
+            branch_id,
+            email,
+            phone_number,
+            branches:branch_id (
+              nama_cabang
+            )
           )
         ),
         profiles!ulok_submissions_admin_id_fkey (

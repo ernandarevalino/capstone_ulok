@@ -169,7 +169,14 @@ export async function getFeedbackSubmissions() {
           profiles:user_id (
             full_name,
             role,
-            avatar_url
+            avatar_url,
+            nik,
+            branch_id,
+            email,
+            phone_number,
+            branches:branch_id (
+              nama_cabang
+            )
           )
         ),
         metode_saw(*)
@@ -878,7 +885,14 @@ export async function getComments(ulokId: string) {
         profiles:user_id (
           full_name,
           role,
-          avatar_url
+          avatar_url,
+          nik,
+          branch_id,
+          email,
+          phone_number,
+          branches:branch_id (
+            nama_cabang
+          )
         )
       `)
       .eq('ulok_id', ulokId)

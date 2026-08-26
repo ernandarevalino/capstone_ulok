@@ -6,6 +6,7 @@ import { getFeedbackSubmissions, createComment, uploadChatAttachment } from '@/a
 import { useCabangProfile } from '@/context/CabangProfileContext'
 import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw, Paperclip, FileText, X, Reply, ExternalLink } from 'lucide-react'
 import { createClient, getRealtimeClient } from '@/utils/supabase/client'
+import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 export default function FeedbackPage() {
   const router = useRouter()
@@ -26,6 +27,12 @@ export default function FeedbackPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null)
+  const [avatarPopover, setAvatarPopover] = useState<AvatarPopoverState | null>(null)
+
+  const handleAvatarClick = (e: React.MouseEvent, profile: any) => {
+    e.stopPropagation()
+    setAvatarPopover({ x: e.clientX, y: e.clientY, profile })
+  }
 
   const scrollToMessage = (msgId: string) => {
     if (!msgId) return
@@ -831,19 +838,26 @@ export default function FeedbackPage() {
                           }`}
                         >
                           {/* User Avatar */}
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={fullName}
-                              className="w-7 h-7 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5"
-                            />
-                          ) : (
-                            <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 ${
-                              isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
-                            }`}>
-                              {fullName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => handleAvatarClick(e, msg.profiles)}
+                            className="shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#142B4D] rounded-full"
+                            title={`Lihat profil ${fullName}`}
+                          >
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={fullName}
+                                className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                              />
+                            ) : (
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity ${
+                                isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
+                              }`}>
+                                {fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </button>
 
                           {/* Message Bubble */}
                           <div
@@ -1217,6 +1231,9 @@ export default function FeedbackPage() {
         )}
 
       </div>
+
+      {/* Avatar Profile Popover */}
+      <AvatarPopover popover={avatarPopover} onClose={() => setAvatarPopover(null)} />
     </div>
   )
 }
