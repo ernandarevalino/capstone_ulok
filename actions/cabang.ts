@@ -889,19 +889,73 @@ export async function getComments(ulokId: string) {
   }
 }
 
+// === ACTIONS: UPLOAD ATTACHMENT CHAT (TEMPORARY DOC / IMAGE) ===
+export async function uploadChatAttachment(formData: FormData) {
+  try {
+    const file = formData.get('file') as File
+    if (!file) throw new Error('File tidak ditemukan.')
+
+    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png']
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || ''
+    if (!allowedExtensions.includes(fileExtension)) {
+      throw new Error('Format file tidak didukung. Harap unggah PDF, JPG, JPEG, atau PNG.')
+    }
+
+    const isImage = ['jpg', 'jpeg', 'png'].includes(fileExtension)
+    const attachmentType = isImage ? 'image' : 'document'
+
+    const supabase = await createClient()
+    const randomString = Math.random().toString(36).substring(2, 8)
+    const storagePath = `attachments/${Date.now()}-${randomString}.${fileExtension}`
+
+    const { error: storageError } = await supabase.storage
+      .from('chat_attachments')
+      .upload(storagePath, file, { upsert: true })
+
+    if (storageError) throw storageError
+
+    // Generate signed URL valid for 7 days (604800 seconds)
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from('chat_attachments')
+      .createSignedUrl(storagePath, 604800)
+
+    let finalUrl = signedData?.signedUrl
+    if (signedError || !finalUrl) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat_attachments')
+        .getPublicUrl(storagePath)
+      finalUrl = publicUrl
+    }
+
+    return { success: true, url: finalUrl, attachmentType, storagePath }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
 // === ACTIONS: BUAT KOMENTAR BARU ===
-export async function createComment(ulokId: string, userId: string, message: string) {
+export async function createComment(
+  ulokId: string, 
+  userId: string, 
+  message: string,
+  replyToId?: string | null,
+  attachmentUrl?: string | null,
+  attachmentType?: string | null
+) {
   try {
     const supabase = await createClient()
+    const insertPayload: any = {
+      ulok_id: ulokId,
+      user_id: userId,
+      message: message,
+    }
+    if (replyToId) insertPayload.reply_to_id = replyToId
+    if (attachmentUrl) insertPayload.attachment_url = attachmentUrl
+    if (attachmentType) insertPayload.attachment_type = attachmentType
+
     const { data, error } = await supabase
       .from('comments')
-      .insert([
-        {
-          ulok_id: ulokId,
-          user_id: userId,
-          message: message,
-        }
-      ])
+      .insert([insertPayload])
       .select()
       .single()
 

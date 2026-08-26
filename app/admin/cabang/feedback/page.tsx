@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getFeedbackSubmissions, createComment } from '@/actions/cabang'
+import { getFeedbackSubmissions, createComment, uploadChatAttachment } from '@/actions/cabang'
 import { useCabangProfile } from '@/context/CabangProfileContext'
-import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
+import { MessagesSquare, Search, Filter, Send, RefreshCw, ChevronLeft, ChevronRight, RotateCcw, Paperclip, FileText, X, Reply, ExternalLink } from 'lucide-react'
 import { createClient, getRealtimeClient } from '@/utils/supabase/client'
 
 export default function FeedbackPage() {
@@ -16,12 +16,15 @@ export default function FeedbackPage() {
   const [isSending, setIsSending] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
 
-  // New states for Tab-Based Chat UI
+  // New states for Tab-Based Chat UI & Reply / File Attachments
   const [searchQuery, setSearchQuery] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeUlok, setActiveUlok] = useState<any>(null)
   const [chatInput, setChatInput] = useState('')
   const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({})
+  const [replyingTo, setReplyingTo] = useState<any>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const [selectedStatus, setSelectedStatus] = useState("")
   const [selectedKepemilikan, setSelectedKepemilikan] = useState("")
@@ -294,16 +297,45 @@ export default function FeedbackPage() {
     return { tag: null, text: message }
   }
 
-  // Step 5: Fixed send logic — re-fetches all submissions and updates activeUlok + sorts tabs
+  // Send logic — re-fetches all submissions and updates activeUlok + sorts tabs
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!chatInput.trim() || !activeUlok || !currentUser) return
+    if ((!chatInput.trim() && !selectedFile) || !activeUlok || !currentUser) return
 
     setIsSending(true)
     try {
-      const res = await createComment(activeUlok.id, currentUser.id, chatInput)
+      let attachmentUrl: string | null = null
+      let attachmentType: string | null = null
+
+      if (selectedFile) {
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        const uploadRes = await uploadChatAttachment(formData)
+        if (!uploadRes.success || !uploadRes.url) {
+          alert('Gagal mengunggah lampiran: ' + uploadRes.error)
+          setIsSending(false)
+          return
+        }
+        attachmentUrl = uploadRes.url
+        attachmentType = uploadRes.attachmentType
+      }
+
+      const msgText = chatInput.trim() || (selectedFile ? `[Lampiran: ${selectedFile.name}]` : '')
+      const res = await createComment(
+        activeUlok.id,
+        currentUser.id,
+        msgText,
+        replyingTo?.id || null,
+        attachmentUrl,
+        attachmentType
+      )
+
       if (res.success) {
         setChatInput('')
+        setReplyingTo(null)
+        setSelectedFile(null)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+
         // Re-fetch to update all submissions and trigger sorting
         const freshRes = await getFeedbackSubmissions()
         if (freshRes.success && freshRes.data) {
@@ -749,18 +781,39 @@ export default function FeedbackPage() {
                       const isComplaint =
                         msg.message?.includes("[Catatan Assessor")
 
+                      const repliedParent = msg.reply_to_id
+                        ? activeUlok.allCommentsSorted?.find((c: any) => c.id === msg.reply_to_id)
+                        : null
+
                       return (
                         <div
                           key={msg.id}
-                          className={`flex w-full ${
-                            isSelf
-                              ? "justify-end"
-                              : "justify-start"
+                          onContextMenu={(e) => {
+                            e.preventDefault()
+                            setReplyingTo(msg)
+                          }}
+                          className={`flex w-full group relative ${
+                            isSelf ? "justify-end" : "justify-start"
                           }`}
                         >
+                          {/* Hover Reply Trigger */}
+                          <button
+                            type="button"
+                            onClick={() => setReplyingTo(msg)}
+                            className={`
+                              opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                              absolute top-1 z-10 p-1 rounded-md text-[10px] font-bold shadow-xs
+                              flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
+                              border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
+                              ${isSelf ? "-left-14" : "-right-14"}
+                            `}
+                            title="Balas pesan ini"
+                          >
+                            <Reply className="w-3 h-3 text-blue-500" /> Balas
+                          </button>
+
                           <div
                             className={`
-                              group
                               max-w-[82%]
                               sm:max-w-[70%]
                               md:max-w-[65%]
@@ -844,6 +897,27 @@ export default function FeedbackPage() {
                               </span>
                             </div>
 
+                            {/* Replied Snippet Box */}
+                            {repliedParent && (
+                              <div
+                                className={`mb-1.5 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs ${
+                                  isSelf || isAdminCabang
+                                    ? 'bg-black/20 border-white/40 text-blue-100'
+                                    : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300'
+                                }`}
+                              >
+                                <div className="font-bold flex items-center gap-1 opacity-90">
+                                  <Reply className="w-3 h-3 shrink-0" />
+                                  <span>
+                                    Membalas {repliedParent.profiles?.full_name || 'Pengguna'}
+                                  </span>
+                                </div>
+                                <p className="truncate italic opacity-80 mt-0.5">
+                                  {repliedParent.message || 'Pesan sebelumnya...'}
+                                </p>
+                              </div>
+                            )}
+
                             {/* Optional Tag */}
                             {tag && (
                               <span
@@ -870,10 +944,42 @@ export default function FeedbackPage() {
                               </span>
                             )}
 
-                            {/* Message */}
+                            {/* Message Text */}
                             <p className="text-[10px] md:text-sm mt-1 whitespace-pre-line break-words leading-relaxed">
                               {text}
                             </p>
+
+                            {/* Attachment Rendering */}
+                            {msg.attachment_url && (
+                              <div className="mt-2">
+                                {msg.attachment_type === 'image' || ['jpg', 'jpeg', 'png', 'webp'].some(ext => msg.attachment_url?.toLowerCase().includes(ext)) ? (
+                                  <div className="overflow-hidden rounded-lg border border-black/10 dark:border-white/10 max-w-xs mt-1">
+                                    <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" title="Klik untuk membuka gambar ukuran penuh">
+                                      <img
+                                        src={msg.attachment_url}
+                                        alt="Lampiran Gambar"
+                                        className="max-h-48 w-full object-cover hover:scale-105 transition-transform duration-200"
+                                      />
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <a
+                                    href={msg.attachment_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-2 p-2 rounded-lg border transition text-xs font-semibold max-w-xs mt-1 ${
+                                      isSelf || isAdminCabang
+                                        ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
+                                        : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
+                                    }`}
+                                  >
+                                    <FileText className="w-4 h-4 shrink-0 text-red-400" />
+                                    <span className="truncate flex-1">Dokumen Lampiran (PDF)</span>
+                                    <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                                  </a>
+                                )}
+                              </div>
+                            )}
 
                             {/* Time */}
                             <div
@@ -907,6 +1013,32 @@ export default function FeedbackPage() {
 
                 </div>
 
+                {/* Reply / File Preview Bar above Input */}
+                {(replyingTo || selectedFile) && (
+                  <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between text-xs transition-all">
+                    {replyingTo && (
+                      <div className="flex items-center gap-1.5 min-w-0 text-blue-600 dark:text-blue-400 font-medium">
+                        <Reply className="w-3.5 h-3.5 shrink-0" />
+                        <span className="shrink-0">Membalas <strong className="font-semibold">{replyingTo.profiles?.full_name || 'Pengguna'}</strong>:</span>
+                        <span className="truncate max-w-[200px] md:max-w-md italic opacity-80">"{replyingTo.message}"</span>
+                        <button type="button" onClick={() => setReplyingTo(null)} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal membalas">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {selectedFile && (
+                      <div className="flex items-center gap-1.5 min-w-0 text-amber-600 dark:text-amber-400 font-medium">
+                        <Paperclip className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate max-w-[200px] md:max-w-md">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                        <button type="button" onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal lampiran">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Input Area */}
                 <form
                   onSubmit={handleSendMessage}
@@ -919,11 +1051,44 @@ export default function FeedbackPage() {
                     dark:bg-gray-900
                     flex gap-2
                     md:gap-2.5
+                    items-center
                   "
                 >
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="
+                      p-2.5
+                      rounded-lg
+                      bg-gray-100
+                      dark:bg-gray-800
+                      hover:bg-gray-200
+                      dark:hover:bg-gray-700
+                      text-gray-600
+                      dark:text-gray-300
+                      transition
+                      shrink-0
+                    "
+                    title="Unggah PDF / Gambar (.pdf, .jpg, .png)"
+                  >
+                    <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+                  </button>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setSelectedFile(e.target.files[0])
+                      }
+                    }}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                  />
+
                   <input
                     type="text"
-                    placeholder="Ketik balasan pesan..."
+                    placeholder={replyingTo ? `Balas pesan ${replyingTo.profiles?.full_name || ''}...` : "Ketik balasan pesan..."}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     className="
@@ -953,7 +1118,7 @@ export default function FeedbackPage() {
 
                   <button
                     type="submit"
-                    disabled={!chatInput.trim() || isSending}
+                    disabled={(!chatInput.trim() && !selectedFile) || isSending}
                     className="
                       w-10
                       h-10
@@ -974,7 +1139,11 @@ export default function FeedbackPage() {
                       shadow-sm
                     "
                   >
-                    <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
+                    {isSending ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
+                    )}
                   </button>
                 </form>
               </div>

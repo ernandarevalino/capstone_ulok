@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName } from '@/actions/cabang'
+import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadChatAttachment } from '@/actions/cabang'
 import { updateUlokStatus } from '@/actions/assessor'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
+import { Paperclip, FileText, X, Reply, ExternalLink } from 'lucide-react'
 
 const getAssessorOriginInfo = (source: string | null) => {
   switch (source) {
@@ -67,7 +68,19 @@ const formatLastReviewedDate = (dateStr: string | null | undefined) => {
 }
 
 // Separate component for rendering comments, memoized to prevent re-renders when typing in the input field
-const CommentItem = React.memo(({ item, currentUserId, currentProfile }: { item: any; currentUserId: string | null; currentProfile: any }) => {
+const CommentItem = React.memo(({ 
+  item, 
+  currentUserId, 
+  currentProfile,
+  allComments,
+  onReply 
+}: { 
+  item: any; 
+  currentUserId: string | null; 
+  currentProfile: any;
+  allComments?: any[];
+  onReply?: (msg: any) => void;
+}) => {
   const isSelf = useMemo(() => {
     return (
       (currentUserId && (item.user_id === currentUserId || item.profiles?.id === currentUserId)) || 
@@ -81,8 +94,36 @@ const CommentItem = React.memo(({ item, currentUserId, currentProfile }: { item:
     return item.message?.includes('[Catatan Assessor - Grup:')
   }, [item.message])
 
+  const repliedParent = useMemo(() => {
+    if (!item.reply_to_id || !allComments) return null
+    return allComments.find((c: any) => c.id === item.reply_to_id)
+  }, [item.reply_to_id, allComments])
+
   return (
-    <div className={`flex w-full ${isSelf ? 'justify-end' : 'justify-start'}`}>
+    <div
+      onContextMenu={(e) => {
+        e.preventDefault()
+        if (onReply) onReply(item)
+      }}
+      className={`flex w-full group relative ${isSelf ? 'justify-end' : 'justify-start'}`}
+    >
+      {onReply && (
+        <button
+          type="button"
+          onClick={() => onReply(item)}
+          className={`
+            opacity-0 group-hover:opacity-100 transition-opacity duration-150
+            absolute top-1 z-10 p-1 rounded-md text-[10px] font-bold shadow-xs
+            flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
+            border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
+            ${isSelf ? '-left-14' : '-right-14'}
+          `}
+          title="Balas pesan ini"
+        >
+          <Reply className="w-3 h-3 text-blue-500" /> Balas
+        </button>
+      )}
+
       <div 
         className={`p-4 rounded-2xl border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${
           isSelf 
@@ -113,12 +154,61 @@ const CommentItem = React.memo(({ item, currentUserId, currentProfile }: { item:
           </span>
         </div>
 
+        {repliedParent && (
+          <div
+            className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs ${
+              isSelf
+                ? 'bg-black/20 border-white/40 text-blue-100'
+                : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <div className="font-bold flex items-center gap-1 opacity-90">
+              <Reply className="w-3 h-3 shrink-0" />
+              <span>Membalas {repliedParent.profiles?.full_name || 'Pengguna'}</span>
+            </div>
+            <p className="truncate italic opacity-80 mt-0.5">
+              {repliedParent.message || 'Pesan sebelumnya...'}
+            </p>
+          </div>
+        )}
+
         <div className="flex items-start gap-1.5">
           {!isSelf && isComplaint && <span className="text-sm shrink-0 mt-0.5 select-none">⚠️</span>}
           <p className="text-xs md:text-sm font-semibold whitespace-pre-line break-words">
             {item.message}
           </p>
         </div>
+
+        {item.attachment_url && (
+          <div className="mt-2">
+            {item.attachment_type === 'image' || ['jpg', 'jpeg', 'png', 'webp'].some(ext => item.attachment_url?.toLowerCase().includes(ext)) ? (
+              <div className="overflow-hidden rounded-lg border border-black/10 dark:border-white/10 max-w-xs mt-1">
+                <a href={item.attachment_url} target="_blank" rel="noopener noreferrer" title="Klik untuk membuka gambar ukuran penuh">
+                  <img
+                    src={item.attachment_url}
+                    alt="Lampiran Gambar"
+                    className="max-h-48 w-full object-cover hover:scale-105 transition-transform duration-200"
+                  />
+                </a>
+              </div>
+            ) : (
+              <a
+                href={item.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 p-2 rounded-lg border transition text-xs font-semibold max-w-xs mt-1 ${
+                  isSelf
+                    ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
+                    : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
+                }`}
+              >
+                <FileText className="w-4 h-4 shrink-0 text-red-400" />
+                <span className="truncate flex-1">Dokumen Lampiran (PDF)</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -153,6 +243,9 @@ export function DetailPenilaianPeroranganClient({
   const [isSending, setIsSending] = useState(false)
   const [currentProfile] = useState<any>(initialProfile)
   const [currentUserId] = useState<string | null>(initialUserId)
+  const [replyingTo, setReplyingTo] = useState<any>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const [checklistItems, setChecklistItems] = useState<any[]>([])
   const [checklistLoading, setChecklistLoading] = useState(true)
@@ -283,23 +376,56 @@ export function DetailPenilaianPeroranganClient({
   const handleSendComment = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     const activeId = currentUserId || currentProfile?.id
-    if (!ulokId || !newComment.trim() || !activeId) return
+    if (!ulokId || (!newComment.trim() && !selectedFile) || !activeId) return
 
     setIsSending(true)
-    const commentText = newComment.trim()
-    const res = await createComment(ulokId, activeId, commentText)
-    if (res.success) {
-      setNewComment('')
-      const commentsRes = await getComments(ulokId)
-      if (commentsRes.success && commentsRes.data) {
-        setComments(commentsRes.data)
+    try {
+      let attachmentUrl: string | null = null
+      let attachmentType: string | null = null
+
+      if (selectedFile) {
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        const uploadRes = await uploadChatAttachment(formData)
+        if (!uploadRes.success || !uploadRes.url) {
+          alert('Gagal mengunggah lampiran: ' + uploadRes.error)
+          setIsSending(false)
+          return
+        }
+        attachmentUrl = uploadRes.url
+        attachmentType = uploadRes.attachmentType
       }
-      router.refresh()
-    } else {
-      alert('Gagal mengirim feedback catatan: ' + res.error)
+
+      const commentText = newComment.trim() || (selectedFile ? `[Lampiran: ${selectedFile.name}]` : '')
+      const res = await createComment(
+        ulokId, 
+        activeId, 
+        commentText, 
+        replyingTo?.id || null, 
+        attachmentUrl, 
+        attachmentType
+      )
+
+      if (res.success) {
+        setNewComment('')
+        setReplyingTo(null)
+        setSelectedFile(null)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+
+        const commentsRes = await getComments(ulokId)
+        if (commentsRes.success && commentsRes.data) {
+          setComments(commentsRes.data)
+        }
+        router.refresh()
+      } else {
+        alert('Gagal mengirim feedback catatan: ' + res.error)
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsSending(false)
     }
-    setIsSending(false)
-  }, [ulokId, newComment, currentUserId, currentProfile, router])
+  }, [ulokId, newComment, selectedFile, replyingTo, currentUserId, currentProfile, router])
 
   const handleStatusChange = useCallback(async (newStatus: string) => {
     if (!ulokId) return
@@ -480,15 +606,62 @@ export function DetailPenilaianPeroranganClient({
                     item={item}
                     currentUserId={currentUserId}
                     currentProfile={currentProfile}
+                    allComments={comments}
+                    onReply={(msg) => setReplyingTo(msg)}
                   />
                 ))}
               </div>
             )}
 
+            {/* Reply / File Preview Bar */}
+            {(replyingTo || selectedFile) && (
+              <div className="mt-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800/90 rounded-lg flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between text-xs transition-all">
+                {replyingTo && (
+                  <div className="flex items-center gap-1.5 min-w-0 text-blue-600 dark:text-blue-400 font-medium">
+                    <Reply className="w-3.5 h-3.5 shrink-0" />
+                    <span className="shrink-0">Membalas <strong className="font-semibold">{replyingTo.profiles?.full_name || 'Pengguna'}</strong>:</span>
+                    <span className="truncate max-w-[200px] md:max-w-md italic opacity-80">"{replyingTo.message}"</span>
+                    <button type="button" onClick={() => setReplyingTo(null)} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal membalas">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {selectedFile && (
+                  <div className="flex items-center gap-1.5 min-w-0 text-amber-600 dark:text-amber-400 font-medium">
+                    <Paperclip className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate max-w-[200px] md:max-w-md">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    <button type="button" onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal lampiran">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2.5 items-center">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition shrink-0"
+                title="Unggah PDF / Gambar (.pdf, .jpg, .png)"
+              >
+                <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setSelectedFile(e.target.files[0])
+                }}
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+              />
+
               <input 
                 type="text" 
-                placeholder="Tulis pesan atau instruksi revisi ke cabang..." 
+                placeholder={replyingTo ? `Balas pesan ${replyingTo.profiles?.full_name || ''}...` : "Tulis pesan atau instruksi revisi ke cabang..."} 
                 className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs md:text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -497,7 +670,7 @@ export function DetailPenilaianPeroranganClient({
               <button 
                 type="submit"
                 className="bg-[#142B4D] dark:bg-slate-800 hover:bg-blue-900 dark:hover:bg-slate-700 text-white p-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center shrink-0 active:scale-95 shadow-xs"
-                disabled={isSending || !newComment.trim()}
+                disabled={isSending || (!newComment.trim() && !selectedFile)}
                 title="Kirim Catatan"
               >
                 {isSending ? (
