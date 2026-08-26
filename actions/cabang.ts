@@ -168,7 +168,8 @@ export async function getFeedbackSubmissions() {
           *,
           profiles:user_id (
             full_name,
-            role
+            role,
+            avatar_url
           )
         ),
         metode_saw(*)
@@ -876,7 +877,8 @@ export async function getComments(ulokId: string) {
         *,
         profiles:user_id (
           full_name,
-          role
+          role,
+          avatar_url
         )
       `)
       .eq('ulok_id', ulokId)

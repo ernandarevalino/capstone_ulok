@@ -173,7 +173,8 @@ export async function getAssessorHistoriSubmissions() {
           *,
           profiles:user_id (
             full_name,
-            role
+            role,
+            avatar_url
           )
         ),
         metode_saw(*)
@@ -216,7 +217,8 @@ export async function getAssessorFeedbackSubmissions() {
           *,
           profiles:user_id (
             full_name,
-            role
+            role,
+            avatar_url
           )
         ),
         profiles!ulok_submissions_admin_id_fkey (

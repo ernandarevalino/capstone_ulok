@@ -150,6 +150,36 @@ export default function DetailUlokBadanHukumPage() {
   const [replyingTo, setReplyingTo] = useState<any>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null)
+
+  const scrollToMessage = (msgId: string) => {
+    if (!msgId) return
+    const el = document.getElementById(`message-${msgId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setHighlightedMsgId(msgId)
+      setTimeout(() => {
+        setHighlightedMsgId(null)
+      }, 2000)
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile()
+        if (file) {
+          e.preventDefault()
+          setSelectedFile(file)
+          break
+        }
+      }
+    }
+  }
 
   const [checklistItems, setChecklistItems] = useState<any[]>([])
   const [checklistLoading, setChecklistLoading] = useState(true)
@@ -622,7 +652,7 @@ export default function DetailUlokBadanHukumPage() {
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
               </div>
             ) : (
-              <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto pr-2 flex flex-col">
+              <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto overflow-x-hidden pr-2 flex flex-col">
                 {comments.map((item) => {
                   const isSelf = 
                     (currentUserId && (item.profile_id === currentUserId || item.profiles?.id === currentUserId)) || 
@@ -635,33 +665,41 @@ export default function DetailUlokBadanHukumPage() {
                     ? comments.find((c: any) => c.id === item.reply_to_id)
                     : null
 
+                  const avatarUrl = item.profiles?.avatar_url
+                  const fullName = item.profiles?.full_name || (isSelf ? 'Anda' : 'User')
+
                   return (
                     <div 
+                      id={`message-${item.id}`}
                       key={item.id} 
                       onContextMenu={(e) => {
                         e.preventDefault()
                         setReplyingTo(item)
                       }}
-                      className={`flex w-full group relative ${isSelf ? 'justify-end' : 'justify-start'}`}
+                      className={`flex items-start gap-2.5 w-full group relative ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}
                     >
-                      {/* Hover Reply Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setReplyingTo(item)}
-                        className={`
-                          opacity-0 group-hover:opacity-100 transition-opacity duration-150
-                          absolute top-1 z-10 p-1 rounded-md text-[10px] font-bold shadow-xs
-                          flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
-                          border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
-                          ${isSelf ? '-left-14' : '-right-14'}
-                        `}
-                        title="Balas pesan ini"
-                      >
-                        <Reply className="w-3 h-3 text-blue-500" /> Balas
-                      </button>
+                      {/* User Avatar */}
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={fullName}
+                          className="w-7 h-7 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5"
+                        />
+                      ) : (
+                        <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 ${
+                          isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
+                        }`}>
+                          {fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
 
+                      {/* Message Bubble */}
                       <div 
                         className={`p-4 rounded-2xl border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${
+                          highlightedMsgId === item.id 
+                            ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]' 
+                            : ''
+                        } ${
                           isSelf 
                             ? 'bg-[#142B4D] dark:bg-slate-800 border-transparent text-white rounded-tr-none' 
                             : isComplaint 
@@ -692,11 +730,18 @@ export default function DetailUlokBadanHukumPage() {
 
                         {repliedParent && (
                           <div
-                            className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs ${
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (item.reply_to_id) {
+                                scrollToMessage(item.reply_to_id)
+                              }
+                            }}
+                            className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs cursor-pointer hover:opacity-90 transition-all ${
                               isSelf
-                                ? 'bg-black/20 border-white/40 text-blue-100'
-                                : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300'
+                                ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
+                                : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
                             }`}
+                            title="Klik untuk melihat pesan yang dibalas"
                           >
                             <div className="font-bold flex items-center gap-1 opacity-90">
                               <Reply className="w-3 h-3 shrink-0" />
@@ -746,6 +791,23 @@ export default function DetailUlokBadanHukumPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Hover Reply Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(item)}
+                        className="
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                          shrink-0 p-1.5 rounded-md text-[10px] font-bold shadow-2xs
+                          flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
+                          border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
+                          cursor-pointer self-center
+                        "
+                        title="Balas pesan ini"
+                      >
+                        <Reply className="w-3 h-3 text-blue-500" />
+                        <span className="hidden sm:inline">Balas</span>
+                      </button>
                     </div>
                   )
                 })}
@@ -804,6 +866,7 @@ export default function DetailUlokBadanHukumPage() {
                 className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs md:text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
+                onPaste={handlePaste}
                 disabled={isSending}
               />
               <button 

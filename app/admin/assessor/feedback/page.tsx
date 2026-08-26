@@ -26,6 +26,36 @@ export default function AssessorFeedbackPage() {
   const [replyingTo, setReplyingTo] = useState<any>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null)
+
+  const scrollToMessage = (msgId: string) => {
+    if (!msgId) return
+    const el = document.getElementById(`message-${msgId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setHighlightedMsgId(msgId)
+      setTimeout(() => {
+        setHighlightedMsgId(null)
+      }, 2000)
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile()
+        if (file) {
+          e.preventDefault()
+          setSelectedFile(file)
+          break
+        }
+      }
+    }
+  }
 
   const [selectedStatus, setSelectedStatus] = useState("")
   const [selectedKepemilikan, setSelectedKepemilikan] = useState("")
@@ -795,10 +825,10 @@ export default function AssessorFeedbackPage() {
                 {/* Messages Area */}
                 <div
                   className="
-                    flex-1 overflow-y-auto
+                    flex-1 overflow-y-auto overflow-x-hidden
                     px-2 py-3
                     md:px-5 md:py-4
-                    space-y-1.5 md:space-y-2
+                    space-y-2 md:space-y-2.5
                     bg-gray-50 dark:bg-gray-950
                     bg-[radial-gradient(circle_at_1px_1px,_rgba(20,43,77,0.06)_1px,_transparent_0)]
                     [background-size:8px_8px]
@@ -833,33 +863,37 @@ export default function AssessorFeedbackPage() {
                         ? activeUlok.allCommentsSorted?.find((c: any) => c.id === msg.reply_to_id)
                         : null
 
+                      const avatarUrl = msg.profiles?.avatar_url
+                      const fullName = msg.profiles?.full_name || (isSelf ? 'Anda' : 'User')
+
                       return (
                         <div
+                          id={`message-${msg.id}`}
                           key={msg.id}
                           onContextMenu={(e) => {
                             e.preventDefault()
                             setReplyingTo(msg)
                           }}
-                          className={`flex w-full group relative ${
-                            isSelf ? "justify-end" : "justify-start"
+                          className={`flex items-start gap-2.5 w-full group relative ${
+                            isSelf ? "flex-row-reverse" : "flex-row"
                           }`}
                         >
-                          {/* Hover Reply Trigger */}
-                          <button
-                            type="button"
-                            onClick={() => setReplyingTo(msg)}
-                            className={`
-                              opacity-0 group-hover:opacity-100 transition-opacity duration-150
-                              absolute top-1 z-10 p-1 rounded-md text-[10px] font-bold shadow-xs
-                              flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
-                              border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
-                              ${isSelf ? "-left-14" : "-right-14"}
-                            `}
-                            title="Balas pesan ini"
-                          >
-                            <Reply className="w-3 h-3 text-blue-500" /> Balas
-                          </button>
+                          {/* User Avatar */}
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={fullName}
+                              className="w-7 h-7 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5"
+                            />
+                          ) : (
+                            <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 ${
+                              isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
+                            }`}>
+                              {fullName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
 
+                          {/* Message Bubble */}
                           <div
                             className={`
                               max-w-[82%]
@@ -869,8 +903,14 @@ export default function AssessorFeedbackPage() {
                               md:px-4 md:py-2.5
                               rounded-lg
                               shadow-sm
-                              transition-all duration-150
+                              transition-all duration-300
                               leading-relaxed
+
+                              ${
+                                highlightedMsgId === msg.id
+                                  ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]'
+                                  : ''
+                              }
 
                               ${
                                 isSelf
@@ -948,11 +988,18 @@ export default function AssessorFeedbackPage() {
                             {/* Replied Snippet Box */}
                             {repliedParent && (
                               <div
-                                className={`mb-1.5 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs ${
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (msg.reply_to_id) {
+                                    scrollToMessage(msg.reply_to_id)
+                                  }
+                                }}
+                                className={`mb-1.5 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs cursor-pointer hover:opacity-90 transition-all ${
                                   isSelf || isAdminCabang
-                                    ? 'bg-black/20 border-white/40 text-blue-100'
-                                    : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300'
+                                    ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
+                                    : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
                                 }`}
+                                title="Klik untuk melihat pesan yang dibalas"
                               >
                                 <div className="font-bold flex items-center gap-1 opacity-90">
                                   <Reply className="w-3 h-3 shrink-0" />
@@ -1054,6 +1101,23 @@ export default function AssessorFeedbackPage() {
                               )}
                             </div>
                           </div>
+
+                          {/* Hover Reply Trigger (Inline next to bubble inside container) */}
+                          <button
+                            type="button"
+                            onClick={() => setReplyingTo(msg)}
+                            className="
+                              opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                              shrink-0 p-1.5 rounded-md text-[10px] font-bold shadow-xs
+                              flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
+                              border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
+                              cursor-pointer
+                            "
+                            title="Balas pesan ini"
+                          >
+                            <Reply className="w-3 h-3 text-blue-500" />
+                            <span className="hidden sm:inline">Balas</span>
+                          </button>
                         </div>
                       )
                     })
@@ -1139,6 +1203,7 @@ export default function AssessorFeedbackPage() {
                     placeholder={replyingTo ? `Balas pesan ${replyingTo.profiles?.full_name || ''}...` : "Ketik balasan pesan..."}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
+                    onPaste={handlePaste}
                     className="
                       flex-1
                       bg-gray-100
