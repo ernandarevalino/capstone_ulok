@@ -49,10 +49,12 @@ interface ClusterScatterChartProps {
   c3: any[]
   c4: any[]
   maxX: number
+  boundaryX?: number
+  boundaryY?: number
   onViewDetail: (id: string, jenisBadanHukum: string) => void
 }
 
-function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScatterChartProps) {
+function ClusterScatterChart({ c1, c2, c3, c4, maxX, boundaryX = 7, boundaryY = 80, onViewDetail }: ClusterScatterChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const rafId = useRef<number | null>(null)
 
@@ -91,8 +93,8 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
   }, [onViewDetail])
 
   return (
-    <div className="w-full mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
-      <ResponsiveContainer width="100%" height={480}>
+    <div className="w-full h-full min-h-[480px] mt-6 relative flex-1 flex flex-col justify-center" ref={chartContainerRef}>
+      <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 10 }}>
           {/* 1 grid aja (bukan 2 versi light/dark) - warnanya ngikut currentColor */}
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-slate-100 dark:text-gray-800" />
@@ -103,6 +105,8 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             name="Durasi"
             unit=" Hari"
             domain={[0, maxX]}
+            padding={{ left: 15, right: 15 }}
+            tickCount={6}
             stroke="#94A3B8"
             fontSize={11}
             fontWeight={600}
@@ -115,6 +119,8 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             name="Kelengkapan"
             unit="%"
             domain={[0, 100]}
+            padding={{ top: 15, bottom: 15 }}
+            ticks={[0, 20, 40, 60, 80, 100]}
             stroke="#94A3B8"
             fontSize={11}
             fontWeight={600}
@@ -124,7 +130,7 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
 
           {/* Shading Areas for Quadrants */}
           <ReferenceArea
-            x1={0} x2={7} y1={80} y2={100}
+            x1={0} x2={boundaryX} y1={boundaryY} y2={100}
             fill="rgba(16, 185, 129, 0.08)"
             stroke="none"
             onMouseEnter={handleQuadrantHover('c3')}
@@ -133,7 +139,7 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             cursor="pointer"
           />
           <ReferenceArea
-            x1={0} x2={7} y1={0} y2={80}
+            x1={0} x2={boundaryX} y1={0} y2={boundaryY}
             fill="rgba(59, 130, 246, 0.08)"
             stroke="none"
             onMouseEnter={handleQuadrantHover('c2')}
@@ -142,7 +148,7 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             cursor="pointer"
           />
           <ReferenceArea
-            x1={7} x2={maxX} y1={80} y2={100}
+            x1={boundaryX} x2={maxX} y1={boundaryY} y2={100}
             fill="rgba(245, 158, 11, 0.08)"
             stroke="none"
             onMouseEnter={handleQuadrantHover('c1')}
@@ -151,7 +157,7 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             cursor="pointer"
           />
           <ReferenceArea
-            x1={7} x2={maxX} y1={0} y2={80}
+            x1={boundaryX} x2={maxX} y1={0} y2={boundaryY}
             fill="rgba(239, 68, 68, 0.08)"
             stroke="none"
             onMouseEnter={handleQuadrantHover('c4')}
@@ -161,8 +167,8 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
           />
 
           {/* Quad Dividers */}
-          <ReferenceLine x={7} stroke="#94A3B8" strokeDasharray="3 3" />
-          <ReferenceLine y={80} stroke="#94A3B8" strokeDasharray="3 3" />
+          <ReferenceLine x={boundaryX} stroke="#94A3B8" strokeDasharray="3 3" />
+          <ReferenceLine y={boundaryY} stroke="#94A3B8" strokeDasharray="3 3" />
 
           <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
 
@@ -170,33 +176,45 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, onViewDetail }: ClusterScat
             name="Cluster 1 (Ideal)"
             data={c3}
             fill="#10B981"
+            fillOpacity={0.75}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
+            stroke="white"
+            strokeWidth={1}
           />
           <Scatter
             name="Cluster 2 (Aktif)"
             data={c2}
             fill="#3B82F6"
+            fillOpacity={0.75}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
+            stroke="white"
+            strokeWidth={1}
           />
           <Scatter
             name="Cluster 3 (Review)"
             data={c1}
             fill="#F28705"
+            fillOpacity={0.75}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
+            stroke="white"
+            strokeWidth={1}
           />
           <Scatter
             name="Cluster 4 (Stagnan)"
             data={c4}
             fill="#D91E2E"
+            fillOpacity={0.75}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
+            stroke="white"
+            strokeWidth={1}
           />
         </ScatterChart>
       </ResponsiveContainer>

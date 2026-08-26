@@ -12,6 +12,7 @@ import {
   ClipboardList, Check, X, CheckCircle2, Activity, XCircle,
   FileSearch
 } from 'lucide-react'
+import ChartFullscreenWrapper from './ChartFullscreenWrapper'
 
 // Chart di-code-split & cuma di-load di client (recharts+d3 lumayan berat).
 // Ini yang paling kerasa dampaknya buat mobile: JS chart gak nge-block
@@ -377,10 +378,13 @@ export default function ClusteringDashboardPage() {
       sumDurasi += item.durasi_hari || 0
       if ((item.durasi_hari || 0) > maxDurasi) maxDurasi = item.durasi_hari || 0
     }
+    // Round up maxDurasi to the nearest 10 (e.g., 71 -> 80) for a cleaner axis
+    const cleanMaxX = Math.ceil((maxDurasi + 5) / 10) * 10
+    
     return {
       avgCompleteness: sumPersentase / totalUsulan,
       avgDuration: sumDurasi / totalUsulan,
-      maxX: Math.max(14, maxDurasi + 4)
+      maxX: Math.max(20, cleanMaxX)
     }
   }, [allItems, totalUsulan])
 
@@ -460,7 +464,7 @@ export default function ClusteringDashboardPage() {
                 Clustering ULOK
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-3xl">
-                Analisis usulan lokasi berdasarkan persentase kelengkapan berkas dan  durasi pengumpulan.
+                Analisis usulan lokasi berdasarkan persentase kelengkapan berkas dan durasi pengumpulan.
               </p>
             </div>
 
@@ -841,19 +845,14 @@ export default function ClusteringDashboardPage() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-fadeIn">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Scatter Plot Chart */}
-                <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 md:p-6 rounded-2xl shadow-sm flex flex-col">
-                  <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
-                      <BarChart3 className="w-7 h-7 text-[#3365A6]" />
-                      Kelompok Dokumen Berdasarkan Kelengkapan & Durasi
-                    </h3>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                      Visualisasi sebaran usulan lokasi nasional di dalam matriks 4 kuadran. Hover dot usulan untuk detail.
-                    </p>
-                  </div>
-
+                {/* Scatter Plot Chart wrapped in Fullscreen Logic */}
+                <ChartFullscreenWrapper
+                  title="Kelompok Dokumen Berdasarkan Kelengkapan & Durasi"
+                  subtitle="Visualisasi sebaran usulan lokasi nasional di dalam matriks 4 kuadran. Klik ikon di kanan atas untuk layar penuh."
+                >
                   <ClusterScatterChart
+                    boundaryX={7}
+                    boundaryY={80}
                     c1={data.c1}
                     c2={data.c2}
                     c3={data.c3}
@@ -861,7 +860,7 @@ export default function ClusteringDashboardPage() {
                     maxX={maxX}
                     onViewDetail={handleViewDetail}
                   />
-                </div>
+                </ChartFullscreenWrapper>
 
                 {/* Sidebar Rincian */}
                 <div className="space-y-6 col-span-1">
