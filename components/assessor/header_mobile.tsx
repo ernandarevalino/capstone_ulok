@@ -100,16 +100,6 @@ export default function HeaderMobile() {
           </Link>
 
           <Link 
-            href="/admin/assessor/feedback" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isActive('/admin/assessor/feedback') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            Feedback
-          </Link>
-
-          <Link 
             href="/admin/assessor/pengelompokan" 
             onClick={() => setIsOpen(false)} 
             className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
@@ -127,6 +117,16 @@ export default function HeaderMobile() {
             }`}
           >
             Clustering
+          </Link>
+
+          <Link 
+            href="/admin/assessor/feedback" 
+            onClick={() => setIsOpen(false)} 
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor/feedback') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Feedback
           </Link>
 
           <Link 

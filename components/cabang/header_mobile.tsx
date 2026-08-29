@@ -100,16 +100,6 @@ export default function HeaderMobile() {
           </Link>
 
           <Link 
-            href="/admin/cabang/feedback" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isActive('/admin/cabang/feedback') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            Feedback
-          </Link>
-
-          <Link 
             href="/admin/cabang/usulan-lokasi" 
             onClick={() => setIsOpen(false)} 
             className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
@@ -117,6 +107,16 @@ export default function HeaderMobile() {
             }`}
           >
             Usulan Lokasi
+          </Link>
+
+          <Link 
+            href="/admin/cabang/feedback" 
+            onClick={() => setIsOpen(false)} 
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/cabang/feedback') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Feedback
           </Link>
 
           <Link 
