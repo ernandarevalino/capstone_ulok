@@ -84,17 +84,6 @@ export default function HeaderDesktop() {
         </Link>
 
         <Link
-          href="/admin/assessor/clustering"
-          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isActive('/admin/assessor/clustering')
-              ? 'text-white after:w-full after:bg-white'
-              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
-          }`}
-        >
-          Clustering
-        </Link>
-
-        <Link
           href="/admin/assessor/feedback"
           className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
             isActive('/admin/assessor/feedback')
@@ -103,6 +92,17 @@ export default function HeaderDesktop() {
           }`}
         >
           Feedback
+        </Link>
+
+        <Link
+          href="/admin/assessor/clustering"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/assessor/clustering')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
+        >
+          Clustering
         </Link>
 
         <Link
