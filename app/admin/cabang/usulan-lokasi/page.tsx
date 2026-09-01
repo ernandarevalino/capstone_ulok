@@ -21,9 +21,11 @@ import {
   CheckCircle2,
   Building2,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import { useCabangProfile } from '@/context/CabangProfileContext'
+import { createClient } from '@/utils/supabase/client'
 
 const formatLastReviewedShort = (dateStr: string | null | undefined) => {
   if (!dateStr) return 'Belum direview'
@@ -542,6 +544,47 @@ export default function UsulanLokasiPage() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [deletedCount, setDeletedCount] = useState<number>(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const handleSyncMidiloc = async () => {
+    setIsSyncing(true)
+    try {
+      // Fetch from our Mock API
+      const res = await fetch('/api/external/midiloc')
+      const result = await res.json()
+      
+      if (result.status !== 'success') throw new Error('Failed to fetch API')
+
+      // Get current user for admin_id
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Anda belum login')
+
+      // Map data to PRISMA schema
+      const payloads = result.data.map((item: any) => ({
+        admin_id: user.id,
+        nama_lokasi: item.site_name,
+        jenis_badan_hukum: item.legal_type,
+        nama_pemegang_hak: item.owner_name,
+        alamat_koordinat: item.coords,
+        detail_alamat: item.address_detail,
+        harga_sewa: item.estimated_price,
+        status: 'Draft'
+      }))
+
+      // Insert into Supabase
+      const { error } = await supabase.from('ulok_submissions').insert(payloads)
+      if (error) throw error
+
+      alert(`Berhasil menarik ${payloads.length} lokasi dari Midiloc API!`)
+      // Refresh the page or trigger data reload
+      window.location.reload()
+    } catch (error: any) {
+      alert(`Integrasi gagal: ${error.message}`)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
   const [downloadingDocName, setDownloadingDocName] = useState<string | null>(null)
@@ -1087,10 +1130,23 @@ export default function UsulanLokasiPage() {
         {/* Mobile Row 2: Tambah Lokasi Baru + Recycle Bin */}
         <div className="flex items-center gap-2 md:contents">
 
+          <button 
+            onClick={handleSyncMidiloc} 
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50 h-11 md:h-10 md:order-5"
+          >
+            {isSyncing ? (
+              <span className="animate-spin border-2 border-emerald-600 border-t-transparent rounded-full w-4 h-4" />
+            ) : (
+              <RefreshCw className="w-4 h-4"/> 
+            )}
+            <span className="hidden sm:inline">Refresh Midiloc</span>
+          </button>
+
           {/* Tambah Lokasi Baru Button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex-1 md:order-5 md:flex-none md:w-48 bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:shadow-md flex items-center gap-2 h-11 md:h-10 justify-center shrink-0"
+            className="flex-1 md:order-6 md:flex-none md:w-48 bg-[#142B4D] hover:bg-[#1a3863] dark:bg-[#142B4D] dark:hover:bg-[#1a3863] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:shadow-md flex items-center gap-2 h-11 md:h-10 justify-center shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Lokasi</span>
