@@ -4,13 +4,15 @@ import React, { useEffect, useState, useTransition, useMemo, useCallback } from 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadChatAttachment } from '@/actions/cabang'
 import { updateUlokStatus } from '@/actions/assessor'
+import { generateVendorToken } from '@/actions/vendor-token'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, QrCode, Share2, Copy, Check as CheckIcon } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const getAssessorOriginInfo = (source: string | null) => {
   switch (source) {
@@ -295,6 +297,38 @@ export function DetailPenilaianPeroranganClient({
   const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null)
   const [avatarPopover, setAvatarPopover] = useState<AvatarPopoverState | null>(null)
 
+  // === VENDOR TOKEN STATE ===
+  const [showVendorModal, setShowVendorModal] = useState(false)
+  const [vendorToken, setVendorToken] = useState<string | null>(null)
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false)
+  const [vendorLinkCopied, setVendorLinkCopied] = useState(false)
+
+  const vendorUrl = vendorToken
+    ? (typeof window !== 'undefined' ? `${window.location.origin}/vendor/upload/${vendorToken}` : `/vendor/upload/${vendorToken}`)
+    : ''
+
+  const handleGenerateVendorToken = useCallback(async () => {
+    setIsGeneratingToken(true)
+    try {
+      const res = await generateVendorToken(ulokId)
+      if (res.success && res.token) {
+        setVendorToken(res.token)
+      } else {
+        alert('Gagal generate token: ' + res.error)
+      }
+    } finally {
+      setIsGeneratingToken(false)
+    }
+  }, [ulokId])
+
+  const handleCopyVendorLink = useCallback(() => {
+    if (!vendorUrl) return
+    navigator.clipboard.writeText(vendorUrl).then(() => {
+      setVendorLinkCopied(true)
+      setTimeout(() => setVendorLinkCopied(false), 2000)
+    })
+  }, [vendorUrl])
+
   const handleAvatarClick = useCallback((e: React.MouseEvent, profile: any) => {
     e.stopPropagation()
     setAvatarPopover({ x: e.clientX, y: e.clientY, profile })
@@ -563,11 +597,19 @@ export function DetailPenilaianPeroranganClient({
             </div>
           </div>
           
-          {/* === ACTION: GO TO PENILAIAN === */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          {/* === ACTION: GO TO PENILAIAN + VENDOR SHARE === */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button
+              onClick={() => setShowVendorModal(true)}
+              className="flex-1 sm:flex-none bg-[#F28705] hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+              title="Bagikan akses upload ke vendor"
+            >
+              <Share2 className="w-4 h-4" />
+              Bagikan Akses Vendor
+            </button>
             <button
               onClick={() => router.push(`/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
-              className="w-full sm:w-auto bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+              className="flex-1 sm:flex-none bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
             >
               <img 
                 src="/icons/icon-form.svg" 
@@ -800,6 +842,100 @@ export function DetailPenilaianPeroranganClient({
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successMessage}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL: VENDOR ACCESS QR === */}
+      {showVendorModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowVendorModal(false); setVendorToken(null) } }}
+        >
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-md overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-[#142B4D] px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <QrCode className="w-5 h-5 text-white" />
+                <h3 className="text-white font-bold text-sm tracking-tight">Bagikan Akses Vendor</h3>
+              </div>
+              <button
+                onClick={() => { setShowVendorModal(false); setVendorToken(null) }}
+                className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Generate link akses untuk vendor agar dapat mengunggah dokumen checklist tanpa perlu login.
+              </p>
+
+              {!vendorToken ? (
+                <button
+                  onClick={handleGenerateVendorToken}
+                  disabled={isGeneratingToken}
+                  className="w-full bg-[#142B4D] hover:bg-blue-900 text-white py-3 rounded-xl text-sm font-bold transition disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  {isGeneratingToken ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Membuat Link...</>
+                  ) : (
+                    <><QrCode className="w-4 h-4" /> Generate Link & QR Code</>
+                  )}
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  {/* QR Code */}
+                  <div className="flex justify-center">
+                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                      <QRCodeCanvas
+                        value={vendorUrl}
+                        size={200}
+                        level="M"
+                        includeMargin={false}
+                      />
+                    </div>
+                  </div>
+
+                  {/* URL Display + Copy */}
+                  <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Link Akses Vendor</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-700 dark:text-gray-200 font-mono break-all flex-1 leading-relaxed">{vendorUrl}</p>
+                      <button
+                        onClick={handleCopyVendorLink}
+                        className="shrink-0 p-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition"
+                        title="Salin link"
+                      >
+                        {vendorLinkCopied
+                          ? <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
+                          : <Copy className="w-3.5 h-3.5 text-gray-500" />
+                        }
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expiry Note */}
+                  <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3">
+                    <span className="text-amber-500 text-base shrink-0 mt-0.5">⏱</span>
+                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                      Link ini akan <strong>kadaluarsa dalam 1 jam</strong> jika tidak dibuka. Sesi akan diperpanjang otomatis selama halaman vendor tetap terbuka.
+                    </p>
+                  </div>
+
+                  {/* Regenerate button */}
+                  <button
+                    onClick={handleGenerateVendorToken}
+                    disabled={isGeneratingToken}
+                    className="w-full text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-blue-400 transition py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl"
+                  >
+                    {isGeneratingToken ? 'Membuat ulang...' : '↻ Generate Ulang Link Baru'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
