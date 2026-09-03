@@ -717,7 +717,18 @@ export function DetailPenilaianBadanHukumClient({
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">NOMOR ULOK</label>
+              <input 
+                type="text"
+                value={initialDetail?.id_ulok || '-'}
+                readOnly
+                disabled
+                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
+              />
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
               <input 
                 type="text"
@@ -726,6 +737,9 @@ export function DetailPenilaianBadanHukumClient({
                 disabled
                 className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
               />
+            </div>
+
+            <div>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
                 {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
               </p>

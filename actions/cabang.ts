@@ -242,11 +242,36 @@ export async function createUlokSubmission(payload: {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
 
+    // Fetch user's branch code
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('branches(kode_cabang)')
+      .eq('id', user.id)
+      .single()
+
+    const branchCode = (profileData?.branches as any)?.kode_cabang || 'M999'
+
+    // Current YYMM
+    const now = new Date()
+    const yy = String(now.getFullYear()).slice(-2)
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const periodKey = `${branchCode}-${yy}${mm}`
+
+    // Generate running number
+    const { count } = await supabase
+      .from('ulok_submissions')
+      .select('id', { count: 'exact', head: true })
+      .like('id_ulok', `${periodKey}-%`)
+
+    const nextNum = String((count || 0) + 1).padStart(4, '0')
+    const generatedIdUlok = `${periodKey}-${nextNum}`
+
     const { data, error } = await supabase
       .from('ulok_submissions')
       .insert([
         {
-          admin_id: user.id, 
+          admin_id: user.id,
+          id_ulok: generatedIdUlok, 
           nama_lokasi: payload.nama_lokasi,
           jenis_badan_hukum: payload.jenis_badan_hukum,
           nama_pemegang_hak: payload.nama_pemegang_hak,
@@ -451,6 +476,7 @@ export async function updateUlokSubmission(id: string, payload: any) {
     const jaminanData: any = {}
 
     // parent
+    if (payload.id_ulok !== undefined) parentData.id_ulok = payload.id_ulok
     if (payload.nama_lokasi !== undefined) parentData.nama_lokasi = payload.nama_lokasi
     if (payload.nama_pemegang_hak !== undefined) parentData.nama_pemegang_hak = payload.nama_pemegang_hak
     if (payload.jenis_badan_hukum !== undefined) parentData.jenis_badan_hukum = payload.jenis_badan_hukum
@@ -1172,5 +1198,22 @@ async function checkAndSendProgressNotification(ulokId: string, oldPersentase: n
     }
   } catch (err) {
     console.error('Error checking or sending progress notification:', err)
+  }
+}
+
+export async function checkUlokIdUnique(idUlok: string, currentUlokId: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('ulok_submissions')
+      .select('id')
+      .eq('id_ulok', idUlok)
+      .neq('id', currentUlokId)
+      .maybeSingle()
+
+    if (error) throw error
+    return { success: true, isUnique: !data }
+  } catch (error: any) {
+    return { success: false, error: error.message, isUnique: false }
   }
 }

@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useTransition, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
@@ -117,6 +117,9 @@ export default function DetailUlokBadanHukumPage() {
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
+  const [idUlok, setIdUlok] = useState('')
+  const [originalIdUlok, setOriginalIdUlok] = useState('')
+  const [idUlokError, setIdUlokError] = useState('')
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   const [namaPengusul, setNamaPengusul] = useState('')
   const [namaCabang, setNamaCabang] = useState('')
@@ -318,6 +321,8 @@ export default function DetailUlokBadanHukumPage() {
         setNamaLokasi(res.data.nama_lokasi || '')
         setStatusBadan(res.data.jenis_badan_hukum || '')
         setNamaPemegang(res.data.nama_pemegang_hak || '')
+        setIdUlok(res.data.id_ulok || '')
+        setOriginalIdUlok(res.data.id_ulok || '')
         setStatusSubmission(res.data.status || 'Draft')
         setLastReviewedAt(res.data.last_reviewed_at || null)
         setNamaPengusul(res.data.profiles?.full_name || 'Pengusul Tidak Diketahui')
@@ -444,14 +449,32 @@ export default function DetailUlokBadanHukumPage() {
     e.preventDefault()
     if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
 
+    const trimmedIdUlok = idUlok.trim().toUpperCase()
+    if (!trimmedIdUlok) {
+      setIdUlokError('Nomor ULOK tidak boleh kosong.')
+      return
+    }
+
+    if (trimmedIdUlok !== originalIdUlok) {
+      const uniqueCheck = await checkUlokIdUnique(trimmedIdUlok, ulokId)
+      if (!uniqueCheck.isUnique) {
+        setIdUlokError('Nomor ULOK sudah digunakan oleh usulan lain. Harap gunakan nomor yang unik.')
+        alert('Gagal menyimpan: Nomor ULOK sudah terdaftar di sistem.')
+        return
+      }
+    }
+
     startTransition(async () => {
       const res = await updateUlokSubmission(ulokId, {
+        id_ulok: trimmedIdUlok,
         nama_lokasi: namaLokasi,
         jenis_badan_hukum: statusBadan,
         nama_pemegang_hak: namaPemegang
       })
 
       if (res.success) {
+        setOriginalIdUlok(trimmedIdUlok)
+        setIdUlokError('')
         setSuccessMessage('Data awal usulan berhasil diperbarui!')
         setShowSuccessModal(true)
         setTimeout(() => {
@@ -620,7 +643,30 @@ export default function DetailUlokBadanHukumPage() {
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">NOMOR ULOK</label>
+              <input 
+                type="text" 
+                value={idUlok} 
+                onChange={(e) => {
+                  setIdUlok(e.target.value.toUpperCase());
+                  setIdUlokError('');
+                }} 
+                className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors ${
+                  idUlokError 
+                    ? 'border-red-500 focus:ring-2 focus:ring-red-500' 
+                    : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
+                }`}
+                required
+              />
+              {idUlokError && (
+                <p className="text-red-500 text-xs mt-1 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {idUlokError}
+                </p>
+              )}
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
               <select 
                 value={statusBadan} 
@@ -633,6 +679,8 @@ export default function DetailUlokBadanHukumPage() {
                 <option value="Yayasan">Yayasan</option>
                 <option value="Koperasi">Koperasi</option>
               </select>
+            </div>
+            <div>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
                 {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
               </p>

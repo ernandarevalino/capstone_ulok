@@ -81,7 +81,7 @@ export default function DocumentChecklistPanel({
       <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-850 pb-3 flex-wrap gap-3">
         <div className="flex items-center gap-3 flex-wrap">
           <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-            📋 Status Checklist Dokumen ({percentage.toFixed(1)}% - {numerator}/{denominator} Terupload)
+            Status Checklist Dokumen ({percentage.toFixed(1)}% - {numerator}/{denominator} Terupload)
           </h4>
 
           <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
