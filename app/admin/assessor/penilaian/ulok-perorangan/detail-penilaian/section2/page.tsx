@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUlokDetail, getUploadedDocuments } from '@/actions/cabang'
-import { Check, Loader2, Download, History } from 'lucide-react'
+import { Check, Loader2, Download, History, CheckCircle2 } from 'lucide-react'
 import { toggleDocumentVerification } from '@/actions/assessor'
 import { calculateULOKSAW } from '@/actions/saw'
 
@@ -797,7 +797,7 @@ export default function Section2PeroranganAssessorPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.15s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.15s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successModalText}
             </p>

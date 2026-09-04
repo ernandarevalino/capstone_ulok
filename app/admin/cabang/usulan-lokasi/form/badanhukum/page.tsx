@@ -9,7 +9,7 @@ import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2 } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
@@ -199,13 +199,14 @@ export default function DetailUlokBadanHukumPage() {
   const [lastUploaderName, setLastUploaderName] = useState<string | null>(null)
   const [uploadingDocName, setUploadingDocName] = useState<string | null>(null)
 
-  const fetchChecklistData = useCallback(async () => {
+  const fetchChecklistData = useCallback(async (customStatusBadan?: string) => {
     if (!ulokId) return
     setChecklistLoading(true)
     try {
+      const activeStatus = customStatusBadan || statusBadan || 'PT'
       const [docsRes, masterRes, uploaderRes] = await Promise.all([
         getUploadedDocuments(ulokId),
-        getChecklistMaster(statusBadan || 'PT'),
+        getChecklistMaster(activeStatus),
         getLastUploaderName(ulokId)
       ])
 
@@ -214,7 +215,7 @@ export default function DetailUlokBadanHukumPage() {
         const master = masterRes.data || []
         
         const submissionMock = {
-          jenis_badan_hukum: statusBadan || 'PT',
+          jenis_badan_hukum: activeStatus,
         }
         
         const checklistMasterIds = getChecklistMasterIds(submissionMock, docs)
@@ -266,10 +267,6 @@ export default function DetailUlokBadanHukumPage() {
     }
   }, [ulokId, statusBadan])
 
-  useEffect(() => {
-    fetchChecklistData()
-  }, [fetchChecklistData])
-
   const handleQuickUpload = async (docName: string, file: File) => {
     if (!ulokId) return
     const docType = mapDocNameToType(docName, statusBadan || 'PT')
@@ -284,12 +281,12 @@ export default function DetailUlokBadanHukumPage() {
       formData.append('file', file)
       const res = await uploadUlokFile(ulokId, docType, formData)
       if (res.success) {
-        setSuccessMessage('Berkas berhasil diperbarui!')
+        setSuccessMessage(`Berkas '${docName}' untuk ULOK '${namaLokasi || ulokId}' berhasil diperbarui!`)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
         }, 1500)
-        await fetchChecklistData()
+        await fetchChecklistData(statusBadan)
         router.refresh()
       } else {
         alert('Gagal mengunggah berkas: ' + res.error)
@@ -315,11 +312,13 @@ export default function DetailUlokBadanHukumPage() {
 
     const fetchDetail = async () => {
       setIsLoading(true)
+      setChecklistLoading(true)
       const res = await getUlokDetail(ulokId)
       
       if (res.success && res.data) {
+        const fetchedStatus = res.data.jenis_badan_hukum || 'PT'
         setNamaLokasi(res.data.nama_lokasi || '')
-        setStatusBadan(res.data.jenis_badan_hukum || '')
+        setStatusBadan(fetchedStatus)
         setNamaPemegang(res.data.nama_pemegang_hak || '')
         setIdUlok(res.data.id_ulok || '')
         setOriginalIdUlok(res.data.id_ulok || '')
@@ -328,12 +327,16 @@ export default function DetailUlokBadanHukumPage() {
         setNamaPengusul(res.data.profiles?.full_name || 'Pengusul Tidak Diketahui')
         setNamaCabang(res.data.profiles?.branches?.nama_cabang || 'Cabang Tidak Diketahui')
         
-        const commentsRes = await getComments(ulokId)
+        const [commentsRes, profileRes] = await Promise.all([
+          getComments(ulokId),
+          getCurrentProfile(),
+          fetchChecklistData(fetchedStatus)
+        ])
+
         if (commentsRes.success && commentsRes.data) {
           setComments(commentsRes.data)
         }
 
-        const profileRes = await getCurrentProfile()
         if (profileRes.success && profileRes.profile) {
           setCurrentProfile(profileRes.profile)
         }
@@ -475,7 +478,7 @@ export default function DetailUlokBadanHukumPage() {
       if (res.success) {
         setOriginalIdUlok(trimmedIdUlok)
         setIdUlokError('')
-        setSuccessMessage('Data awal usulan berhasil diperbarui!')
+        setSuccessMessage(`ULOK '${namaLokasi}' berhasil diperbarui!`)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -498,11 +501,12 @@ export default function DetailUlokBadanHukumPage() {
       })
 
       if (res.success) {
-        setSuccessMessage('Status kepemilikan berhasil diubah!')
+        setSuccessMessage(`Status kepemilikan ULOK '${namaLokasi}' berhasil diubah ke '${newStatus}'!`)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
         }, 1500)
+        await fetchChecklistData(newStatus)
       } else {
         alert('Gagal memperbarui status kepemilikan: ' + res.error)
       }
@@ -540,7 +544,9 @@ export default function DetailUlokBadanHukumPage() {
               />
             </button>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Data Usulan Lokasi (ULOK)</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                {namaLokasi ? `Data Usulan ${namaLokasi}` : 'Data Usulan Lokasi (ULOK)'}
+              </h1>
               <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold mt-0.5">ID Berkas: {ulokId}</p>
             </div>
           </div>
@@ -558,46 +564,21 @@ export default function DetailUlokBadanHukumPage() {
               />
               Form
             </button>
-
-            <button
-              form="form-badan-hukum"
-              type="submit"
-              disabled={isPending || isLoading}
-              className="bg-[#142B4D] dark:bg-slate-800 text-white p-2.5 h-[38px] w-[38px] md:h-[40px] md:w-[40px] rounded-xl hover:bg-emerald-600 dark:hover:bg-emerald-600 transition shadow-xs flex items-center justify-center active:scale-95 disabled:opacity-50 shrink-0"
-              title={isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
-            >
-              {isPending ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <img 
-                  src="/icons/icon-check-2.svg" 
-                  alt="Save Icon" 
-                  className="w-4 h-4 md:w-5 md:h-5 object-contain brightness-0 invert" 
-                />
-              )}
-            </button>
           </div>
         </div>
 
-        {/* === MAIN SECTIONS: RINGKASAN, FORM & KOMENTAR (SINGLE LOADING CONTAINER) === */}
-        {isLoading ? (
-          <div className="py-8 text-center text-gray-400 italic flex flex-col items-center justify-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 dark:border-slate-800 dark:border-t-slate-200"></div>
-            <span className="text-xs">Memuat data usulan...</span>
-          </div>
-        ) : (
-          <>
-            <UlokSummaryCard
-              namaLokasi={namaLokasi}
-              namaCabang={namaCabang}
-              namaPengusul={namaPengusul}
-              jenisKepemilikan={statusBadan || 'PT'}
-              status={statusSubmission}
-              totalDokumen={checklistItems.length}
-              dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
-              dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
-              dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
-            />
+        {/* === MAIN SECTIONS: RINGKASAN, FORM & KOMENTAR === */}
+        <UlokSummaryCard
+          namaLokasi={namaLokasi}
+          namaCabang={namaCabang}
+          namaPengusul={namaPengusul}
+          jenisKepemilikan={statusBadan || 'PT'}
+          status={statusSubmission}
+          totalDokumen={checklistItems.length}
+          dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
+          dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
+          dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
+        />
 
             {/* === PANEL FORM DATA UTAMA === */}
             <form 
@@ -609,9 +590,27 @@ export default function DetailUlokBadanHukumPage() {
                 <h2 className="font-bold text-white text-sm md:text-base tracking-tight">
                   Informasi Usulan Kelompok Badan Hukum
                 </h2>
-                <span className="px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                  {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
-                </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={isPending || isLoading}
+                    className="bg-white/10 hover:bg-emerald-600 text-white p-2 h-[34px] w-[34px] rounded-lg transition shadow-xs flex items-center justify-center active:scale-95 disabled:opacity-50 shrink-0 border border-white/20 cursor-pointer"
+                    title={isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  >
+                    {isPending ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <img 
+                        src="/icons/icon-check-2.svg" 
+                        alt="Save Icon" 
+                        className="w-4 h-4 object-contain brightness-0 invert" 
+                      />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="p-6 space-y-5">
@@ -940,8 +939,6 @@ export default function DetailUlokBadanHukumPage() {
                 </form>
               </div>
             </div>
-          </>
-        )}
 
         {/* === PANEL CHECKLIST DOKUMEN === */}
         {checklistLoading ? (
@@ -968,7 +965,7 @@ export default function DetailUlokBadanHukumPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successMessage}
             </p>

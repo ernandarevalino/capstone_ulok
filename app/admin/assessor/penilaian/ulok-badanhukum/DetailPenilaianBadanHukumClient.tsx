@@ -10,7 +10,7 @@ import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, QrCode, Share2, Copy, Check as CheckIcon, Send, MessagesSquare } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, QrCode, Share2, Copy, Check as CheckIcon, Send, MessagesSquare, CheckCircle2 } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 import { QRCodeCanvas } from 'qrcode.react'
 
@@ -864,7 +864,7 @@ export function DetailPenilaianBadanHukumClient({
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
-            <img src="/icons/icon-check.svg" alt="Success" className="w-16 h-16 mx-auto mb-2" />
+            <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 mb-2" />
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successMessage}
             </p>
@@ -965,6 +965,18 @@ export function DetailPenilaianBadanHukumClient({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL: SUKSES === */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-80 text-center space-y-4 animate-[scaleUp_0.2s_ease-out]">
+            <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 mb-2" />
+            <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
+              {successMessage}
+            </p>
           </div>
         </div>
       )}
