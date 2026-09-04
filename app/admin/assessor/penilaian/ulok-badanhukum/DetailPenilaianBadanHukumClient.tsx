@@ -10,7 +10,7 @@ import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, QrCode, Share2, Copy, Check as CheckIcon } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, QrCode, Share2, Copy, Check as CheckIcon, Send, MessagesSquare } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 import { QRCodeCanvas } from 'qrcode.react'
 
@@ -144,16 +144,16 @@ const CommentItem = React.memo(({
 
       {/* Message Bubble */}
       <div 
-        className={`p-4 rounded-2xl border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${
+        className={`px-3 py-2 md:px-4 md:py-2.5 rounded-lg border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${
           highlightedMsgId === item.id 
             ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]' 
             : ''
         } ${
           isSelf 
-            ? 'bg-[#142B4D] dark:bg-slate-800 border-transparent text-white rounded-tr-none' 
+            ? 'bg-[#142B4D] dark:bg-[#142B4D] border-transparent text-white rounded-tr-none shadow-[0_2px_6px_rgba(20,43,77,0.15)]' 
             : isComplaint 
-              ? 'bg-rose-50 border-rose-300 dark:bg-rose-950/40 dark:border-rose-900/60 text-gray-800 dark:text-gray-100 rounded-tl-none' 
-              : 'bg-gray-100 border-gray-200 dark:bg-gray-800/60 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none'
+              ? 'bg-rose-50 border-rose-200/70 dark:bg-rose-950/40 dark:border-rose-900/60 text-gray-800 dark:text-gray-100 rounded-tl-none' 
+              : 'bg-white border-gray-200/70 dark:bg-gray-800 dark:border-gray-700/70 text-gray-800 dark:text-gray-100 rounded-tl-none'
         }`}
       >
         <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${
@@ -321,12 +321,28 @@ export function DetailPenilaianBadanHukumClient({
     }
   }, [ulokId])
 
-  const handleCopyVendorLink = useCallback(() => {
+  const handleCopyVendorLink = useCallback(async () => {
     if (!vendorUrl) return
-    navigator.clipboard.writeText(vendorUrl).then(() => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(vendorUrl)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = vendorUrl
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-999999px'
+        textarea.style.top = '-999999px'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        textarea.remove()
+      }
       setVendorLinkCopied(true)
       setTimeout(() => setVendorLinkCopied(false), 2000)
-    })
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
   }, [vendorUrl])
 
   const handleAvatarClick = useCallback((e: React.MouseEvent, profile: any) => {
@@ -592,8 +608,8 @@ export function DetailPenilaianBadanHukumClient({
   }, [comments, currentUserId, currentProfile, highlightedMsgId, scrollToMessage, handleAvatarClick])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="space-y-6">
         
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
@@ -635,7 +651,7 @@ export function DetailPenilaianBadanHukumClient({
               title="Bagikan akses upload ke vendor"
             >
               <Share2 className="w-4 h-4" />
-              Bagikan Akses Vendor
+              QR Share
             </button>
             <button
               onClick={() => router.push(`/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
@@ -664,25 +680,20 @@ export function DetailPenilaianBadanHukumClient({
         />
 
         {/* === FORM: DATA UTAMA === */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 p-6 space-y-5 transition-colors duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-3.5">
-            <h2 className="font-bold text-gray-800 dark:text-gray-100 text-base flex items-center gap-2.5 tracking-tight">
-              <img 
-                src="/icons/icon-law.svg" 
-                alt="Law" 
-                className="w-5 h-5 object-contain dark:brightness-0 dark:invert" 
-              />
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
+          <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors rounded-t-xl">
+            <h2 className="font-bold text-white text-sm md:text-base tracking-tight">
               Informasi Usulan Kelompok Badan Hukum
             </h2>
             
             {/* === FORM: DROPDOWN STATUS === */}
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status:</span>
+              <span className="text-xs font-bold text-blue-200 uppercase tracking-wider">Status:</span>
               <select
                 value={statusSubmission}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 disabled={isPending}
-                className={`px-5 py-3 rounded-lg text-xs font-bold border transition shadow-xs outline-none cursor-pointer ${getStatusStyle(statusSubmission)} disabled:opacity-60`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold border transition shadow-xs outline-none cursor-pointer ${getStatusStyle(statusSubmission)} disabled:opacity-60`}
               >
                 {(statusSubmission === 'Draft' || statusSubmission === 'In Review') && (
                   <option value={statusSubmission} disabled>{statusSubmission === 'Draft' ? 'Draft (Belum Direview)' : 'In Review'}</option>
@@ -694,71 +705,68 @@ export function DetailPenilaianBadanHukumClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Lokasi</label>
-              <input 
-                type="text"
-                value={namaLokasi}
-                readOnly
-                disabled
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
-              />
-            </div>
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Lokasi</label>
+                <input 
+                  type="text"
+                  value={namaLokasi}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Pemegang Hak</label>
-              <input 
-                type="text"
-                value={namaPemegang}
-                readOnly
-                disabled
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Pemegang Hak</label>
+                <input 
+                  type="text"
+                  value={namaPemegang}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">NOMOR ULOK</label>
-              <input 
-                type="text"
-                value={initialDetail?.id_ulok || '-'}
-                readOnly
-                disabled
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">NOMOR ULOK</label>
+                <input 
+                  type="text"
+                  value={initialDetail?.id_ulok || '-'}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
-              <input 
-                type="text"
-                value={statusBadan === 'PT' ? 'PT (Perseroan Terbatas)' : statusBadan}
-                readOnly
-                disabled
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Badan Hukum)</label>
+                <input 
+                  type="text"
+                  value={statusBadan === 'PT' ? 'PT (Perseroan Terbatas)' : statusBadan}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-gray-50/50 dark:bg-gray-950/40 text-gray-400 dark:text-gray-500 font-semibold cursor-not-allowed outline-none select-none"
+                />
+              </div>
 
-            <div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
-                {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
-              </p>
+              <div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
+                  {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* === PANEL: KOMENTAR & FEEDBACK === */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
-          <div className="bg-gray-50 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center gap-2.5">
-            <img 
-              src="/icons/icon-comment-2.svg" 
-              alt="Comment" 
-              className="w-4 h-4 object-contain dark:brightness-0 dark:invert" 
-            />
-            <h2 className="font-bold text-gray-800 dark:text-gray-100 text-sm tracking-tight">Kolom Komentar / Pesan Assessor</h2>
+          <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
+            <h2 className="font-bold text-white text-sm md:text-base tracking-tight">Kolom Komentar / Pesan Assessor</h2>
           </div>
           
-          <div className="p-4 md:p-6 bg-gray-50/30 dark:bg-gray-950/20 min-h-[300px] flex flex-col justify-between">
+          <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(circle_at_1px_1px,_rgba(20,43,77,0.06)_1px,_transparent_0)] [background-size:8px_8px] dark:bg-[radial-gradient(circle_at_1px_1px,_rgba(255,255,255,0.035)_1px,_transparent_0)] min-h-[300px] flex flex-col justify-between transition-colors">
             {/* === LIST PESAN === */}
             {memoizedCommentsList}
 
@@ -788,14 +796,14 @@ export function DetailPenilaianBadanHukumClient({
               </div>
             )}
 
-            <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2.5 items-center">
+            <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2 md:gap-2.5 items-center">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition shrink-0"
+                className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition shrink-0"
                 title="Unggah PDF / Gambar (.pdf, .jpg, .png)"
               >
-                <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+                <Paperclip className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-300" />
               </button>
 
               <input
@@ -811,7 +819,7 @@ export function DetailPenilaianBadanHukumClient({
               <input 
                 type="text" 
                 placeholder={replyingTo ? `Balas catatan ${replyingTo.profiles?.full_name || ''}...` : "Tulis catatan revisi atau feedback untuk Admin Cabang..."} 
-                className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-xs md:text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+                className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3.5 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[#142B4D]/20 dark:focus:ring-blue-500/30 focus:border-[#142B4D]/20 outline-none transition-all font-medium"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onPaste={handlePaste}
@@ -819,18 +827,14 @@ export function DetailPenilaianBadanHukumClient({
               />
               <button 
                 type="submit"
-                className="bg-[#142B4D] dark:bg-slate-800 hover:bg-blue-900 dark:hover:bg-slate-700 text-white p-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center shrink-0 active:scale-95 shadow-xs"
+                className="w-10 h-10 md:w-11 md:h-11 rounded-lg bg-[#142B4D] hover:bg-[#1a3863] text-white flex items-center justify-center disabled:opacity-40 transition-all shrink-0 shadow-sm active:scale-95"
                 disabled={isSending || (!newComment.trim() && !selectedFile)}
                 title="Kirim Catatan"
               >
                 {isSending ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  <img 
-                    src="/icons/icon-send.svg" 
-                    alt="Send" 
-                    className="w-4 h-4 object-contain brightness-0 invert" 
-                    />
+                  <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
                 )}
               </button>
             </form>
@@ -871,50 +875,37 @@ export function DetailPenilaianBadanHukumClient({
       {/* === MODAL: VENDOR ACCESS QR === */}
       {showVendorModal && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out] p-4"
           onClick={(e) => { if (e.target === e.currentTarget) { setShowVendorModal(false); setVendorToken(null) } }}
         >
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-md overflow-hidden">
-            {/* Modal Header */}
-            <div className="bg-[#142B4D] px-5 py-4 flex items-center justify-between">
+          <div className="w-full max-w-sm space-y-2 animate-[scaleUp_0.2s_ease-out]">
+            {/* === HEADER MODAL === */}
+            <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center justify-between rounded-xl shadow-md">
               <div className="flex items-center gap-2.5">
-                <QrCode className="w-5 h-5 text-white" />
-                <h3 className="text-white font-bold text-sm tracking-tight">Bagikan Akses Vendor</h3>
+                <QrCode className="w-5 h-5 text-white shrink-0" />
+                <span className="text-sm">QR Share</span>
               </div>
-              <button
-                onClick={() => { setShowVendorModal(false); setVendorToken(null) }}
-                className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-5">
+            {/* === BODY MODAL === */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden p-6 space-y-4">
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Generate link akses untuk vendor agar dapat mengunggah dokumen checklist tanpa perlu login.
+                Generate link akses untuk vendor.
               </p>
 
               {!vendorToken ? (
-                <button
-                  onClick={handleGenerateVendorToken}
-                  disabled={isGeneratingToken}
-                  className="w-full bg-[#142B4D] hover:bg-blue-900 text-white py-3 rounded-xl text-sm font-bold transition disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
-                >
-                  {isGeneratingToken ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Membuat Link...</>
-                  ) : (
-                    <><QrCode className="w-4 h-4" /> Generate Link & QR Code</>
-                  )}
-                </button>
+                <div className="py-6 text-center text-gray-400 dark:text-gray-500 space-y-2">
+                  <QrCode className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 animate-pulse" />
+                  <p className="text-xs">Klik tombol <strong className="text-[#142B4D] dark:text-blue-400">Generate</strong> di bawah untuk membuat QR Code & link akses vendor.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {/* QR Code */}
                   <div className="flex justify-center">
-                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                       <QRCodeCanvas
                         value={vendorUrl}
-                        size={200}
+                        size={180}
                         level="M"
                         includeMargin={false}
                       />
@@ -941,22 +932,38 @@ export function DetailPenilaianBadanHukumClient({
 
                   {/* Expiry Note */}
                   <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3">
-                    <span className="text-amber-500 text-base shrink-0 mt-0.5">⏱</span>
                     <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
                       Link ini akan <strong>kadaluarsa dalam 1 jam</strong> jika tidak dibuka. Sesi akan diperpanjang otomatis selama halaman vendor tetap terbuka.
                     </p>
                   </div>
-
-                  {/* Regenerate button */}
-                  <button
-                    onClick={handleGenerateVendorToken}
-                    disabled={isGeneratingToken}
-                    className="w-full text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-[#142B4D] dark:hover:text-blue-400 transition py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl"
-                  >
-                    {isGeneratingToken ? 'Membuat ulang...' : '↻ Generate Ulang Link Baru'}
-                  </button>
                 </div>
               )}
+            </div>
+
+            {/* === FOOTER: AKSI === */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 flex items-center gap-1 p-1">
+              <button
+                type="button"
+                onClick={() => { setShowVendorModal(false); setVendorToken(null) }}
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateVendorToken}
+                disabled={isGeneratingToken}
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-white bg-[#142B4D] hover:bg-[#1a3863] transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {isGeneratingToken ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Membuat...</span>
+                  </>
+                ) : (
+                  <span>{vendorToken ? 'Generate Ulang' : 'Generate'}</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

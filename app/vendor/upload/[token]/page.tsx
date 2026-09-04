@@ -1,6 +1,6 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
 import VendorUploadClient from './VendorUploadClient'
+import FooterGlobal from '@/components/footer_global'
 
 // Service-role client to bypass RLS for public page data fetching
 function getAdminClient() {
@@ -14,6 +14,66 @@ function getAdminClient() {
 interface PageProps {
   params: Promise<{ token: string }>
 }
+
+// Reusable Layout wrapper for the Vendor route (Matching Admin Cabang Header & Layout Structure)
+const VendorLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50 transition-colors duration-300">
+    {/* === UTAMA: HEADER DESKTOP (Matching HeaderDesktop style) === */}
+    <header className="hidden md:flex items-center justify-between bg-[#142B4D] px-8 py-[26px] shadow-md text-white">
+      {/* === UTAMA: LOGO === */}
+      <div className="flex items-center">
+        <img
+          src="/images/prisma-white-navbar.png"
+          alt="Logo PRISMA"
+          className="h-5 w-auto object-contain"
+        />
+        <span className="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">
+          VENDOR
+        </span>
+      </div>
+
+      {/* === PANEL: INFORMASI AKSI / SESI === */}
+      <div className="flex items-center space-x-5">
+        <div className="flex flex-col items-end">
+          <span className="text-xs font-bold text-slate-200">Eksternal</span>
+        </div>
+      </div>
+    </header>
+
+    {/* === UTAMA: HEADER MOBILE (Matching HeaderMobile style) === */}
+    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-[100] h-16">
+      <div className="flex items-center justify-between px-4 h-full">
+        {/* === UTAMA: LOGO === */}
+        <div className="flex items-center">
+          <img
+            src="/images/prisma-white-navbar.png"
+            alt="Logo PRISMA"
+            className="h-4 w-auto object-contain"
+          />
+          <span className="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">
+            VENDOR
+          </span>
+        </div>
+
+        {/* === PANEL: STATUS SESI === */}
+        <div className="flex items-center">
+          <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800/60 px-2 py-1 rounded-md shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Sesi Aman
+          </span>
+        </div>
+      </div>
+    </header>
+
+    {/* === KONTEN: HALAMAN (Matching Admin Cabang Layout: max-w-7xl mx-auto p-4 md:p-8) === */}
+    <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8">
+      {children}
+    </main>
+
+    {/* === FOOTER GLOBAL === */}
+    <FooterGlobal />
+  </div>
+)
 
 export default async function VendorUploadPage({ params }: PageProps) {
   const { token } = await params
@@ -40,46 +100,34 @@ export default async function VendorUploadPage({ params }: PageProps) {
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-[#F2F2F2] dark:bg-[#0D0D0D] flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-md overflow-hidden">
-          {/* Error Header */}
-          <div className="bg-[#D91E2E] px-6 py-5 flex items-center gap-3">
-            <span className="text-white text-2xl">🔒</span>
-            <div>
-              <h1 className="text-white font-bold text-base tracking-tight">Link Akses Kadaluarsa</h1>
-              <p className="text-red-100 text-xs mt-0.5">Vendor Upload Portal — PRISMA</p>
-            </div>
-          </div>
-
-          {/* Error Body */}
-          <div className="p-6 space-y-4">
-            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl p-4">
-              <p className="text-sm font-semibold text-red-800 dark:text-red-300 leading-relaxed">
-                Link akses ini <strong>tidak valid atau telah kadaluarsa</strong>.
-              </p>
-              <p className="text-xs text-red-600 dark:text-red-400 mt-2 leading-relaxed">
-                Token vendor hanya berlaku selama <strong>1 jam</strong> dan akan diperpanjang otomatis selama halaman tetap terbuka.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                📞 Silakan hubungi <strong>tim Alfamidi</strong> untuk meminta link akses baru dari Assessor yang bertanggung jawab.
-              </p>
-            </div>
-
-            {/* PRISMA branding */}
-            <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <div className="w-6 h-6 bg-[#142B4D] rounded-md flex items-center justify-center">
-                <span className="text-white text-[10px] font-black">P</span>
+      <VendorLayout>
+        <div className="flex-1 flex items-center justify-center py-12">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-md overflow-hidden">
+            {/* Error Header */}
+            <div className="bg-[#D91E2E] px-6 py-5 flex items-center gap-3">
+              <div>
+                <h1 className="text-white font-bold text-base tracking-tight">Link Akses Kadaluarsa</h1>
+                <p className="text-red-100 text-xs mt-0.5">Vendor Upload Portal</p>
               </div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold">
-                PRISMA · Sistem Penilaian Lokasi Alfamidi
-              </p>
+            </div>
+
+            {/* Error Body */}
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-300 leading-relaxed">
+                  Link akses ini <strong>telah kadaluarsa</strong>.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Silakan hubungi <strong>tim Alfamidi</strong> untuk meminta link akses baru dari Assessor yang bertanggung jawab.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </VendorLayout>
     )
   }
 
@@ -100,13 +148,15 @@ export default async function VendorUploadPage({ params }: PageProps) {
     .order('version', { ascending: false })
 
   return (
-    <VendorUploadClient
-      token={token}
-      ulokId={submission.id}
-      namaLokasi={submission.nama_lokasi}
-      jenisBadanHukum={submission.jenis_badan_hukum}
-      checklistMaster={checklistMaster || []}
-      initialDocuments={documents || []}
-    />
+    <VendorLayout>
+      <VendorUploadClient
+        token={token}
+        ulokId={submission.id}
+        namaLokasi={submission.nama_lokasi}
+        jenisBadanHukum={submission.jenis_badan_hukum}
+        checklistMaster={checklistMaster || []}
+        initialDocuments={documents || []}
+      />
+    </VendorLayout>
   )
 }

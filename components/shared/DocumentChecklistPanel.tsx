@@ -77,26 +77,26 @@ export default function DocumentChecklistPanel({
   const onDownload = handleDownload || defaultDownloadHandler
 
   return (
-    <div className="bg-white dark:bg-gray-950 rounded-2xl p-5 border border-gray-200/60 dark:border-gray-800/85 shadow-sm space-y-4 w-full">
-      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-850 pb-3 flex-wrap gap-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-            Status Checklist Dokumen ({percentage.toFixed(1)}% - {numerator}/{denominator} Terupload)
-          </h4>
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300 w-full">
+      <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl flex-wrap gap-3">
+        <h4 className="text-white font-bold text-sm md:text-base tracking-tight">
+          Status Checklist Dokumen ({percentage.toFixed(1)}% - {numerator}/{denominator} Terupload)
+        </h4>
 
-          <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs px-2.5 py-1 rounded-md bg-white/10 text-white border border-white/20">
             Terakhir diupload oleh:{' '}
-            <strong className="font-semibold text-slate-800 dark:text-slate-100">
+            <strong className="font-semibold text-white">
               {lastUploaderName || '-'}
             </strong>
           </span>
+          <span className="text-xs font-semibold text-blue-200">
+            Jenis: {jenisBadanHukum}
+          </span>
         </div>
-        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-          Jenis: {jenisBadanHukum}
-        </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         {checklistItems && checklistItems.length > 0 ? (
           checklistItems.map((doc, idx) => {
             // Determine state

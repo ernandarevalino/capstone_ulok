@@ -143,7 +143,7 @@ export default function VendorUploadClient({
   )
 
   return (
-    <div className="min-h-screen bg-[#F2F2F2] dark:bg-[#0D0D0D] transition-colors duration-300">
+    <div className="space-y-6">
       {/* ===== FIXED TOAST NOTIFICATIONS ===== */}
       {successFlash && (
         <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white text-sm font-semibold px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-[fadeIn_0.2s_ease-out]">
@@ -158,58 +158,36 @@ export default function VendorUploadClient({
         </div>
       )}
 
-      {/* ===== HEADER ===== */}
-      <div className="bg-[#142B4D] text-white">
-        <div className="max-w-3xl mx-auto px-4 py-5">
-          {/* Top bar: branding + heartbeat */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
-                <span className="text-white text-xs font-black">P</span>
-              </div>
-              <span className="text-white/70 text-xs font-bold tracking-widest uppercase">PRISMA</span>
-            </div>
-            <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
-              heartbeatActive
-                ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
-                : 'bg-red-500/10 border-red-400/30 text-red-300'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${heartbeatActive ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-              {heartbeatActive ? 'Sesi Aktif' : 'Sesi Berakhir'}
-            </div>
+      {/* ===== BANNER CARD (Lokasi & Progress) ===== */}
+      <div className="bg-[#142B4D] dark:bg-slate-900 text-white rounded-2xl shadow-md p-6 border border-slate-800">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-400 shrink-0" />
+            <h1 className="text-lg md:text-xl font-bold text-white tracking-tight leading-tight">
+              Portal Upload Vendor
+            </h1>
           </div>
+          <p className="text-blue-100 font-semibold text-base pl-7">{namaLokasi}</p>
+          <p className="text-blue-300/70 text-xs pl-7">{jenisBadanHukum} · ID: {ulokId.substring(0, 8)}...</p>
+        </div>
 
-          {/* ULOK title */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-white/70 shrink-0" />
-              <h1 className="text-lg md:text-xl font-bold text-white tracking-tight leading-tight">
-                Portal Unggah Dokumen Vendor
-              </h1>
-            </div>
-            <p className="text-blue-200 font-semibold text-sm pl-7">{namaLokasi}</p>
-            <p className="text-blue-300/60 text-xs pl-7">{jenisBadanHukum} · ID: {ulokId.substring(0, 8)}...</p>
+        {/* Progress bar */}
+        <div className="mt-5 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <span className="text-blue-200">{uploadedCount}/{totalCount} Dokumen Terunggah</span>
+            <span className="text-white bg-blue-600/80 px-2 py-0.5 rounded-md text-[11px]">{progress}%</span>
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-5 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-blue-200">{uploadedCount}/{totalCount} Dokumen Terunggah</span>
-              <span className="text-white">{progress}%</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[#F28705] to-yellow-300 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+          <div className="h-2.5 bg-slate-800/80 rounded-full overflow-hidden border border-white/10">
+            <div
+              className="h-full bg-gradient-to-r from-[#F28705] to-amber-300 rounded-full transition-all duration-500 shadow-sm"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </div>
 
       {/* ===== MAIN CONTENT ===== */}
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-
+      <div className="space-y-4">
         {/* Info card */}
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-4 flex items-start gap-3">
           <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -219,7 +197,7 @@ export default function VendorUploadClient({
           </p>
         </div>
 
-        {/* Checklist Header */}
+        {/* Checklist Card */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/80 overflow-hidden">
           <div className="bg-[#142B4D] dark:bg-slate-900 px-5 py-4 flex items-center gap-3">
             <FileText className="w-5 h-5 text-white/80" />
@@ -246,16 +224,6 @@ export default function VendorUploadClient({
                 />
               ))
             )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center pb-8">
-          <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
-            <div className="w-5 h-5 bg-[#142B4D] rounded flex items-center justify-center">
-              <span className="text-white text-[9px] font-black">P</span>
-            </div>
-            <p className="text-xs font-semibold">PRISMA · Sistem Penilaian Lokasi Alfamidi</p>
           </div>
         </div>
       </div>
