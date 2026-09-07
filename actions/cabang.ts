@@ -1217,3 +1217,180 @@ export async function checkUlokIdUnique(idUlok: string, currentUlokId: string) {
     return { success: false, error: error.message, isUnique: false }
   }
 }
+
+// === ACTIONS: MIDILOC INTEGRATION (TARIK SEMUA & TARIK SINGLE) ===
+export async function syncMidilocData(payload: { mode: 'all' | 'single'; nomor_ulok?: string }) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    // Fetch user branch code
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('branches(kode_cabang)')
+      .eq('id', user.id)
+      .single()
+
+    const branchCode = (profileData?.branches as any)?.kode_cabang || 'M999'
+
+    // Get dynamic baseUrl for internal API call
+    const { headers } = await import('next/headers')
+    const headerList = await headers()
+    const host = headerList.get('host') || 'localhost:3000'
+    const forwardedProto = headerList.get('x-forwarded-proto')
+    const protocol = forwardedProto || 'http'
+    const baseUrl = `${protocol}://${host}`
+
+    const url = payload.mode === 'single' && payload.nomor_ulok
+      ? `${baseUrl}/api/external/midiloc?nomor_ulok=${encodeURIComponent(payload.nomor_ulok.trim())}`
+      : `${baseUrl}/api/external/midiloc`
+
+    let res: Response
+    try {
+      res = await fetch(url, { cache: 'no-store' })
+    } catch (fetchErr) {
+      // Fallback to http://127.0.0.1 if original host fetch fails
+      const port = host.includes(':') ? host.split(':')[1] : '3000'
+      const fallbackUrl = payload.mode === 'single' && payload.nomor_ulok
+        ? `http://127.0.0.1:${port}/api/external/midiloc?nomor_ulok=${encodeURIComponent(payload.nomor_ulok.trim())}`
+        : `http://127.0.0.1:${port}/api/external/midiloc`
+      res = await fetch(fallbackUrl, { cache: 'no-store' })
+    }
+
+    if (!res.ok) throw new Error('Gagal menghubungi API Midiloc')
+    
+    const apiResult = await res.json()
+    if (apiResult.status !== 'success' || !Array.isArray(apiResult.data)) {
+      throw new Error('Format respon API Midiloc tidak valid')
+    }
+
+    if (apiResult.data.length === 0) {
+      if (payload.mode === 'single') {
+        return { success: false, error: `Nomor ULOK '${payload.nomor_ulok}' tidak ditemukan di sistem Midiloc.` }
+      }
+      return { success: true, count: 0, message: 'Tidak ada data baru dari Midiloc.' }
+    }
+
+    let insertedCount = 0
+    let skippedCount = 0
+    // Track last inserted for single mode navigation
+    let lastInserted: { id: string; jenis_badan_hukum: string; nama_lokasi: string } | null = null
+
+    for (const item of apiResult.data) {
+      const refId = item.external_id || item.nomor_ulok
+
+      // Cek apakah lokasi ini sudah pernah di-import (berdasarkan midiloc_ref_id)
+      if (refId) {
+        const { data: existing } = await supabase
+          .from('ulok_submissions')
+          .select('id')
+          .eq('midiloc_ref_id', refId)
+          .is('deleted_at', null)
+          .maybeSingle()
+
+        if (existing) {
+          skippedCount++
+          continue
+        }
+      }
+
+      // Generate running ID ULOK
+      const now = new Date()
+      const yy = String(now.getFullYear()).slice(-2)
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const periodKey = `${branchCode}-${yy}${mm}`
+
+      const { count } = await supabase
+        .from('ulok_submissions')
+        .select('id', { count: 'exact', head: true })
+        .like('id_ulok', `${periodKey}-%`)
+
+      const nextNum = String((count || 0) + 1).padStart(4, '0')
+      const generatedIdUlok = `${periodKey}-${nextNum}`
+
+      // Insert new submission
+      const { data: inserted, error: insertErr } = await supabase
+        .from('ulok_submissions')
+        .insert([{
+          admin_id: user.id,
+          id_ulok: generatedIdUlok,
+          nama_lokasi: item.site_name,
+          jenis_badan_hukum: item.legal_type,
+          nama_pemegang_hak: item.owner_name,
+          alamat_koordinat: item.coords,
+          detail_alamat: item.address_detail,
+          harga_sewa: item.estimated_price,
+          midiloc_ref_id: refId,
+          status: 'Draft'
+        }])
+        .select()
+        .single()
+
+      if (insertErr) {
+        console.error('Error inserting midiloc item:', insertErr)
+        continue
+      }
+
+      const newUlokId = inserted.id
+
+      // Initialize sub-tables
+      await Promise.all([
+        supabase.from('ulok_pemilik').insert({ ulok_id: newUlokId }),
+        supabase.from('ulok_sertifikat').insert({ ulok_id: newUlokId }),
+        supabase.from('ulok_legal').insert({ ulok_id: newUlokId }),
+        supabase.from('ulok_jaminan').insert({ ulok_id: newUlokId }),
+        supabase.from('metode_saw').insert({ ulok_id: newUlokId })
+      ])
+
+      // Seed dummy documents if provided by Midiloc
+      if (Array.isArray(item.documents) && item.documents.length > 0) {
+        const docPayloads = item.documents.map((doc: any) => ({
+          ulok_id: newUlokId,
+          checklist_id: doc.checklist_id,
+          uploaded_by: user.id,
+          file_url: doc.file_url,
+          document_type: doc.document_type,
+          is_verified: doc.is_verified || false,
+          version: 1,
+          is_latest: true
+        }))
+
+        await supabase.from('documents').insert(docPayloads)
+      }
+
+      lastInserted = { id: newUlokId, jenis_badan_hukum: item.legal_type, nama_lokasi: item.site_name }
+      insertedCount++
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+
+    if (insertedCount === 0 && skippedCount > 0) {
+      return { 
+        success: false, 
+        count: 0, 
+        error: payload.mode === 'single' 
+          ? `ULOK dengan Nomor '${payload.nomor_ulok}' sudah pernah di-import ke sistem.`
+          : 'Semua data terbaru dari Midiloc sudah pernah di-import ke sistem.' 
+      }
+    }
+
+    const successMessageText = payload.mode === 'single'
+      ? `ULOK '${lastInserted?.nama_lokasi}' berhasil di-import dari Midiloc!`
+      : `Semua data (${insertedCount} usulan lokasi) berhasil di-import dari Midiloc!`
+
+    return { 
+      success: true, 
+      count: insertedCount, 
+      skipped: skippedCount,
+      message: successMessageText,
+      // For single mode: pass inserted data so client can navigate to form detail
+      insertedData: payload.mode === 'single' ? lastInserted : null
+    }
+  } catch (error: any) {
+    console.error('Error in syncMidilocData:', error)
+    return { success: false, error: error.message }
+  }
+}
+

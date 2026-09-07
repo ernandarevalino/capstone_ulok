@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUlokSubmissions, createUlokSubmission } from '@/actions/cabang'
+import { getUlokSubmissions, createUlokSubmission, syncMidilocData } from '@/actions/cabang'
 import { softDeleteUlok, getDeletedUlokCount } from '@/actions/recyclebin'
 import {
   Download,
@@ -544,43 +544,64 @@ export default function UsulanLokasiPage() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [deletedCount, setDeletedCount] = useState<number>(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isMidilocModalOpen, setIsMidilocModalOpen] = useState(false)
+  const [midilocMode, setMidilocMode] = useState<'all' | 'single'>('all')
+  const [midilocInputNomor, setMidilocInputNomor] = useState('')
+  const [midilocError, setMidilocError] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  const handleSyncMidiloc = async () => {
+  // Helper: determine form route based on jenis_badan_hukum
+  const getFormRoute = (jenisBadanHukum: string) => {
+    const norm = (jenisBadanHukum || '').toLowerCase()
+    if (norm === 'perorangan' || norm.includes('perorangan')) {
+      return '/admin/cabang/usulan-lokasi/form/perorangan'
+    }
+    return '/admin/cabang/usulan-lokasi/form/badanhukum'
+  }
+
+  const handleSyncMidiloc = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    setMidilocError(null)
+
+    if (midilocMode === 'single' && !midilocInputNomor.trim()) {
+      setMidilocError('Silakan masukkan Nomor ULOK terlebih dahulu')
+      return
+    }
+
     setIsSyncing(true)
     try {
-      // Fetch from our Mock API
-      const res = await fetch('/api/external/midiloc')
-      const result = await res.json()
-      
-      if (result.status !== 'success') throw new Error('Failed to fetch API')
+      const res = await syncMidilocData({
+        mode: midilocMode,
+        nomor_ulok: midilocMode === 'single' ? midilocInputNomor.trim() : undefined
+      })
 
-      // Get current user for admin_id
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Anda belum login')
+      if (res.success) {
+        setIsMidilocModalOpen(false)
+        setMidilocInputNomor('')
+        setMidilocError(null)
+        setSuccessMessage(res.message || 'Berhasil menarik data dari Midiloc!')
+        setShowSuccessModal(true)
 
-      // Map data to PRISMA schema
-      const payloads = result.data.map((item: any) => ({
-        admin_id: user.id,
-        nama_lokasi: item.site_name,
-        jenis_badan_hukum: item.legal_type,
-        nama_pemegang_hak: item.owner_name,
-        alamat_koordinat: item.coords,
-        detail_alamat: item.address_detail,
-        harga_sewa: item.estimated_price,
-        status: 'Draft'
-      }))
-
-      // Insert into Supabase
-      const { error } = await supabase.from('ulok_submissions').insert(payloads)
-      if (error) throw error
-
-      alert(`Berhasil menarik ${payloads.length} lokasi dari Midiloc API!`)
-      // Refresh the page or trigger data reload
-      window.location.reload()
+        if (midilocMode === 'single' && res.insertedData) {
+          // Single mode: navigate to form detail after success modal
+          const { id, jenis_badan_hukum } = res.insertedData
+          const targetRoute = getFormRoute(jenis_badan_hukum)
+          setTimeout(() => {
+            setShowSuccessModal(false)
+            router.push(`${targetRoute}?id=${id}`)
+          }, 1500)
+        } else {
+          // Tarik semua: just refresh list
+          fetchSubmissions()
+          setTimeout(() => {
+            setShowSuccessModal(false)
+          }, 2000)
+        }
+      } else {
+        setMidilocError(res.error || 'Gagal menyingkronkan data Midiloc')
+      }
     } catch (error: any) {
-      alert(`Integrasi gagal: ${error.message}`)
+      setMidilocError(error.message || 'Terjadi kesalahan sistem saat sinkronisasi')
     } finally {
       setIsSyncing(false)
     }
@@ -1131,16 +1152,16 @@ export default function UsulanLokasiPage() {
         <div className="flex items-center gap-2 md:contents">
 
           <button 
-            onClick={handleSyncMidiloc} 
+            onClick={() => setIsMidilocModalOpen(true)} 
             disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50 h-11 md:h-10 md:order-5"
+            className="flex items-center gap-2 px-4 py-2 border border-emerald-600 text-emerald-600 dark:text-emerald-400 border-emerald-600/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 h-11 md:h-10 md:order-5 shadow-sm"
           >
             {isSyncing ? (
               <span className="animate-spin border-2 border-emerald-600 border-t-transparent rounded-full w-4 h-4" />
             ) : (
               <RefreshCw className="w-4 h-4"/> 
             )}
-            <span className="hidden sm:inline">Refresh Midiloc</span>
+            <span className="hidden sm:inline">Midiloc</span>
           </button>
 
           {/* Tambah Lokasi Baru Button */}
@@ -1385,6 +1406,144 @@ export default function UsulanLokasiPage() {
                 Simpan
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL: SINKRONISASI MIDILOC === */}
+      {isMidilocModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-[fadeIn_0.2s_ease-out] p-4">
+          <div className={`w-80 space-y-2 animate-[scaleUp_0.2s_ease-out] ${midilocMode === 'single' ? 'max-w-80' : 'max-w-md'}`}>
+
+            {/* Header Modal */}
+            <div className="bg-[#142B4D] text-white p-4 font-bold flex items-center gap-2 rounded-xl shadow-md">
+              <Building2 className="w-5 h-5 text-white shrink-0" />
+              <span>Sinkronisasi Midiloc</span>
+            </div>
+
+            {/* Mode Toggle */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 p-3">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMidilocMode('all')
+                    setMidilocError(null)
+                  }}
+                  className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    midilocMode === 'all'
+                      ? 'bg-white dark:bg-gray-900 text-[#142B4D] dark:text-blue-400 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Tarik Semua</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMidilocMode('single')
+                    setMidilocError(null)
+                  }}
+                  className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    midilocMode === 'single'
+                      ? 'bg-white dark:bg-gray-900 text-[#142B4D] dark:text-blue-400 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Input Nomor</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body — conditional per mode */}
+            {midilocMode === 'all' ? (
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 p-5 space-y-3">
+                <div className="p-3.5 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl space-y-1.5 text-xs text-blue-900 dark:text-blue-300">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-950 dark:text-blue-200">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    Penarikan Semua Lokasi Terbaru
+                  </div>
+                </div>
+                {midilocError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-600 dark:text-red-400 font-semibold flex items-center gap-2 animate-[fadeIn_0.15s_ease-out]">
+                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                    <span>{midilocError}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <form id="form-midiloc-single" onSubmit={handleSyncMidiloc} className="p-6 space-y-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
+                      Nomor ULOK
+                    </label>
+                    <input
+                      type="text"
+                      value={midilocInputNomor}
+                      onChange={(e) => {
+                        setMidilocInputNomor(e.target.value)
+                        if (midilocError) setMidilocError(null)
+                      }}
+                      placeholder="Contoh: MDLA-2026-0905"
+                      className={`w-full border p-2.5 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none font-mono tracking-wide transition-all duration-200 ${
+                        midilocError
+                          ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                          : 'border-gray-200 dark:border-gray-800 focus:border-[#142B4D] dark:focus:border-blue-500 focus:ring-4 focus:ring-[#142B4D]/10'
+                      }`}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  {midilocError ? (
+                    <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-[11px] text-red-600 dark:text-red-400 font-semibold flex items-center gap-1.5 animate-[fadeIn_0.15s_ease-out]">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      <span>{midilocError}</span>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Ketik Nomor ULOK spesifik dari Midiloc. Setelah berhasil, Anda akan diarahkan langsung ke halaman detail ULOK.
+                    </p>
+                  )}
+                </form>
+              </div>
+            )}
+
+            {/* Footer Aksi */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 flex items-center gap-1 p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMidilocModalOpen(false)
+                  setMidilocError(null)
+                }}
+                disabled={isSyncing}
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSyncMidiloc}
+                disabled={isSyncing}
+                className="flex-1 h-11 rounded-xl text-sm font-bold text-white bg-[#142B4D] hover:bg-[#1a3863] transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSyncing ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Sync...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Tarik Data</span>
+                  </>
+                )}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
