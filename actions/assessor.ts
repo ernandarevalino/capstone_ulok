@@ -18,7 +18,7 @@ export async function getAssessorSubmissions() {
       .from('ulok_submissions')
       .select(`
         *,
-        profiles:admin_id (
+        profiles:profiles!ulok_submissions_admin_id_fkey (
           full_name,
           branches:branch_id (
             nama_cabang
@@ -163,7 +163,7 @@ export async function getAssessorHistoriSubmissions() {
       .from('ulok_submissions')
       .select(`
         *,
-        profiles:admin_id (
+        profiles:profiles!ulok_submissions_admin_id_fkey (
           full_name,
           branches:branch_id (
             nama_cabang

@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useTransition, useMemo, useCallback } from 'react'
-import { useAssessorProfile } from '@/context/AssessorProfileContext'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import { exportUlokSubmissionsCSV } from '@/actions/export'
 import {
@@ -40,9 +39,6 @@ const renderAnalysisNotes = (notes: string, fallback: string) => {
 }
 
 export default function PeringkatPage() {
-  const profile = useAssessorProfile()
-  const [isPending, startTransition] = useTransition()
-
   // State
   const [data, setData] = useState<ClusteringResult>({
     c1: [],
@@ -140,7 +136,7 @@ export default function PeringkatPage() {
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm max-w-md text-center space-y-4">
           <AlertCircle className="w-10 h-10 text-[#D91E2E] mx-auto" />
           <h3 className="text-base font-bold text-gray-900 dark:text-gray-150">Gagal Memuat Data Leaderboard</h3>
-          <p className="text-xs text-gray-505 text-gray-500 dark:text-gray-400">{error}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{error}</p>
           <button
             onClick={loadData}
             className="w-full bg-[#3365A6] hover:bg-[#3365A6]/90 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95 cursor-pointer"

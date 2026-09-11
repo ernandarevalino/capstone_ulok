@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
   // Midiloc external data structure (Mock) with aaaa-bbbb-cccc format (e.g. M001-2609-0001 or MDLA-2026-0905)
   const mockExternalData = [
     {
-      external_id: 'MDL1-2609-0001',
-      nomor_ulok: 'MDL1-2609-0001',
-      site_name: 'Alfamidi Super [API Midiloc 1]',
+      external_id: 'MDL1-2609-0099',
+      nomor_ulok: 'MDL1-2609-0099',
+      site_name: 'Alfamidi Super [API Midiloc 999]',
       legal_type: 'PT',
       owner_name: 'PT Akselerasi Retail Indonesia',
       coords: '-6.205000, 106.825000',
@@ -53,6 +53,97 @@ export async function GET(request: NextRequest) {
         }
       ]
     },
+
+    {
+      external_id: 'MDL1-2609-0678',
+      nomor_ulok: 'MDL1-2609-0678',
+      site_name: 'Alfamidi Super [API Midiloc 78]',
+      legal_type: 'PT',
+      owner_name: 'PT Akselerasi Retail Indonesia',
+      coords: '-6.205000, 106.825000',
+      address_detail: 'Jl. Jend. Sudirman No. 45, Jakarta Pusat (Source: Midiloc API)',
+      estimated_price: 85000000,
+      luas_tanah: 500,
+      luas_bangunan: 350,
+      documents: [
+        {
+          checklist_id: 1, // E-KTP (yang mewakili)
+          document_type: 'E-KTP (yang mewakili)',
+          file_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop',
+          is_verified: false
+        },
+        {
+          checklist_id: 2, // Akta Pendirian & SK Menteri
+          document_type: 'Akta Pendirian & SK Menteri',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: false
+        },
+        {
+          checklist_id: 6, // NIB OSS RBA
+          document_type: 'NIB OSS RBA',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: true
+        },
+        {
+          checklist_id: 7, // NPWP
+          document_type: 'NPWP',
+          file_url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop',
+          is_verified: true
+        },
+        {
+          checklist_id: 12, // Sertifikat Tanah
+          document_type: 'Sertifikat Tanah (Hak Milik / HGB / Hak Pakai)',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: true
+        }
+      ]
+    },
+
+    {
+      external_id: 'MDL1-2609-0234',
+      nomor_ulok: 'MDL1-2609-0234',
+      site_name: 'Alfamidi Super [API Midiloc 1234]',
+      legal_type: 'PT',
+      owner_name: 'PT Akselerasi Retail Wakanda',
+      coords: '-6.205000, 106.825000',
+      address_detail: 'Jl. Jend. Sudirman No. 45, Jakarta Pusat (Source: Midiloc API)',
+      estimated_price: 85000000,
+      luas_tanah: 500,
+      luas_bangunan: 350,
+      documents: [
+        {
+          checklist_id: 1, // E-KTP (yang mewakili)
+          document_type: 'E-KTP (yang mewakili)',
+          file_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop',
+          is_verified: true
+        },
+        {
+          checklist_id: 2, // Akta Pendirian & SK Menteri
+          document_type: 'Akta Pendirian & SK Menteri',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: false
+        },
+        {
+          checklist_id: 6, // NIB OSS RBA
+          document_type: 'NIB OSS RBA',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: true
+        },
+        {
+          checklist_id: 7, // NPWP
+          document_type: 'NPWP',
+          file_url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop',
+          is_verified: true
+        },
+        {
+          checklist_id: 12, // Sertifikat Tanah
+          document_type: 'Sertifikat Tanah (Hak Milik / HGB / Hak Pakai)',
+          file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          is_verified: false
+        }
+      ]
+    },
+
     {
       external_id: 'MDLA-2026-8811',
       nomor_ulok: 'MDLA-2026-8811',
@@ -175,9 +266,9 @@ export async function GET(request: NextRequest) {
   if (nomorUlokQuery) {
     const q = nomorUlokQuery.trim().toLowerCase()
     filteredData = mockExternalData.filter(
-      item => item.nomor_ulok.toLowerCase() === q || 
-              item.external_id.toLowerCase() === q ||
-              item.nomor_ulok.toLowerCase().includes(q)
+      item => item.nomor_ulok.toLowerCase() === q ||
+        item.external_id.toLowerCase() === q ||
+        item.nomor_ulok.toLowerCase().includes(q)
     )
   }
 

@@ -140,7 +140,7 @@ export async function getPengelompokanData() {
       .from('ulok_submissions')
       .select(`
         *,
-        profiles:admin_id (
+        profiles:profiles!ulok_submissions_admin_id_fkey (
           full_name,
           branches:branch_id (
             nama_cabang

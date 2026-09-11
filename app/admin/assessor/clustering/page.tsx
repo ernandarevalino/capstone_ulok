@@ -3,12 +3,11 @@
 import React, { useEffect, useState, useMemo, useCallback, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useAssessorProfile } from '@/context/AssessorProfileContext'
 import { getClusteringData, ClusteringResult } from '@/actions/clustering'
 import {
   AlertCircle, Download, Clock, AlertTriangle, RotateCcw,
   Layers, RefreshCw, Filter, Search,
-  LayoutDashboard, TrendingUp, BarChart3, ClipboardCheck,
+  LayoutDashboard, TrendingUp, ClipboardCheck,
   ClipboardList, Check, X, CheckCircle2, Activity, XCircle,
   FileSearch
 } from 'lucide-react'
@@ -174,7 +173,6 @@ function DashboardSkeleton() {
 
 export default function ClusteringDashboardPage() {
   const router = useRouter()
-  const profile = useAssessorProfile()
   const [isPending, startTransition] = useTransition()
 
   // State

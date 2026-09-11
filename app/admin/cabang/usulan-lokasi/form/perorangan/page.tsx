@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useTransition, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique, syncUlokFromMidiloc } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2 } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2, RefreshCw } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
@@ -113,6 +113,7 @@ export default function DetailUlokPeroranganPage() {
   const [isPending, startTransition] = useTransition()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
@@ -448,6 +449,49 @@ export default function DetailUlokPeroranganPage() {
     }
   }
 
+  const triggerMidilocSync = useCallback(async (targetNomor?: string) => {
+    const nomorToSync = (targetNomor || idUlok).trim().toUpperCase()
+    if (!ulokId || !nomorToSync) return
+
+    setIsSyncing(true)
+    setIdUlokError('')
+    try {
+      const res = await syncUlokFromMidiloc(ulokId, nomorToSync)
+      if (res.success && res.data) {
+        const synced = res.data
+        setNamaLokasi(synced.nama_lokasi)
+        setStatusBadan(synced.jenis_badan_hukum)
+        setNamaPemegang(synced.nama_pemegang_hak)
+        setIdUlok(synced.id_ulok)
+        setOriginalIdUlok(synced.id_ulok)
+        if (synced.namaPengusul) setNamaPengusul(synced.namaPengusul)
+        if (synced.namaCabang) setNamaCabang(synced.namaCabang)
+
+        setSuccessMessage(`Data ULOK berhasil disinkronkan dengan Midiloc: ${synced.nama_lokasi}`)
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 1500)
+
+        // Immediately recalculate checklist from synced documents
+        await fetchChecklistData(synced.jenis_badan_hukum)
+
+        // If legal type changed from Perorangan to Badan Hukum, redirect to badanhukum form
+        const isBadanHukum = ['PT', 'Koperasi', 'Yayasan'].includes(synced.jenis_badan_hukum)
+        if (isBadanHukum) {
+          router.push(`/admin/cabang/usulan-lokasi/form/badanhukum?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)
+        }
+      } else {
+        setIdUlokError(res.error || 'Nomor ULOK tidak ditemukan di sistem Midiloc')
+      }
+    } catch (err: any) {
+      console.error('Error syncing midiloc in form:', err)
+      setIdUlokError(err.message || 'Gagal sinkronisasi data Midiloc')
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [ulokId, idUlok, fetchChecklistData, router, fromSource])
+
   const handleUpdateDetail = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
@@ -531,7 +575,7 @@ export default function DetailUlokPeroranganPage() {
 
         {/* === HEADER PANEL === */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-gray-200 dark:border-gray-800 pb-5">
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-3 transition-all duration-300 ${isSyncing ? 'opacity-50 filter blur-[0.5px]' : ''}`}>
             <button 
               onClick={() => router.push(backPath)}
               className="text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition bg-white dark:bg-gray-900 p-2.5 rounded-full shadow-xs border border-gray-200 dark:border-gray-800 active:scale-90 flex items-center justify-center"
@@ -544,8 +588,9 @@ export default function DetailUlokPeroranganPage() {
               />
             </button>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-2">
                 {namaLokasi ? `Data Usulan ${namaLokasi}` : 'Data Usulan Lokasi (ULOK)'}
+                {isSyncing && <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />}
               </h1>
               <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold mt-0.5">ID Berkas: {ulokId}</p>
             </div>
@@ -568,23 +613,31 @@ export default function DetailUlokPeroranganPage() {
         </div>
 
         {/* === MAIN SECTIONS: RINGKASAN, FORM & KOMENTAR === */}
-        <UlokSummaryCard
-          namaLokasi={namaLokasi}
-          namaCabang={namaCabang}
-          namaPengusul={namaPengusul}
-          jenisKepemilikan={statusBadan || 'Perorangan'}
-          status={statusSubmission}
-          totalDokumen={checklistItems.length}
-          dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
-          dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
-          dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
-        />
+        <div className="relative transition-all duration-300">
+          {isSyncing && (
+            <div className="absolute inset-0 z-20 bg-white/60 dark:bg-gray-950/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center gap-2 border border-blue-200/50 dark:border-blue-900/50 animate-fadeIn">
+              <RefreshCw className="w-4 h-4 text-[#3365A6] animate-spin" />
+              <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Menyinkronkan data usulan dari Midiloc...</span>
+            </div>
+          )}
+          <UlokSummaryCard
+            namaLokasi={namaLokasi}
+            namaCabang={namaCabang}
+            namaPengusul={namaPengusul}
+            jenisKepemilikan={statusBadan || 'Perorangan'}
+            status={statusSubmission}
+            totalDokumen={checklistItems.length}
+            dokumenTerunggah={checklistItems.filter((item) => item.is_uploaded).length}
+            dokumenSesuai={checklistItems.filter((item) => item.is_verified).length}
+            dokumenBelumSesuai={checklistItems.filter((item) => item.is_uploaded && !item.is_verified).length}
+          />
+        </div>
 
             {/* === FORM: PERORANGAN UTAMA === */}
             <form 
               id="form-perorangan" 
               onSubmit={handleUpdateDetail} 
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300"
+              className={`bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-all duration-300 ${isSyncing ? 'opacity-80 pointer-events-none' : ''}`}
             >
               <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
                 <h2 className="font-bold text-white text-sm md:text-base tracking-tight">
@@ -596,7 +649,7 @@ export default function DetailUlokPeroranganPage() {
                   </span>
                   <button
                     type="submit"
-                    disabled={isPending || isLoading}
+                    disabled={isPending || isLoading || isSyncing}
                     className="bg-white/10 hover:bg-emerald-600 text-white p-2 h-[34px] w-[34px] rounded-lg transition shadow-xs flex items-center justify-center active:scale-95 disabled:opacity-50 shrink-0 border border-white/20 cursor-pointer"
                     title={isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
                   >
@@ -640,22 +693,42 @@ export default function DetailUlokPeroranganPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">NOMOR ULOK</label>
-                    <input 
-                      type="text" 
-                      value={idUlok} 
-                      onChange={(e) => {
-                        setIdUlok(e.target.value.toUpperCase());
-                        setIdUlokError('');
-                      }} 
-                      placeholder="Contoh: ULOK-001"
-                      className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors ${
-                        idUlokError 
-                          ? 'border-red-500 focus:ring-2 focus:ring-red-500' 
-                          : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
-                      }`}
-                      required
-                    />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NOMOR ULOK</label>
+                      {isSyncing && (
+                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 animate-pulse">
+                          <RefreshCw className="w-3 h-3 animate-spin" /> Menyinkronkan...
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative flex items-center">
+                      <input 
+                        type="text" 
+                        value={idUlok} 
+                        disabled={isSyncing}
+                        onChange={(e) => {
+                          setIdUlok(e.target.value.toUpperCase());
+                          setIdUlokError('');
+                        }}
+                        placeholder="Contoh: MDL1-2609-0099"
+                        className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 pr-20 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                          idUlokError 
+                            ? 'border-red-500 focus:ring-2 focus:ring-red-500' 
+                            : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
+                        }`}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => triggerMidilocSync(idUlok)}
+                        disabled={isSyncing || !idUlok.trim()}
+                        title="Tarik data terbaru dari Midiloc"
+                        className="absolute right-1.5 px-2.5 py-1.5 bg-[#142B4D] hover:bg-blue-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-md text-[11px] font-bold flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                        <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+                      </button>
+                    </div>
                     {idUlokError && (
                       <p className="text-red-500 text-xs mt-1 font-semibold flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5" /> {idUlokError}

@@ -349,7 +349,7 @@ export async function getUlokDetail(id: string) {
         ulok_legal(*),
         ulok_jaminan(*),
         metode_saw(*),
-        profiles:admin_id (
+        profiles:profiles!ulok_submissions_admin_id_fkey (
           full_name,
           branches (
             nama_cabang
@@ -1393,4 +1393,157 @@ export async function syncMidilocData(payload: { mode: 'all' | 'single'; nomor_u
     return { success: false, error: error.message }
   }
 }
+
+// === ACTIONS: SYNC EXISTING ULOK FROM MIDILOC (LIVE SYNC IN FORM DETAIL) ===
+export async function syncUlokFromMidiloc(ulokId: string, nomorUlok: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    if (!ulokId || !nomorUlok) {
+      throw new Error('ID ULOK dan Nomor ULOK wajib diisi')
+    }
+
+    const trimmedNomor = nomorUlok.trim()
+
+    // Get dynamic baseUrl for internal API call
+    const { headers } = await import('next/headers')
+    const headerList = await headers()
+    const host = headerList.get('host') || 'localhost:3000'
+    const forwardedProto = headerList.get('x-forwarded-proto')
+    const protocol = forwardedProto || 'http'
+    const baseUrl = `${protocol}://${host}`
+
+    const url = `${baseUrl}/api/external/midiloc?nomor_ulok=${encodeURIComponent(trimmedNomor)}`
+
+    let res: Response
+    try {
+      res = await fetch(url, { cache: 'no-store' })
+    } catch (fetchErr) {
+      const port = host.includes(':') ? host.split(':')[1] : '3000'
+      const fallbackUrl = `http://127.0.0.1:${port}/api/external/midiloc?nomor_ulok=${encodeURIComponent(trimmedNomor)}`
+      res = await fetch(fallbackUrl, { cache: 'no-store' })
+    }
+
+    if (!res.ok) throw new Error('Gagal menghubungi API Midiloc')
+
+    const apiResult = await res.json()
+    if (apiResult.status !== 'success' || !Array.isArray(apiResult.data) || apiResult.data.length === 0) {
+      return { success: false, error: `Nomor ULOK '${nomorUlok}' tidak ditemukan di sistem Midiloc.` }
+    }
+
+    const item = apiResult.data[0]
+    const refId = item.external_id || item.nomor_ulok || trimmedNomor
+
+    // Cek apakah midiloc_ref_id sudah pernah digunakan pada usulan lain
+    if (refId) {
+      const { data: existingOther } = await supabase
+        .from('ulok_submissions')
+        .select('id, nama_lokasi')
+        .eq('midiloc_ref_id', refId)
+        .neq('id', ulokId)
+        .is('deleted_at', null)
+        .maybeSingle()
+
+      if (existingOther) {
+        return { 
+          success: false, 
+          error: `Nomor ULOK '${nomorUlok}' sudah digunakan pada usulan '${existingOther.nama_lokasi}'.` 
+        }
+      }
+    }
+
+    // 1. Update parent submission (ulok_submissions)
+    // NOTE: ulokId (UUID) NEVER CHANGES
+    const { data: updatedSub, error: updateErr } = await supabase
+      .from('ulok_submissions')
+      .update({
+        nama_lokasi: item.site_name,
+        jenis_badan_hukum: item.legal_type,
+        nama_pemegang_hak: item.owner_name,
+        alamat_koordinat: item.coords,
+        detail_alamat: item.address_detail,
+        harga_sewa: item.estimated_price,
+        midiloc_ref_id: refId,
+        id_ulok: item.nomor_ulok || trimmedNomor.toUpperCase(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ulokId)
+      .select(`
+        *,
+        profiles:profiles!ulok_submissions_admin_id_fkey (
+          full_name,
+          branches (
+            nama_cabang
+          )
+        )
+      `)
+      .single()
+
+    if (updateErr) {
+      console.error('Error updating ulok from midiloc:', updateErr)
+      throw new Error(updateErr.message || 'Gagal memperbarui data ULOK')
+    }
+
+    // 2. Sync dummy documents if provided by Midiloc
+    if (Array.isArray(item.documents) && item.documents.length > 0) {
+      // Soft-delete previous documents for this ulok_id so they don't duplicate/conflict
+      await supabase
+        .from('documents')
+        .update({ deleted_at: new Date().toISOString(), is_latest: false })
+        .eq('ulok_id', ulokId)
+        .is('deleted_at', null)
+
+      const docPayloads = item.documents.map((doc: any) => ({
+        ulok_id: ulokId,
+        checklist_id: doc.checklist_id,
+        uploaded_by: user.id,
+        file_url: doc.file_url,
+        document_type: doc.document_type,
+        is_verified: doc.is_verified || false,
+        version: 1,
+        is_latest: true
+      }))
+
+      await supabase.from('documents').insert(docPayloads)
+    }
+
+    // 3. Update progress & SAW
+    try {
+      await updateUlokProgressAndTimestamp(ulokId)
+      await calculateULOKSAW(ulokId)
+    } catch (sawErr) {
+      console.error('Non-critical SAW update error:', sawErr)
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/perorangan')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/badanhukum')
+
+    return {
+      success: true,
+      data: {
+        id: ulokId,
+        id_ulok: item.nomor_ulok || trimmedNomor.toUpperCase(),
+        nama_lokasi: item.site_name,
+        jenis_badan_hukum: item.legal_type,
+        nama_pemegang_hak: item.owner_name,
+        alamat_koordinat: item.coords,
+        detail_alamat: item.address_detail,
+        harga_sewa: item.estimated_price,
+        midiloc_ref_id: refId,
+        status: updatedSub?.status || 'Draft',
+        namaPengusul: updatedSub?.profiles?.full_name || 'Pengusul',
+        namaCabang: updatedSub?.profiles?.branches?.nama_cabang || 'Cabang',
+        documents: item.documents || []
+      }
+    }
+  } catch (error: any) {
+    console.error('Error in syncUlokFromMidiloc:', error)
+    return { success: false, error: error.message || 'Terjadi kesalahan sistem saat sinkronisasi Midiloc' }
+  }
+}
+
 

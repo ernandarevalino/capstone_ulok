@@ -468,7 +468,7 @@ export async function getSAWLeaderboard() {
         status,
         harga_sewa,
         first_in_review_at,
-        profiles:admin_id (
+        profiles:profiles!ulok_submissions_admin_id_fkey (
           id,
           full_name,
           branch_id,
