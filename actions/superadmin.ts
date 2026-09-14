@@ -451,3 +451,184 @@ export async function deleteUserAction(id: string) {
     return { success: false, error: error.message }
   }
 }
+
+// === ACTIONS: RIWAYAT LOGIN / LOGOUT PENGGUNA ===
+export interface GetLoginHistoryParams {
+  roleFilter?: string; // 'all' | 'admin_cabang' | 'assessor' | 'super_admin'
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getLoginHistoryAction(params?: GetLoginHistoryParams) {
+  try {
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    const { data: callerProfile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileErr || callerProfile?.role !== 'super_admin') {
+      throw new Error('Akses ditolak: Hanya Super Admin yang dapat mengakses riwayat login.')
+    }
+
+    const {
+      roleFilter = 'all',
+      startDate = '',
+      endDate = '',
+      search = '',
+      page = 1,
+      limit = 15
+    } = params || {}
+
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    let query = supabase
+      .from('login_history')
+      .select(`
+        id,
+        user_id,
+        login_at,
+        logout_at,
+        ip_address,
+        user_agent,
+        created_at,
+        profiles!inner (
+          id,
+          full_name,
+          nik,
+          role,
+          avatar_url,
+          branch_id,
+          branches (
+            id,
+            nama_cabang
+          )
+        )
+      `, { count: 'exact' })
+
+    if (roleFilter && roleFilter !== 'all') {
+      query = query.eq('profiles.role', roleFilter)
+    }
+
+    if (startDate) {
+      query = query.gte('login_at', `${startDate}T00:00:00.000Z`)
+    }
+
+    if (endDate) {
+      query = query.lte('login_at', `${endDate}T23:59:59.999Z`)
+    }
+
+    if (search && search.trim() !== '') {
+      const searchNum = parseInt(search.trim(), 10)
+      if (!isNaN(searchNum)) {
+        query = query.or(`full_name.ilike.%${search.trim()}%,nik.eq.${searchNum}`, { referencedTable: 'profiles' })
+      } else {
+        query = query.ilike('profiles.full_name', `%${search.trim()}%`)
+      }
+    }
+
+    const { data, count, error } = await query
+      .order('login_at', { ascending: false })
+      .range(from, to)
+
+    if (error) throw error
+
+    // Quick stats calculation
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    
+    const { data: allRecent } = await supabase
+      .from('login_history')
+      .select('login_at, logout_at')
+      .gte('login_at', startOfToday.toISOString())
+
+    const now = Date.now()
+    const SESSION_EXPIRY_MS = 30 * 60 * 1000 // 30 menit (match middleware.ts)
+
+    let totalToday = allRecent ? allRecent.length : 0
+    let activeCount = 0
+    let expiredCount = 0
+    let logoutCount = 0
+
+    if (allRecent) {
+      for (const item of allRecent) {
+        if (item.logout_at) {
+          logoutCount++
+        } else {
+          const diff = now - new Date(item.login_at).getTime()
+          if (diff <= SESSION_EXPIRY_MS) {
+            activeCount++
+          } else {
+            expiredCount++
+          }
+        }
+      }
+    }
+
+    const formattedData = (data || []).map((item: any) => {
+      const profile = item.profiles || {}
+      const loginTime = new Date(item.login_at).getTime()
+      const isExplicitLogout = !!item.logout_at
+      const diffSinceLogin = now - loginTime
+      
+      let sessionStatus: 'active' | 'expired' | 'logout' = 'logout'
+      let estimatedExpiredAt: string | null = null
+
+      if (isExplicitLogout) {
+        sessionStatus = 'logout'
+      } else if (diffSinceLogin <= SESSION_EXPIRY_MS) {
+        sessionStatus = 'active'
+      } else {
+        sessionStatus = 'expired'
+        estimatedExpiredAt = new Date(loginTime + SESSION_EXPIRY_MS).toISOString()
+      }
+
+      return {
+        id: item.id,
+        userId: item.user_id,
+        userName: profile.full_name || 'Pengguna Tidak Diketahui',
+        userNik: profile.nik ? String(profile.nik) : '-',
+        userRole: profile.role || '-',
+        userAvatar: profile.avatar_url || null,
+        branchName: profile.branches?.nama_cabang || (profile.role === 'admin_cabang' ? 'Cabang Belum Ditentukan' : '-'),
+        loginAt: item.login_at,
+        logoutAt: item.logout_at,
+        ipAddress: item.ip_address || '-',
+        userAgent: item.user_agent || '-',
+        sessionStatus,
+        estimatedExpiredAt
+      }
+    })
+
+    return {
+      success: true,
+      data: formattedData,
+      totalCount: count || 0,
+      totalPages: Math.ceil((count || 0) / limit),
+      stats: {
+        totalToday,
+        activeCount,
+        expiredCount,
+        logoutCount
+      }
+    }
+  } catch (error: any) {
+    console.error('[getLoginHistoryAction] Error:', error)
+    return {
+      success: false,
+      error: error.message,
+      data: [],
+      totalCount: 0,
+      totalPages: 0,
+      stats: { totalToday: 0, activeCount: 0, expiredCount: 0, logoutCount: 0 }
+    }
+  }
+}

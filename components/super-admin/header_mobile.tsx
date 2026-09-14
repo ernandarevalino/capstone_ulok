@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth'; 
+import { getCurrentProfile } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/superadmin';
 
 export default function HeaderMobile() {
@@ -49,22 +49,22 @@ export default function HeaderMobile() {
       <div className="flex items-center justify-between px-4 h-full">
         {/* === UTAMA: LOGO & ROLE === */}
         <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
-          <img 
-            src="/images/prisma-white-navbar.png" 
-            alt="Logo PRISMA" 
-            className="h-4 w-auto object-contain" 
+          <img
+            src="/images/prisma-white-navbar.png"
+            alt="Logo PRISMA"
+            className="h-4 w-auto object-contain"
           />
           <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">SA</span>
         </Link>
 
         {/* === AKSES: NOTIFIKASI === */}
         <div className="flex items-center space-x-2 ml-auto mr-2">
-          <Link 
-            href="/admin/super-admin/notification" 
+          <Link
+            href="/admin/super-admin/notification"
             className={`p-2 rounded-full relative flex items-center justify-center ${isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''}`}
           >
             <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
-            
+
             {/* === NOTIFIKASI: BADGE === */}
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 min-w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center px-0.5 border border-slate-900 shadow-sm animate-pulse">
@@ -75,7 +75,7 @@ export default function HeaderMobile() {
         </div>
 
         {/* === PENGENDALI: HAMBURGER === */}
-        <button 
+        <button
           onClick={() => setIsOpen(!isOpen)}
           className="text-2xl p-2 focus:outline-none hover:bg-slate-700 rounded transition-colors"
         >
@@ -86,42 +86,47 @@ export default function HeaderMobile() {
       {/* === DROPDOWN: NAVIGASI MOBILE === */}
       {isOpen && (
         <nav className="bg-[#142B4D] border-t border-slate-700 p-4 flex flex-col space-y-2 font-semibold text-sm animate-fade-in">
-          <Link 
-            href="/admin/super-admin" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isActive('/admin/super-admin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
+          <Link
+            href="/admin/super-admin"
+            onClick={() => setIsOpen(false)}
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
           >
             Dashboard
           </Link>
 
-          <Link 
-            href="/admin/super-admin/daftaruser/admincabang" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isDaftarUserActive('admincabang') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
+          <Link
+            href="/admin/super-admin/daftaruser/admincabang"
+            onClick={() => setIsOpen(false)}
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isDaftarUserActive('admincabang') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
           >
             Daftar Admin Cabang
           </Link>
 
-          <Link 
-            href="/admin/super-admin/daftaruser/assessor" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isDaftarUserActive('assessor') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
+          <Link
+            href="/admin/super-admin/daftaruser/assessor"
+            onClick={() => setIsOpen(false)}
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isDaftarUserActive('assessor') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
           >
             Daftar Assessor
           </Link>
 
-          <Link 
-            href="/admin/super-admin/recyclebin" 
-            onClick={() => setIsOpen(false)} 
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
-              isActive('/admin/super-admin/recyclebin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-            }`}
+          <Link
+            href="/admin/super-admin/riwayat-login"
+            onClick={() => setIsOpen(false)}
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin/riwayat-login') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+          >
+            User Activity Log
+          </Link>
+
+          <Link
+            href="/admin/super-admin/recyclebin"
+            onClick={() => setIsOpen(false)}
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin/recyclebin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              }`}
           >
             Recycle Bin
           </Link>
@@ -129,18 +134,17 @@ export default function HeaderMobile() {
           <hr className="border-slate-700 my-2" />
 
           {/* === SEKTOR: AVATAR PROFIL === */}
-          <Link 
+          <Link
             href="/admin/super-admin/profile"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${
-              isActive('/admin/super-admin/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
-            }`}
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${isActive('/admin/super-admin/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
+              }`}
           >
             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
               {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Profile Mobile" 
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile Mobile"
                   className="w-full h-full object-cover"
                 />
               ) : (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth'; 
+import { getCurrentProfile } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/superadmin';
 
 export default function HeaderDesktop() {
@@ -57,46 +57,52 @@ export default function HeaderDesktop() {
 
       {/* === NAVIGASI: MENU SUPER ADMIN === */}
       <nav className="flex items-center space-x-8 text-sm font-semibold">
-        <Link 
-          href="/admin/super-admin" 
-          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isActive('/admin/super-admin') 
+        <Link
+          href="/admin/super-admin"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${isActive('/admin/super-admin')
               ? 'text-white after:w-full after:bg-white'
               : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
-          }`}
+            }`}
         >
           Dashboard
         </Link>
 
-        <Link 
-          href="/admin/super-admin/daftaruser/admincabang" 
-          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isDaftarUserActive('admincabang') 
+        <Link
+          href="/admin/super-admin/daftaruser/admincabang"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${isDaftarUserActive('admincabang')
               ? 'text-white after:w-full after:bg-white'
               : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
-          }`}
+            }`}
         >
           Admin Cabang
         </Link>
 
-        <Link 
-          href="/admin/super-admin/daftaruser/assessor" 
-          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isDaftarUserActive('assessor') 
+        <Link
+          href="/admin/super-admin/daftaruser/assessor"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${isDaftarUserActive('assessor')
               ? 'text-white after:w-full after:bg-white'
               : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
-          }`}
+            }`}
         >
           Assessor
         </Link>
 
-        <Link 
-          href="/admin/super-admin/recyclebin" 
-          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
-            isActive('/admin/super-admin/recyclebin') 
+        <Link
+          href="/admin/super-admin/riwayat-login"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${isActive('/admin/super-admin/riwayat-login')
               ? 'text-white after:w-full after:bg-white'
               : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
-          }`}
+            }`}
+        >
+          User Activity Log
+        </Link>
+
+        <Link
+          href="/admin/super-admin/recyclebin"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${isActive('/admin/super-admin/recyclebin')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+            }`}
         >
           Recycle Bin
         </Link>
@@ -104,16 +110,15 @@ export default function HeaderDesktop() {
 
       {/* === PANEL: INFORMASI PENGGUNA === */}
       <div className="flex items-center space-x-5">
-        <Link 
-          href="/admin/super-admin/notification" 
-          className={`p-2 rounded-full transition-colors flex items-center justify-center relative group ${
-            isActive('/admin/super-admin/notification') ? 'bg-slate-700' : 'hover:bg-slate-700/50'
-          }`}
+        <Link
+          href="/admin/super-admin/notification"
+          className={`p-2 rounded-full transition-colors flex items-center justify-center relative group ${isActive('/admin/super-admin/notification') ? 'bg-slate-700' : 'hover:bg-slate-700/50'
+            }`}
         >
-          <img 
-            src="/icons/icon-notification.svg" 
-            alt="Notification Icon" 
-            className="w-6 h-6 object-contain brightness-0 invert" 
+          <img
+            src="/icons/icon-notification.svg"
+            alt="Notification Icon"
+            className="w-6 h-6 object-contain brightness-0 invert"
           />
           {/* === NOTIFIKASI: BADGE === */}
           {unreadCount > 0 && (
@@ -124,18 +129,17 @@ export default function HeaderDesktop() {
         </Link>
 
         {/* === SEKTOR: AVATAR PROFIL === */}
-        <Link 
+        <Link
           href="/admin/super-admin/profile"
-          className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${
-            isActive('/admin/super-admin/profile') 
-              ? 'border-white ring-2 ring-blue-400' 
+          className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm border-2 transition-all hover:scale-105 ${isActive('/admin/super-admin/profile')
+              ? 'border-white ring-2 ring-blue-400'
               : 'border-gray-400'
-          } ${!profile?.avatar_url ? 'bg-slate-500 text-white' : ''}`}
+            } ${!profile?.avatar_url ? 'bg-slate-500 text-white' : ''}`}
         >
           {profile?.avatar_url ? (
-            <img 
-              src={profile.avatar_url} 
-              alt="Profile" 
+            <img
+              src={profile.avatar_url}
+              alt="Profile"
               className="w-full h-full object-cover"
             />
           ) : (

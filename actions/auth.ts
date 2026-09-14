@@ -29,6 +29,23 @@ export async function loginAction(formData: FormData) {
 
     if (profileError) throw new Error(`Gagal memuat profil pengguna: ${profileError.message}`)
     
+    // Catat login history
+    try {
+      const headerList = await headers()
+      const forwardedFor = headerList.get('x-forwarded-for')
+      const ipAddress = forwardedFor ? forwardedFor.split(',')[0].trim() : headerList.get('x-real-ip') || null
+      const userAgent = headerList.get('user-agent') || null
+
+      await supabase.from('login_history').insert({
+        user_id: data.user.id,
+        login_at: new Date().toISOString(),
+        ip_address: ipAddress,
+        user_agent: userAgent
+      })
+    } catch (logErr) {
+      console.error('[loginAction] Failed to record login history:', logErr)
+    }
+
     const cookieStore = await cookies()
     const isProduction = process.env.NODE_ENV === 'production'
 
@@ -65,6 +82,32 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   try {
     const supabase = await createClient()
+
+    // 1. Update login_history: set logout_at = now() untuk sesi login aktif terakhir milik user
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: latestLogin } = await supabase
+          .from('login_history')
+          .select('id')
+          .eq('user_id', user.id)
+          .is('logout_at', null)
+          .order('login_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (latestLogin) {
+          await supabase
+            .from('login_history')
+            .update({ logout_at: new Date().toISOString() })
+            .eq('id', latestLogin.id)
+        }
+      }
+    } catch (histErr) {
+      console.error('[logoutAction] Failed to update logout history:', histErr)
+    }
+
+    // 2. Sign out
     await supabase.auth.signOut()
   } catch (error) {
     console.error('[logoutAction] Error during signOut:', error)
