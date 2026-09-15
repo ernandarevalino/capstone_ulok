@@ -110,6 +110,16 @@ export default function HeaderMobile() {
           </Link>
 
           <Link 
+            href="/admin/assessor/perpanjangan" 
+            onClick={() => setIsOpen(false)} 
+            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${
+              isActive('/admin/assessor/perpanjangan') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Perpanjangan
+          </Link>
+
+          <Link 
             href="/admin/assessor/feedback" 
             onClick={() => setIsOpen(false)} 
             className={`py-3 px-4 rounded-lg transition-colors flex items-center ${

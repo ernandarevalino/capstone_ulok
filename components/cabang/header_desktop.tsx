@@ -84,6 +84,17 @@ export default function HeaderDesktop() {
         </Link>
 
         <Link
+          href="/admin/cabang/perpanjangan"
+          className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
+            isActive('/admin/cabang/perpanjangan')
+              ? 'text-white after:w-full after:bg-white'
+              : 'text-slate-300 after:w-0 after:bg-white hover:after:w-full'
+          }`}
+        >
+          Perpanjangan
+        </Link>
+
+        <Link
           href="/admin/cabang/feedback"
           className={`relative py-1 transition-colors duration-200 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:transition-all after:duration-300 ${
             isActive('/admin/cabang/feedback')
