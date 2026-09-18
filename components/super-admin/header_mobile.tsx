@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth';
+import { getCurrentProfile, logoutAction } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/superadmin';
 
 export default function HeaderMobile() {
@@ -44,123 +44,269 @@ export default function HeaderMobile() {
   const isDaftarUserActive = (subPath: string) => pathname.includes(`/daftaruser/${subPath}`);
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
+  const handleLogout = async () => {
+    setIsOpen(false);
+    await logoutAction();
+  };
+
   return (
-    <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-50 h-16">
-      <div className="flex items-center justify-between px-4 h-full">
-        {/* === UTAMA: LOGO & ROLE === */}
-        <Link href="/admin/super-admin" className="flex items-center hover:opacity-90 transition-opacity">
-          <img
-            src="/images/prisma-white-navbar.png"
-            alt="Logo PRISMA"
-            className="h-4 w-auto object-contain"
-          />
-          <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded ml-1.5 uppercase tracking-wider shadow-sm">SA</span>
-        </Link>
-
-        {/* === AKSES: NOTIFIKASI === */}
-        <div className="flex items-center space-x-2 ml-auto mr-2">
-          <Link
-            href="/admin/super-admin/notification"
-            className={`p-2 rounded-full relative flex items-center justify-center ${isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''}`}
-          >
-            <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
-
-            {/* === NOTIFIKASI: BADGE === */}
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 min-w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center px-0.5 border border-slate-900 shadow-sm animate-pulse">
-                {unreadCount > 15 ? '15+' : unreadCount}
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* === PENGENDALI: HAMBURGER === */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="text-2xl p-2 focus:outline-none hover:bg-slate-700 rounded transition-colors"
-        >
-          {isOpen ? '✖' : '☰'}
-        </button>
-      </div>
-
-      {/* === DROPDOWN: NAVIGASI MOBILE === */}
-      {isOpen && (
-        <nav className="bg-[#142B4D] border-t border-slate-700 p-4 flex flex-col space-y-2 font-semibold text-sm animate-fade-in">
-          <Link
-            href="/admin/super-admin"
-            onClick={() => setIsOpen(false)}
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-          >
-            Dashboard
+    <>
+      {/* === MOBILE TOP HEADER BAR === */}
+      <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 h-16">
+        <div className="flex items-center justify-between px-4 h-full">
+          {/* LOGO & SA BADGE */}
+          <Link href="/admin/super-admin" className="flex items-center space-x-2">
+            <img
+              src="/images/prisma-white-navbar.png"
+              alt="Logo PRISMA"
+              className="h-5 w-auto object-contain"
+            />
+            <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+              SA
+            </span>
           </Link>
 
-          <Link
-            href="/admin/super-admin/daftaruser/admincabang"
-            onClick={() => setIsOpen(false)}
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isDaftarUserActive('admincabang') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+          {/* RIGHT UTILITIES */}
+          <div className="flex items-center space-x-2">
+            {/* NOTIFICATION BELL */}
+            <Link
+              href="/admin/super-admin/notification"
+              className={`p-2 rounded-full relative flex items-center justify-center ${
+                isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''
               }`}
-          >
-            Daftar Admin Cabang
-          </Link>
-
-          <Link
-            href="/admin/super-admin/daftaruser/assessor"
-            onClick={() => setIsOpen(false)}
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isDaftarUserActive('assessor') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-          >
-            Daftar Assessor
-          </Link>
-
-          <Link
-            href="/admin/super-admin/riwayat-login"
-            onClick={() => setIsOpen(false)}
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin/riwayat-login') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-          >
-            User Activity Log
-          </Link>
-
-          <Link
-            href="/admin/super-admin/recyclebin"
-            onClick={() => setIsOpen(false)}
-            className={`py-3 px-4 rounded-lg transition-colors flex items-center ${isActive('/admin/super-admin/recyclebin') ? 'bg-[#314158] text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-          >
-            Recycle Bin
-          </Link>
-
-          <hr className="border-slate-700 my-2" />
-
-          {/* === SEKTOR: AVATAR PROFIL === */}
-          <Link
-            href="/admin/super-admin/profile"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg ${isActive('/admin/super-admin/profile') ? 'bg-[#314158] text-white' : 'hover:bg-slate-800 text-slate-300'
-              }`}
-          >
-            <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs text-white border border-gray-400 shrink-0 ${!profile?.avatar_url ? 'bg-slate-500' : ''}`}>
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile Mobile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span>{initialLetter}</span>
+            >
+              <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 min-w-[14px] h-[14px] bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center px-0.5 border border-slate-900 shadow-xs animate-pulse">
+                  {unreadCount > 15 ? '15+' : unreadCount}
+                </span>
               )}
+            </Link>
+
+            {/* HAMBURGER TOGGLE BUTTON */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-xl focus:outline-hidden hover:bg-slate-700 rounded-lg transition-colors text-slate-200"
+              aria-label="Toggle Menu"
+            >
+              {isOpen ? '✕' : '☰'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* === MOBILE SIDEBAR DRAWER OVERLAY === */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Drawer Sidebar Content */}
+          <div className="relative flex flex-col w-72 max-w-[80vw] bg-[#142B4D] text-slate-200 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            {/* Drawer Header */}
+            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+              <Link
+                href="/admin/super-admin"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-2"
+              >
+                <img
+                  src="/images/prisma-white-navbar.png"
+                  alt="Logo PRISMA"
+                  className="h-5 w-auto object-contain"
+                />
+                <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  SA
+                </span>
+              </Link>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors text-lg"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold tracking-wide block truncate max-w-37.5">
-                {profile?.full_name || 'Loading...'}
-              </span>
-              <span className="text-[10px] text-gray-400 block">Lihat Profil Super Admin</span>
+            {/* Navigation Groups */}
+            <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6 text-xs font-semibold tracking-wide">
+              {/* GROUP 1: RINGKASAN */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  RINGKASAN
+                </p>
+                <div className="space-y-1">
+                  <Link
+                    href="/admin/super-admin"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive('/admin/super-admin')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Ulok Dashboard</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/super-admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  >
+                    <span>Clustering Dashboard</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/super-admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  >
+                    <span>User Dashboard</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* GROUP 2: ACCOUNT & OVERVIEW */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  ACCOUNT & OVERVIEW
+                </p>
+                <div className="space-y-1">
+                  <Link
+                    href="/admin/super-admin"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive('/admin/super-admin')
+                        ? 'bg-slate-800 text-white'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Super Admin</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/super-admin/daftaruser/admincabang"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isDaftarUserActive('admincabang')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Admin Cabang</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/super-admin/daftaruser/assessor"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isDaftarUserActive('assessor')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Assessor Legal</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* GROUP 3: ACTIVITY & LOG */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  ACTIVITY & LOG
+                </p>
+                <div className="space-y-1">
+                  <Link
+                    href="/admin/super-admin/recyclebin"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive('/admin/super-admin/recyclebin')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Recycle Bin</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/super-admin/riwayat-login"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive('/admin/super-admin/riwayat-login')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>User Log</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* GROUP 4: PENGATURAN */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  PENGATURAN
+                </p>
+                <div className="space-y-1">
+                  <Link
+                    href="/admin/super-admin/branches"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive('/admin/super-admin/branches')
+                        ? 'bg-[#1D3557] text-white font-bold'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Umum</span>
+                  </Link>
+
+                  <a
+                    href="#about"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors"
+                  >
+                    <span>Tentang</span>
+                  </a>
+                </div>
+              </div>
+            </nav>
+
+            {/* Bottom Profile & Actions */}
+            <div className="p-4 border-t border-slate-800 space-y-2">
+              <Link
+                href="/admin/super-admin/profile"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-3 p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{initialLetter}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Anastasya'}</p>
+                  <p className="text-[10px] text-slate-400">Pengaturan Akun</p>
+                </div>
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
+              </button>
             </div>
-          </Link>
-        </nav>
+          </div>
+        </div>
       )}
-    </header>
+    </>
   );
 }
