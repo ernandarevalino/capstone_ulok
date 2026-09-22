@@ -490,7 +490,9 @@ export async function getLoginHistoryAction(params?: GetLoginHistoryParams) {
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    let query = supabase
+    const supabaseAdmin = getSupabaseAdmin()
+
+    let query = supabaseAdmin
       .from('login_history')
       .select(`
         id,
@@ -545,7 +547,7 @@ export async function getLoginHistoryAction(params?: GetLoginHistoryParams) {
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
     
-    const { data: allRecent } = await supabase
+    const { data: allRecent } = await supabaseAdmin
       .from('login_history')
       .select('login_at, logout_at')
       .gte('login_at', startOfToday.toISOString())

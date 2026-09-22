@@ -6,6 +6,23 @@ import { sendResetPasswordEmail } from '@/utils/email'
 import { headers, cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+// ====== HELPER: SUPABASE ADMIN ======
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!serviceKey || serviceKey.trim() === '') {
+    throw new Error("Kritikal: SUPABASE_SERVICE_ROLE_KEY kosong atau tidak terbaca oleh Server! Pastikan SUPABASE_SERVICE_ROLE_KEY sudah diset di Vercel & .env.");
+  }
+
+  return createAdminClient(url!, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
 // === ACTIONS: LOGIN ===
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string
@@ -29,21 +46,41 @@ export async function loginAction(formData: FormData) {
 
     if (profileError) throw new Error(`Gagal memuat profil pengguna: ${profileError.message}`)
     
-    // Catat login history
+    // Catat login history (menggunakan Admin client untuk bypass RLS issue saat login)
     try {
       const headerList = await headers()
       const forwardedFor = headerList.get('x-forwarded-for')
-      const ipAddress = forwardedFor ? forwardedFor.split(',')[0].trim() : headerList.get('x-real-ip') || null
+      const realIp = headerList.get('x-real-ip')
+      const vercelIp = headerList.get('x-vercel-forwarded-for')
+
+      let ipAddress = '127.0.0.1'
+      if (forwardedFor) {
+        ipAddress = forwardedFor.split(',')[0].trim()
+      } else if (realIp) {
+        ipAddress = realIp.trim()
+      } else if (vercelIp) {
+        ipAddress = vercelIp.trim()
+      }
+
+      if (ipAddress === '::1' || ipAddress === '::ffff:127.0.0.1') {
+        ipAddress = '127.0.0.1 (Local)'
+      }
+
       const userAgent = headerList.get('user-agent') || null
 
-      await supabase.from('login_history').insert({
+      const supabaseAdmin = getSupabaseAdmin()
+      const { error: insertErr } = await supabaseAdmin.from('login_history').insert({
         user_id: data.user.id,
         login_at: new Date().toISOString(),
         ip_address: ipAddress,
         user_agent: userAgent
       })
+
+      if (insertErr) {
+        console.error('[loginAction] Failed to insert login history:', insertErr)
+      }
     } catch (logErr) {
-      console.error('[loginAction] Failed to record login history:', logErr)
+      console.error('[loginAction] Error recording login history:', logErr)
     }
 
     const cookieStore = await cookies()
@@ -87,7 +124,8 @@ export async function logoutAction() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: latestLogin } = await supabase
+        const supabaseAdmin = getSupabaseAdmin()
+        const { data: latestLogin } = await supabaseAdmin
           .from('login_history')
           .select('id')
           .eq('user_id', user.id)
@@ -97,7 +135,7 @@ export async function logoutAction() {
           .maybeSingle()
 
         if (latestLogin) {
-          await supabase
+          await supabaseAdmin
             .from('login_history')
             .update({ logout_at: new Date().toISOString() })
             .eq('id', latestLogin.id)
