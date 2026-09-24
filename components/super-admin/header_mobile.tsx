@@ -6,7 +6,11 @@ import { usePathname } from 'next/navigation';
 import { getCurrentProfile, logoutAction } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/superadmin';
 
-export default function HeaderMobile() {
+interface HeaderMobileProps {
+  isScrolled?: boolean;
+}
+
+export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
@@ -52,7 +56,11 @@ export default function HeaderMobile() {
   return (
     <>
       {/* === MOBILE TOP HEADER BAR === */}
-      <header className="block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 h-16">
+      <header
+        className={`block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 transition-all duration-300 ease-in-out overflow-hidden rounded-t-xl ${
+          isScrolled ? 'max-h-0 opacity-0 py-0 border-none' : 'max-h-16 opacity-100 h-16 mb-1'
+        }`}
+      >
         <div className="flex items-center justify-between px-4 h-full">
           {/* LOGO & SA BADGE */}
           <Link href="/admin/super-admin" className="flex items-center space-x-2">
@@ -274,36 +282,6 @@ export default function HeaderMobile() {
               </div>
             </nav>
 
-            {/* Bottom Profile & Actions */}
-            <div className="p-4 border-t border-slate-800 space-y-2">
-              <Link
-                href="/admin/super-admin/profile"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center space-x-3 p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Profile Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{initialLetter}</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Anastasya'}</p>
-                  <p className="text-[10px] text-slate-400">Pengaturan Akun</p>
-                </div>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
-            </div>
           </div>
         </div>
       )}

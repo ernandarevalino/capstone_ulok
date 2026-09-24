@@ -376,13 +376,13 @@ export default function ClusteringDashboardPage() {
       sumDurasi += item.durasi_hari || 0
       if ((item.durasi_hari || 0) > maxDurasi) maxDurasi = item.durasi_hari || 0
     }
-    // Round up maxDurasi to the nearest 10 (e.g., 71 -> 80) for a cleaner axis
-    const cleanMaxX = Math.ceil((maxDurasi + 5) / 10) * 10
+    // Round up maxDurasi to a clean axis domain (e.g., 20/21 -> 21 for 7-day increments)
+    const cleanMaxX = maxDurasi <= 21 ? 21 : Math.ceil((maxDurasi + 5) / 10) * 10
     
     return {
       avgCompleteness: sumPersentase / totalUsulan,
       avgDuration: sumDurasi / totalUsulan,
-      maxX: Math.max(20, cleanMaxX)
+      maxX: Math.max(14, cleanMaxX)
     }
   }, [allItems, totalUsulan])
 

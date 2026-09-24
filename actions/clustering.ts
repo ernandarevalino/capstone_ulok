@@ -53,7 +53,7 @@ export async function getClusteringData(): Promise<{
       const persentase = item.persentase || 0;
       const createdAt = new Date(item.created_at);
       const diffTime = Math.abs(now.getTime() - createdAt.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = parseFloat((diffTime / (1000 * 60 * 60 * 24)).toFixed(1));
 
       // Inject durasi hari into the object for UI rendering
       const clusteredItem = { ...item, durasi_hari: diffDays };

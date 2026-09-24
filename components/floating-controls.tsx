@@ -12,22 +12,35 @@ export function FloatingControls() {
   useEffect(() => {
     setMounted(true)
 
-    const handleScroll = () => {
-      if (window.scrollY > 300) {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document
+      let scrollTop = 0
+      if (target && 'scrollTop' in target && typeof (target as HTMLElement).scrollTop === 'number') {
+        scrollTop = (target as HTMLElement).scrollTop
+      }
+      scrollTop = Math.max(scrollTop, window.scrollY || document.documentElement.scrollTop || 0)
+
+      if (scrollTop > 150) {
         setShowScrollTop(true)
       } else {
         setShowScrollTop(false)
       }
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, true)
+    return () => window.removeEventListener('scroll', handleScroll, true)
   }, [])
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
+    })
+    document.querySelectorAll('main, .overflow-y-auto').forEach((el) => {
+      el.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
     })
   }
 

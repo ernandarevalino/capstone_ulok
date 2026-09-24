@@ -8,9 +8,10 @@ import { getNotificationsAction } from '@/actions/superadmin';
 
 interface HeaderTopbarProps {
   onToggleSidebar?: () => void;
+  isCollapsed?: boolean;
 }
 
-export default function HeaderTopbar({ onToggleSidebar }: HeaderTopbarProps) {
+export default function HeaderTopbar({ onToggleSidebar, isCollapsed = false }: HeaderTopbarProps) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -78,17 +79,24 @@ export default function HeaderTopbar({ onToggleSidebar }: HeaderTopbarProps) {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-[#0D0D0D] border-b border-gray-200 dark:border-gray-800 px-4 md:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
+    <header className="h-16 bg-[#F0F4F8] dark:bg-[#131F33] px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-colors duration-200">
       {/* === LEFT: SIDEBAR TOGGLE & PAGE TITLE === */}
       <div className="flex items-center space-x-3">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Toggle Sidebar"
+            className="hidden md:flex p-1.5 md:p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors items-center justify-center border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+            title={isCollapsed ? 'Perluas Sidebar (Text & Icon)' : 'Ciutkan Sidebar (Hanya Icon)'}
+            aria-label="Toggle Sidebar"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2" />
+              <path strokeWidth="2" d="M9 3v18" />
+              {isCollapsed ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 12h4m-2-2l2 2-2 2" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 12h-4m2-2l-2 2 2 2" />
+              )}
             </svg>
           </button>
         )}
@@ -182,10 +190,10 @@ export default function HeaderTopbar({ onToggleSidebar }: HeaderTopbarProps) {
           )}
         </div>
 
-        {/* Notification Bell */}
+        {/* Notification Bell (Desktop Only) */}
         <Link
           href="/admin/super-admin/notification"
-          className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative flex items-center justify-center"
+          className="hidden md:flex p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative items-center justify-center"
           title="Notifikasi"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

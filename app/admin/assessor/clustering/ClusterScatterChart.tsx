@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useCallback, memo } from 'react'
+import React, { useRef, useState, useCallback, useMemo, memo } from 'react'
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -54,13 +54,70 @@ interface ClusterScatterChartProps {
   onViewDetail: (id: string, jenisBadanHukum: string) => void
 }
 
+// === Stable deterministic pseudo-random from a string seed ===
+// Produces a consistent float in [0, 1) for the same seed string.
+// This way jitter doesn't change every re-render (unlike Math.random()).
+function seededRand(seed: string): number {
+  let h = 2166136261 >>> 0
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i)
+    h = Math.imul(h, 16777619) >>> 0
+  }
+  return (h >>> 0) / 4294967296
+}
+
+// Apply jitter to a list of items.
+// jitterX: max shift on X axis (days), jitterY: max shift on Y axis (%)
+// Jitter is bidirectional (negative/positive), and the item stays in its quadrant.
+function applyJitter(
+  items: any[],
+  jitterX: number,
+  jitterY: number,
+  boundaryX: number,
+  boundaryY: number,
+  maxX: number,
+  clusterSide: 'left' | 'right',  // left = <=boundaryX, right = >boundaryX
+  yZone: 'high' | 'low'           // high = >=boundaryY, low = <boundaryY
+): any[] {
+  return items.map((item) => {
+    const seed = item.id || String(item.nama_lokasi) + String(item.created_at)
+    const rx = seededRand(seed + 'x')
+    const ry = seededRand(seed + 'y')
+    // bidirectional shift: scale to [-jitterX, +jitterX]
+    const dx = (rx - 0.5) * 2 * jitterX
+    const dy = (ry - 0.5) * 2 * jitterY
+
+    let newX = (item.durasi_hari ?? 0) + dx
+    let newY = (item.persentase ?? 0) + dy
+
+    // Clamp X within quadrant boundaries with a small margin
+    const margin = 0.25
+    if (clusterSide === 'left') {
+      newX = Math.max(margin, Math.min(boundaryX - margin, newX))
+    } else {
+      newX = Math.max(boundaryX + margin, Math.min(maxX - margin, newX))
+    }
+
+    // Clamp Y within quadrant boundaries with a small margin
+    if (yZone === 'high') {
+      newY = Math.max(boundaryY + margin, Math.min(100 - margin, newY))
+    } else {
+      newY = Math.max(margin, Math.min(boundaryY - margin, newY))
+    }
+
+    return {
+      ...item,
+      // _jittered_ values used only for rendering
+      durasi_hari: parseFloat(newX.toFixed(2)),
+      persentase: parseFloat(newY.toFixed(2)),
+    }
+  })
+}
+
 function ClusterScatterChart({ c1, c2, c3, c4, maxX, boundaryX = 7, boundaryY = 80, onViewDetail }: ClusterScatterChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const rafId = useRef<number | null>(null)
 
-  // Hover state lives ONLY inside this chart component now.
-  // Sebelumnya state ini ada di komponen page utama, jadi tiap mousemove
-  // di atas chart bikin SELURUH halaman (tabs, tabel, dsb) ikut re-render.
   const [quadrantHover, setQuadrantHover] = useState<{
     label: string
     subtitle: string
@@ -68,8 +125,16 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, boundaryX = 7, boundaryY = 
     y: number
   } | null>(null)
 
-  // Throttle pakai requestAnimationFrame: mousemove bisa nembak puluhan
-  // event per detik, ini batasin update state maksimal 1x per frame.
+  // Apply jitter to each cluster. useMemo so it only recomputes when data changes.
+  // Jitter amounts tuned per cluster to spread without crossing quadrant boundaries.
+  const jX = 2.8  // ±2.8 days on X
+  const jY = 8    // ±8% on Y
+
+  const jitteredC3 = useMemo(() => applyJitter(c3, jX, jY, boundaryX, boundaryY, maxX, 'left', 'high'), [c3, boundaryX, boundaryY, maxX])
+  const jitteredC2 = useMemo(() => applyJitter(c2, jX, jY, boundaryX, boundaryY, maxX, 'left', 'low'), [c2, boundaryX, boundaryY, maxX])
+  const jitteredC1 = useMemo(() => applyJitter(c1, jX, jY, boundaryX, boundaryY, maxX, 'right', 'high'), [c1, boundaryX, boundaryY, maxX])
+  const jitteredC4 = useMemo(() => applyJitter(c4, jX, jY, boundaryX, boundaryY, maxX, 'right', 'low'), [c4, boundaryX, boundaryY, maxX])
+
   const handleQuadrantHover = useCallback((key: QuadrantKey) => (e: any) => {
     if (rafId.current) return
     rafId.current = requestAnimationFrame(() => {
@@ -105,8 +170,8 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, boundaryX = 7, boundaryY = 
             name="Durasi"
             unit=" Hari"
             domain={[0, maxX]}
+            ticks={maxX === 21 ? [0, 7, 14, 21] : undefined}
             padding={{ left: 15, right: 15 }}
-            tickCount={6}
             stroke="#94A3B8"
             fontSize={11}
             fontWeight={600}
@@ -174,47 +239,47 @@ function ClusterScatterChart({ c1, c2, c3, c4, maxX, boundaryX = 7, boundaryY = 
 
           <Scatter
             name="Cluster 1 (Ideal)"
-            data={c3}
+            data={jitteredC3}
             fill="#10B981"
-            fillOpacity={0.75}
+            fillOpacity={0.72}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
             stroke="white"
-            strokeWidth={1}
+            strokeWidth={0.8}
           />
           <Scatter
             name="Cluster 2 (Aktif)"
-            data={c2}
+            data={jitteredC2}
             fill="#3B82F6"
-            fillOpacity={0.75}
+            fillOpacity={0.72}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
             stroke="white"
-            strokeWidth={1}
+            strokeWidth={0.8}
           />
           <Scatter
             name="Cluster 3 (Review)"
-            data={c1}
+            data={jitteredC1}
             fill="#F28705"
-            fillOpacity={0.75}
+            fillOpacity={0.72}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
             stroke="white"
-            strokeWidth={1}
+            strokeWidth={0.8}
           />
           <Scatter
             name="Cluster 4 (Stagnan)"
-            data={c4}
+            data={jitteredC4}
             fill="#D91E2E"
-            fillOpacity={0.75}
+            fillOpacity={0.72}
             line={false}
             cursor="pointer"
             onClick={handleClusterClick}
             stroke="white"
-            strokeWidth={1}
+            strokeWidth={0.8}
           />
         </ScatterChart>
       </ResponsiveContainer>
