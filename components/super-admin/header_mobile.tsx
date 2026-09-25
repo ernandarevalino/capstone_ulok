@@ -5,47 +5,53 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile, logoutAction } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/superadmin';
+import { SUPER_ADMIN_NAV_GROUPS, isNavItemActive } from './super_admin_nav_config';
 
 interface HeaderMobileProps {
   isScrolled?: boolean;
+  profile?: any;
+  unreadCount?: number;
 }
 
-export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) {
+export default function HeaderMobile({
+  isScrolled = false,
+  profile: propProfile,
+  unreadCount: propUnreadCount,
+}: HeaderMobileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const [profile, setProfile] = useState<any>(null);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [profile, setProfile] = useState<any>(propProfile || null);
+  const [unreadCount, setUnreadCount] = useState<number>(propUnreadCount || 0);
 
   useEffect(() => {
-    async function loadProfile() {
-      const res = await getCurrentProfile();
-      if (res && res.success) {
-        setProfile(res.profile);
+    if (propProfile !== undefined) {
+      setProfile(propProfile);
+    } else {
+      async function loadProfile() {
+        const res = await getCurrentProfile();
+        if (res && res.success) {
+          setProfile(res.profile);
+        }
       }
+      loadProfile();
     }
+  }, [propProfile, pathname]);
 
-    async function loadUnreadNotifications() {
-      const res = await getNotificationsAction();
-      if (res && res.success) {
-        const unreadItems = res.data.filter((item: any) => !item.is_read);
-        setUnreadCount(unreadItems.length);
+  useEffect(() => {
+    if (propUnreadCount !== undefined) {
+      setUnreadCount(propUnreadCount);
+    } else {
+      async function loadUnreadNotifications() {
+        const res = await getNotificationsAction();
+        if (res && res.success) {
+          const unreadItems = res.data.filter((item: any) => !item.is_read);
+          setUnreadCount(unreadItems.length);
+        }
       }
-    }
-
-    loadProfile();
-    loadUnreadNotifications();
-
-    const intervalId = setInterval(() => {
       loadUnreadNotifications();
-    }, 10000);
+    }
+  }, [propUnreadCount, pathname]);
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [pathname]);
-
-  const isActive = (path: string) => pathname === path;
-  const isDaftarUserActive = (subPath: string) => pathname.includes(`/daftaruser/${subPath}`);
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
   const handleLogout = async () => {
@@ -57,7 +63,7 @@ export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) 
     <>
       {/* === MOBILE TOP HEADER BAR === */}
       <header
-        className={`block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 transition-all duration-300 ease-in-out overflow-hidden rounded-t-xl ${
+        className={`block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 transition-all duration-300 ease-in-out overflow-hidden rounded-t-2xl ${
           isScrolled ? 'max-h-0 opacity-0 py-0 border-none' : 'max-h-16 opacity-100 h-16 mb-1'
         }`}
       >
@@ -80,7 +86,7 @@ export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) 
             <Link
               href="/admin/super-admin/notification"
               className={`p-2 rounded-full relative flex items-center justify-center ${
-                isActive('/admin/super-admin/notification') ? 'bg-slate-700' : ''
+                pathname.startsWith('/admin/super-admin/notification') ? 'bg-slate-700' : ''
               }`}
             >
               <img src="/icons/icon-notification.svg" alt="Notif" className="w-5 h-5 brightness-0 invert" />
@@ -113,9 +119,9 @@ export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) 
           />
 
           {/* Drawer Sidebar Content */}
-          <div className="relative flex flex-col w-72 max-w-[80vw] bg-[#142B4D] text-slate-200 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative flex flex-col w-72 max-w-[80vw] bg-[#0E1B2E] text-slate-200 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200 rounded-r-2xl border-r border-slate-800">
             {/* Drawer Header */}
-            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+            <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 shrink-0">
               <Link
                 href="/admin/super-admin"
                 onClick={() => setIsOpen(false)}
@@ -140,148 +146,59 @@ export default function HeaderMobile({ isScrolled = false }: HeaderMobileProps) 
             </div>
 
             {/* Navigation Groups */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6 text-xs font-semibold tracking-wide">
-              {/* GROUP 1: RINGKASAN */}
-              <div>
-                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  RINGKASAN
-                </p>
-                <div className="space-y-1">
-                  <Link
-                    href="/admin/super-admin"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive('/admin/super-admin')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Ulok Dashboard</span>
-                  </Link>
-
-                  <Link
-                    href="/admin/super-admin"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span>Clustering Dashboard</span>
-                  </Link>
-
-                  <Link
-                    href="/admin/super-admin"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-                  >
-                    <span>User Dashboard</span>
-                  </Link>
+            <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-5 text-xs font-semibold tracking-wide">
+              {SUPER_ADMIN_NAV_GROUPS.map((group) => (
+                <div key={group.id} className="space-y-1">
+                  <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    {group.groupTitle}
+                  </p>
+                  {group.items.map((item) => {
+                    const active = isNavItemActive(pathname, item.href, item.exact);
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-colors ${
+                          active
+                            ? 'bg-[#1D3557] text-white font-bold shadow-xs'
+                            : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                        }`}
+                      >
+                        <span>{item.title}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </div>
-
-              {/* GROUP 2: ACCOUNT & OVERVIEW */}
-              <div>
-                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  ACCOUNT & OVERVIEW
-                </p>
-                <div className="space-y-1">
-                  <Link
-                    href="/admin/super-admin"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive('/admin/super-admin')
-                        ? 'bg-slate-800 text-white'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Super Admin</span>
-                  </Link>
-
-                  <Link
-                    href="/admin/super-admin/daftaruser/admincabang"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isDaftarUserActive('admincabang')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Admin Cabang</span>
-                  </Link>
-
-                  <Link
-                    href="/admin/super-admin/daftaruser/assessor"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isDaftarUserActive('assessor')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Assessor Legal</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* GROUP 3: ACTIVITY & LOG */}
-              <div>
-                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  ACTIVITY & LOG
-                </p>
-                <div className="space-y-1">
-                  <Link
-                    href="/admin/super-admin/recyclebin"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive('/admin/super-admin/recyclebin')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Recycle Bin</span>
-                  </Link>
-
-                  <Link
-                    href="/admin/super-admin/riwayat-login"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive('/admin/super-admin/riwayat-login')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>User Log</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* GROUP 4: PENGATURAN */}
-              <div>
-                <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  PENGATURAN
-                </p>
-                <div className="space-y-1">
-                  <Link
-                    href="/admin/super-admin/branches"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive('/admin/super-admin/branches')
-                        ? 'bg-[#1D3557] text-white font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>Umum</span>
-                  </Link>
-
-                  <a
-                    href="#about"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors"
-                  >
-                    <span>Tentang</span>
-                  </a>
-                </div>
-              </div>
+              ))}
             </nav>
 
+            {/* Mobile Footer / User Profile & Logout */}
+            <div className="p-4 border-t border-slate-800 shrink-0 bg-slate-900/50">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{initialLetter}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Super Admin'}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{profile?.nik || 'superadmin@prisma.com'}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
