@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import HeaderDesktop from '@/components/super-admin/header_desktop';
 import HeaderMobile from '@/components/super-admin/header_mobile';
@@ -45,27 +45,24 @@ export default function SuperAdminLayoutClient({ children }: { children: React.R
 
     const intervalId = setInterval(() => {
       loadData();
-    }, 15000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [pathname]);
 
-  const toggleSidebar = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem('superadmin_sidebar_collapsed', String(next));
-      return next;
-    });
-  };
+  useEffect(() => {
+    localStorage.setItem('superadmin_sidebar_collapsed', String(isCollapsed));
+  }, [isCollapsed]);
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  const toggleSidebar = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+  }, []);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
     const scrollTop = e.currentTarget.scrollTop;
-    if (scrollTop > 10) {
-      setIsScrolled(true);
-    } else {
-      setIsScrolled(false);
-    }
-  };
+    const scrolled = scrollTop > 10;
+    setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+  }, []);
 
   return (
     <div className="h-screen max-h-screen bg-[#0E1B2E] dark:bg-[#09111D] text-slate-900 dark:text-slate-100 flex flex-col justify-between pt-2 md:pt-3 pr-2 md:pr-4 pb-1.5 md:pb-2.5 pl-0 transition-colors duration-300 overflow-hidden">
@@ -92,7 +89,7 @@ export default function SuperAdminLayoutClient({ children }: { children: React.R
           />
 
           {/* KONTEN UTAMA */}
-          <main onScroll={handleScroll} className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 overflow-y-auto">
+          <main onScroll={handleScroll} className="flex-1 w-full overflow-y-auto p-4 md:p-6">
             {children}
           </main>
         </div>
@@ -105,3 +102,4 @@ export default function SuperAdminLayoutClient({ children }: { children: React.R
     </div>
   );
 }
+

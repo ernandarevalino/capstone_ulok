@@ -249,7 +249,7 @@ export default function DaftarAdminCabangPage() {
 
   if (initialLoading) {
     return (
-      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 text-gray-800 dark:text-slate-100">
         {/* Page Header Skeleton */}
         <div className="mb-6">
           <div className="h-8 md:h-9 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
@@ -303,7 +303,7 @@ export default function DaftarAdminCabangPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="space-y-4 md:space-y-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* === HEADER SECTION === */}
       <div className="max-w-7xl mx-auto mb-6">

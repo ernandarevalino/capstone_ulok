@@ -67,7 +67,7 @@ export default function SuperAdminProfilePage() {
 
   if (loading) {
     return (
-      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8">
+      <div className="w-full overflow-x-hidden space-y-4 md:space-y-6">
         {/* Page Header Title/Subtitle */}
         <div className="mb-6">
           <div className="h-7 md:h-8 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
@@ -128,7 +128,7 @@ export default function SuperAdminProfilePage() {
   const initialLetter = fullName ? fullName.charAt(0).toUpperCase() : 'S';
 
   return (
-    <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100">
+    <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 text-gray-800 dark:text-slate-100">
       <div className="space-y-6">
 
         {/* === HEADER PAGE === */}

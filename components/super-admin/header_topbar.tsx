@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile, logoutAction } from '@/actions/auth';
-import { getNotificationsAction } from '@/actions/superadmin';
+import { motion, AnimatePresence } from 'framer-motion';
+import { logoutAction } from '@/actions/auth';
 import { getSuperAdminPageTitle } from './super_admin_nav_config';
 
 interface HeaderTopbarProps {
@@ -14,11 +14,11 @@ interface HeaderTopbarProps {
   unreadCount?: number;
 }
 
-export default function HeaderTopbar({
+function HeaderTopbar({
   onToggleSidebar,
   isCollapsed = false,
   profile: propProfile,
-  unreadCount: propUnreadCount,
+  unreadCount: propUnreadCount = 0,
 }: HeaderTopbarProps) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(propProfile || null);
@@ -26,35 +26,18 @@ export default function HeaderTopbar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Sync props or load fallback
+  // Sync props
   useEffect(() => {
     if (propProfile !== undefined) {
       setProfile(propProfile);
-    } else {
-      async function loadProfile() {
-        const res = await getCurrentProfile();
-        if (res && res.success) {
-          setProfile(res.profile);
-        }
-      }
-      loadProfile();
     }
-  }, [propProfile, pathname]);
+  }, [propProfile]);
 
   useEffect(() => {
     if (propUnreadCount !== undefined) {
       setUnreadCount(propUnreadCount);
-    } else {
-      async function loadUnreadNotifications() {
-        const res = await getNotificationsAction();
-        if (res && res.success) {
-          const unreadItems = res.data.filter((item: any) => !item.is_read);
-          setUnreadCount(unreadItems.length);
-        }
-      }
-      loadUnreadNotifications();
     }
-  }, [propUnreadCount, pathname]);
+  }, [propUnreadCount]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -77,9 +60,9 @@ export default function HeaderTopbar({
   };
 
   return (
-    <header className="h-16 bg-[#F0F4F8] dark:bg-[#131F33] px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-colors duration-200 rounded-t-2xl md:rounded-tl-none md:rounded-tr-3xl border-b border-slate-200/50 dark:border-slate-800/50">
+    <header className="h-16 bg-[#F0F4F8] dark:bg-[#131F33] pl-2 pr-4 md:pl-4 md:pr-8 flex items-center justify-between sticky top-0 z-30 transition-colors duration-200 rounded-t-2xl md:rounded-tl-none md:rounded-tr-3xl border-b border-slate-200/50 dark:border-slate-800/50">
       {/* === LEFT: SIDEBAR TOGGLE & DYNAMIC PAGE TITLE === */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
@@ -98,9 +81,18 @@ export default function HeaderTopbar({
             </svg>
           </button>
         )}
-        <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-          {pageTitle}
-        </h1>
+        <AnimatePresence mode="wait">
+          <motion.h1
+            key={pathname}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
+          >
+            {pageTitle}
+          </motion.h1>
+        </AnimatePresence>
       </div>
 
       {/* === RIGHT: ROLE BADGE, PROFILE DROPDOWN & NOTIFICATION === */}
@@ -207,3 +199,6 @@ export default function HeaderTopbar({
     </header>
   );
 }
+
+export default memo(HeaderTopbar);
+

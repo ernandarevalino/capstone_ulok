@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile } from '@/actions/auth';
+import { motion } from 'framer-motion';
 import {
   SUPER_ADMIN_NAV_GROUPS,
   isNavItemActive,
@@ -16,29 +16,22 @@ interface HeaderDesktopProps {
   profile?: any;
 }
 
-export default function HeaderDesktop({
+function HeaderDesktop({
   isCollapsed = false,
   profile: propProfile,
 }: HeaderDesktopProps) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(propProfile || null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
-  // Sync propProfile or fetch if missing
+  // Sync propProfile when passed
   useEffect(() => {
     if (propProfile) {
       setProfile(propProfile);
-      return;
     }
-    async function loadProfile() {
-      const res = await getCurrentProfile();
-      if (res && res.success) {
-        setProfile(res.profile);
-      }
-    }
-    loadProfile();
-  }, [propProfile, pathname]);
+  }, [propProfile]);
 
   // Click outside to close account menu popover
   useEffect(() => {
@@ -117,87 +110,88 @@ export default function HeaderDesktop({
   const renderNavItem = (item: NavItemConfig) => {
     const active = isNavItemActive(pathname, item.href, item.exact);
 
-    if (isCollapsed) {
-      if (active) {
-        return (
-          <div key={item.id} className="relative group my-0.5 z-20">
+    return (
+      <div
+        key={item.id}
+        onMouseEnter={() => setHoveredId(item.id)}
+        onMouseLeave={() => setHoveredId(null)}
+        className={`relative group my-0.5 z-20 ${active || isCollapsed ? '' : 'pr-3'}`}
+      >
+        {/* === Active Tab Sliding Background Indicator === */}
+        {active && (
+          <motion.div
+            layoutId="superadmin-active-tab"
+            className="absolute inset-0 z-10"
+            transition={{
+              type: 'spring',
+              stiffness: 380,
+              damping: 30,
+              mass: 0.8,
+            }}
+          >
             {/* Top-Right Inverse Radius Curve */}
             <div className="absolute -top-4 right-0 w-4 h-4 bg-[#F0F4F8] dark:bg-[#131F33] pointer-events-none z-10">
               <div className="w-full h-full bg-[#0E1B2E] dark:bg-[#09111D] rounded-br-2xl" />
             </div>
 
-            <Link
-              href={item.href}
-              title={item.title}
-              className="relative flex items-center justify-center h-10 w-full bg-[#F0F4F8] dark:bg-[#131F33] text-[#0E1B2E] dark:text-white rounded-l-2xl rounded-r-none transition-all duration-200 z-20 shadow-xs"
-            >
-              {renderNavIcon(item.icon, true)}
-            </Link>
+            {/* Active Card Body */}
+            <div className="w-full h-full bg-[#F0F4F8] dark:bg-[#131F33] rounded-l-2xl rounded-r-none shadow-xs relative">
+              {/* Left edge accent indicator bar */}
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-emerald-500 via-[#F28705] to-[#142B4D] rounded-r-full shadow-xs" />
+            </div>
 
             {/* Bottom-Right Inverse Radius Curve */}
             <div className="absolute -bottom-4 right-0 w-4 h-4 bg-[#F0F4F8] dark:bg-[#131F33] pointer-events-none z-10">
               <div className="w-full h-full bg-[#0E1B2E] dark:bg-[#09111D] rounded-tr-2xl" />
             </div>
+          </motion.div>
+        )}
 
-            {/* Collapsed Tooltip */}
-            <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#14233A] dark:bg-[#0E1828] text-white text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 border border-[#243A5E] dark:border-[#1C2C46] top-1/2 -translate-y-1/2">
-              {item.title}
-            </div>
-          </div>
-        );
-      }
+        {/* === Hover Soft Glass Pill Indicator === */}
+        {hoveredId === item.id && !active && (
+          <motion.div
+            layoutId="superadmin-hover-tab"
+            className={`absolute inset-0 bg-[#162740]/70 dark:bg-[#121E30]/80 z-10 ${
+              isCollapsed ? 'w-10 mx-auto rounded-xl' : 'w-full rounded-xl'
+            }`}
+            transition={{
+              type: 'spring',
+              stiffness: 450,
+              damping: 35,
+            }}
+          />
+        )}
 
-      return (
-        <div key={item.id} className="relative group my-0.5 pr-2">
-          <Link
-            href={item.href}
-            title={item.title}
-            className="relative flex items-center justify-center w-10 h-10 mx-auto transition-all duration-200 rounded-xl text-slate-400 hover:bg-[#162740]/70 dark:hover:bg-[#121E30]/70 hover:text-slate-100 font-medium"
+        {/* Nav Link Item */}
+        <Link
+          href={item.href}
+          title={isCollapsed ? item.title : undefined}
+          className={`relative flex items-center h-10 transition-colors duration-200 z-20 ${
+            active
+              ? 'text-[#0E1B2E] dark:text-white font-bold w-full'
+              : `text-slate-400 hover:text-slate-100 font-medium ${
+                  isCollapsed ? 'w-10 mx-auto justify-center' : 'w-full'
+                }`
+          } ${isCollapsed ? 'justify-center px-0' : 'pl-3.5 pr-4 space-x-3'}`}
+        >
+          {renderNavIcon(item.icon, active)}
+          <span
+            className={`truncate text-xs tracking-tight select-none transition-all duration-200 ease-out ${
+              isCollapsed
+                ? 'max-w-0 opacity-0 overflow-hidden pointer-events-none'
+                : 'max-w-[140px] opacity-100'
+            }`}
           >
-            {renderNavIcon(item.icon, false)}
-          </Link>
+            {item.title}
+          </span>
+        </Link>
 
-          {/* Collapsed Tooltip */}
+        {/* Collapsed Tooltip */}
+        {isCollapsed && (
           <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#14233A] dark:bg-[#0E1828] text-white text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 border border-[#243A5E] dark:border-[#1C2C46] top-1/2 -translate-y-1/2">
             {item.title}
           </div>
-        </div>
-      );
-    }
-
-    if (active) {
-      return (
-        <div key={item.id} className="relative my-0.5 z-20">
-          {/* Top-Right Inverse Radius Curve */}
-          <div className="absolute -top-4 right-0 w-4 h-4 bg-[#F0F4F8] dark:bg-[#131F33] pointer-events-none z-10">
-            <div className="w-full h-full bg-[#0E1B2E] dark:bg-[#09111D] rounded-br-2xl" />
-          </div>
-
-          <Link
-            href={item.href}
-            className="relative flex items-center h-10 pl-3.5 pr-4 space-x-3 w-full bg-[#F0F4F8] dark:bg-[#131F33] text-[#0E1B2E] dark:text-white font-bold rounded-l-2xl rounded-r-none transition-all duration-200 z-20 shadow-xs"
-          >
-            {renderNavIcon(item.icon, true)}
-            <span className="truncate text-xs tracking-tight select-none">{item.title}</span>
-          </Link>
-
-          {/* Bottom-Right Inverse Radius Curve */}
-          <div className="absolute -bottom-4 right-0 w-4 h-4 bg-[#F0F4F8] dark:bg-[#131F33] pointer-events-none z-10">
-            <div className="w-full h-full bg-[#0E1B2E] dark:bg-[#09111D] rounded-tr-2xl" />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div key={item.id} className="relative group my-0.5 pr-3">
-        <Link
-          href={item.href}
-          className="relative flex items-center h-10 px-3.5 space-x-3 w-full transition-all duration-200 rounded-xl text-slate-400 hover:bg-[#162740]/70 dark:hover:bg-[#121E30]/70 hover:text-slate-100 font-medium"
-        >
-          {renderNavIcon(item.icon, false)}
-          <span className="truncate text-xs tracking-tight select-none">{item.title}</span>
-        </Link>
+        )}
       </div>
     );
   };
@@ -206,10 +200,10 @@ export default function HeaderDesktop({
     <aside
       className={`hidden md:flex flex-col ${
         isCollapsed ? 'w-20 pl-2.5 pr-0' : 'w-56 pl-3.5 pr-0'
-      } bg-[#0E1B2E] dark:bg-[#09111D] text-slate-200 h-full shrink-0 select-none transition-all duration-300 py-3 relative z-30 rounded-l-3xl`}
+      } bg-[#0E1B2E] dark:bg-[#09111D] text-slate-200 h-full shrink-0 select-none transition-[width,padding] duration-200 ease-out py-3 relative z-30 rounded-l-3xl will-change-[width]`}
     >
-      {/* === 1. LOGO & BRAND HEADER (Matching Topbar Height h-16) === */}
-      <div className={`h-16 flex items-center shrink-0 mb-1 ${isCollapsed ? 'justify-center' : 'px-2 pr-5'}`}>
+      {/* === 1. LOGO & BRAND HEADER === */}
+      <div className={`h-16 flex items-center shrink-0 mb-1 transition-all duration-200 ${isCollapsed ? 'justify-center' : 'px-2 pr-5'}`}>
         <Link href="/admin/super-admin" className="flex items-center space-x-2.5 group overflow-hidden" title="PRISMA Super Admin">
           {isCollapsed ? (
             <span className="text-[11px] bg-emerald-600 text-white font-bold px-2 py-1 rounded-lg uppercase tracking-wider shadow-xs group-hover:scale-110 transition-transform">
@@ -235,9 +229,9 @@ export default function HeaderDesktop({
         {SUPER_ADMIN_NAV_GROUPS.map((group) => (
           <div key={group.id} className="space-y-0.5">
             {isCollapsed ? (
-              <div className="my-2.5 border-t border-[#223859]/60 dark:border-[#1B2B45]/60 mx-1" />
+              <div className="my-2.5 border-t border-[#223859]/60 dark:border-[#1B2B45]/60 mx-1 transition-all duration-200" />
             ) : (
-              <p className="px-3 pr-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1.5">
+              <p className="px-3 pr-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1.5 transition-all duration-200 truncate">
                 {group.groupTitle}
               </p>
             )}
@@ -246,12 +240,12 @@ export default function HeaderDesktop({
         ))}
       </nav>
 
-      {/* === 3. BOTTOM USER ACCOUNT CARD / SWITCHER === */}
+      {/* === 3. BOTTOM USER ACCOUNT CARD === */}
       <div
-        className={`pt-2 relative shrink-0 mt-auto ${isCollapsed ? '' : 'pr-3'}`}
+        className={`pt-2 relative shrink-0 mt-auto transition-all duration-200 ${isCollapsed ? '' : 'pr-3'}`}
         ref={accountMenuRef}
       >
-        <div className={`h-[1px] bg-slate-700/30 dark:bg-slate-800/40 mb-3 ${
+        <div className={`h-[1px] bg-slate-700/30 dark:bg-slate-800/40 mb-3 transition-all duration-200 ${
           isCollapsed 
             ? 'w-[80%] mx-auto' 
             : 'w-[95%] ml-1.5' 
@@ -293,9 +287,9 @@ export default function HeaderDesktop({
         <button
           onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
           title={isCollapsed ? (profile?.full_name || 'Super Admin') : undefined}
-          className={`flex items-center rounded-xl bg-transparent hover:bg-[#14233A]/60 dark:hover:bg-[#101C2E]/60 text-left transition-colors border border-slate-700/30 dark:border-slate-800/40 group ${
+          className={`flex items-center rounded-xl bg-transparent hover:bg-[#14233A]/60 dark:hover:bg-[#101C2E]/60 text-left transition-all duration-200 border border-slate-700/30 dark:border-slate-800/40 group ${
             isCollapsed 
-              ? 'w-14 h-14 mx-auto justify-center p-2' 
+              ? 'w-12 h-12 mx-auto justify-center p-1.5' 
               : 'w-full h-14 justify-between p-2.5' 
           }`}
         >
@@ -307,14 +301,12 @@ export default function HeaderDesktop({
                 <span>{initialLetter}</span>
               )}
             </div>
-            {!isCollapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-white truncate">
-                  {profile?.full_name || 'Super Admin'}
-                </p>
-                <p className="text-[10px] text-slate-400 truncate">Super Admin</p>
-              </div>
-            )}
+            <div className={`min-w-0 flex-1 transition-all duration-200 ${isCollapsed ? 'max-w-0 opacity-0 overflow-hidden pointer-events-none' : 'max-w-[120px] opacity-100'}`}>
+              <p className="text-xs font-bold text-white truncate">
+                {profile?.full_name || 'Super Admin'}
+              </p>
+              <p className="text-[10px] text-slate-400 truncate">Super Admin</p>
+            </div>
           </div>
           {!isCollapsed && (
             <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,3 +318,6 @@ export default function HeaderDesktop({
     </aside>
   );
 }
+
+export default memo(HeaderDesktop);
+

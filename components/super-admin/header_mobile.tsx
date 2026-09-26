@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getCurrentProfile, logoutAction } from '@/actions/auth';
-import { getNotificationsAction } from '@/actions/superadmin';
+import { motion, AnimatePresence } from 'framer-motion';
+import { logoutAction } from '@/actions/auth';
 import { SUPER_ADMIN_NAV_GROUPS, isNavItemActive } from './super_admin_nav_config';
 
 interface HeaderMobileProps {
@@ -13,10 +13,10 @@ interface HeaderMobileProps {
   unreadCount?: number;
 }
 
-export default function HeaderMobile({
+function HeaderMobile({
   isScrolled = false,
   profile: propProfile,
-  unreadCount: propUnreadCount,
+  unreadCount: propUnreadCount = 0,
 }: HeaderMobileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -26,31 +26,14 @@ export default function HeaderMobile({
   useEffect(() => {
     if (propProfile !== undefined) {
       setProfile(propProfile);
-    } else {
-      async function loadProfile() {
-        const res = await getCurrentProfile();
-        if (res && res.success) {
-          setProfile(res.profile);
-        }
-      }
-      loadProfile();
     }
-  }, [propProfile, pathname]);
+  }, [propProfile]);
 
   useEffect(() => {
     if (propUnreadCount !== undefined) {
       setUnreadCount(propUnreadCount);
-    } else {
-      async function loadUnreadNotifications() {
-        const res = await getNotificationsAction();
-        if (res && res.success) {
-          const unreadItems = res.data.filter((item: any) => !item.is_read);
-          setUnreadCount(unreadItems.length);
-        }
-      }
-      loadUnreadNotifications();
     }
-  }, [propUnreadCount, pathname]);
+  }, [propUnreadCount]);
 
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'S';
 
@@ -63,7 +46,7 @@ export default function HeaderMobile({
     <>
       {/* === MOBILE TOP HEADER BAR === */}
       <header
-        className={`block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 transition-all duration-300 ease-in-out overflow-hidden rounded-t-2xl ${
+        className={`block md:hidden bg-[#142B4D] text-white shadow-md relative z-40 transition-[max-height,opacity,margin] duration-300 ease-in-out overflow-hidden rounded-t-2xl ${
           isScrolled ? 'max-h-0 opacity-0 py-0 border-none' : 'max-h-16 opacity-100 h-16 mb-1'
         }`}
       >
@@ -110,98 +93,120 @@ export default function HeaderMobile({
       </header>
 
       {/* === MOBILE SIDEBAR DRAWER OVERLAY === */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"
-            onClick={() => setIsOpen(false)}
-          />
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 bg-black/60"
+              onClick={() => setIsOpen(false)}
+            />
 
-          {/* Drawer Sidebar Content */}
-          <div className="relative flex flex-col w-72 max-w-[80vw] bg-[#0E1B2E] text-slate-200 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200 rounded-r-2xl border-r border-slate-800">
-            {/* Drawer Header */}
-            <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 shrink-0">
-              <Link
-                href="/admin/super-admin"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center space-x-2"
-              >
-                <img
-                  src="/images/prisma-white-navbar.png"
-                  alt="Logo PRISMA"
-                  className="h-5 w-auto object-contain"
-                />
-                <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  SA
-                </span>
-              </Link>
+            {/* Drawer Sidebar Content */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              className="relative flex flex-col w-72 max-w-[80vw] bg-[#0E1B2E] text-slate-200 h-full shadow-2xl z-10 rounded-r-2xl border-r border-slate-800"
+            >
+              {/* Drawer Header */}
+              <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 shrink-0">
+                <Link
+                  href="/admin/super-admin"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center space-x-2"
+                >
+                  <img
+                    src="/images/prisma-white-navbar.png"
+                    alt="Logo PRISMA"
+                    className="h-5 w-auto object-contain"
+                  />
+                  <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    SA
+                  </span>
+                </Link>
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors text-lg"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Navigation Groups */}
-            <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-5 text-xs font-semibold tracking-wide">
-              {SUPER_ADMIN_NAV_GROUPS.map((group) => (
-                <div key={group.id} className="space-y-1">
-                  <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    {group.groupTitle}
-                  </p>
-                  {group.items.map((item) => {
-                    const active = isNavItemActive(pathname, item.href, item.exact);
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-colors ${
-                          active
-                            ? 'bg-[#1D3557] text-white font-bold shadow-xs'
-                            : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-                        }`}
-                      >
-                        <span>{item.title}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
-            </nav>
-
-            {/* Mobile Footer / User Profile & Logout */}
-            <div className="p-4 border-t border-slate-800 shrink-0 bg-slate-900/50">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{initialLetter}</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Super Admin'}</p>
-                  <p className="text-[10px] text-slate-400 truncate">{profile?.nik || 'superadmin@prisma.com'}</p>
-                </div>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors text-lg"
+                >
+                  ✕
+                </button>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
-            </div>
+              {/* Navigation Groups */}
+              <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-5 text-xs font-semibold tracking-wide">
+                {SUPER_ADMIN_NAV_GROUPS.map((group) => (
+                  <div key={group.id} className="space-y-1">
+                    <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                      {group.groupTitle}
+                    </p>
+                    {group.items.map((item) => {
+                      const active = isNavItemActive(pathname, item.href, item.exact);
+                      return (
+                        <div key={item.id} className="relative">
+                          {active && (
+                            <motion.div
+                              layoutId="mobile-active-tab-indicator"
+                              className="absolute inset-0 bg-[#1D3557] rounded-xl shadow-xs z-0"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <Link
+                            href={item.href}
+                            onClick={() => setIsOpen(false)}
+                            className={`relative z-10 flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-colors ${
+                              active
+                                ? 'text-white font-bold'
+                                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                            }`}
+                          >
+                            <span>{item.title}</span>
+                          </Link>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </nav>
+
+              {/* Mobile Footer / User Profile & Logout */}
+              <div className="p-4 border-t border-slate-800 shrink-0 bg-slate-900/50">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{initialLetter}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Super Admin'}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{profile?.nik || 'superadmin@prisma.com'}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }
+
+export default memo(HeaderMobile);
