@@ -95,11 +95,14 @@ export async function loginAction(formData: FormData) {
       defaultPath = '/admin/cabang'
     }
 
+    const SEVEN_DAYS_SECONDS = 60 * 60 * 24 * 7
+
     cookieStore.set('last_activity_at', Date.now().toString(), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
       secure: isProduction,
+      maxAge: SEVEN_DAYS_SECONDS,
     })
 
     cookieStore.set('last_visited_path', defaultPath, {

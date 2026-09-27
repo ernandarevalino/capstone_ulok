@@ -474,8 +474,12 @@ export default function PengelompokanDashboard() {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
+    let isMounted = true
     setMounted(true)
-    fetchData()
+    fetchData(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleDownload = async (url: string, filename: string) => {
@@ -538,20 +542,21 @@ export default function PengelompokanDashboard() {
     }
   }
 
-  async function fetchData() {
+  async function fetchData(isMountedCheck: boolean = true) {
     setLoading(true)
     setError(null)
     try {
       const res = await getPengelompokanData()
+      if (!isMountedCheck) return
       if (res.success && res.data) {
         setData(res.data)
       } else {
         setError(res.error || 'Terjadi kesalahan saat memuat data.')
       }
     } catch (err: any) {
-      setError(err.message || 'Gagal memuat data pengelompokan.')
+      if (isMountedCheck) setError(err.message || 'Gagal memuat data pengelompokan.')
     } finally {
-      setLoading(false)
+      if (isMountedCheck) setLoading(false)
     }
   }
 
@@ -912,7 +917,7 @@ export default function PengelompokanDashboard() {
 
           {/* Refresh */}
           <button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             disabled={mounted ? loading : false}
             title="Muat Ulang Data"
             className="flex h-11 w-11 shrink-0 sm:h-10 sm:w-auto items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 sm:px-4"

@@ -731,13 +731,15 @@ export default function UsulanLokasiPage() {
     setCurrentPage(1)
   }, [])
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async (isMountedCheck: boolean = true) => {
     setIsLoading(true)
     try {
       const [res, countRes] = await Promise.all([
         getUlokSubmissions(),
         getDeletedUlokCount()
       ])
+
+      if (!isMountedCheck) return
 
       if (res.success && res.data) {
         setSubmissions(res.data)
@@ -755,14 +757,17 @@ export default function UsulanLokasiPage() {
     } catch (err) {
       console.error(err)
     } finally {
-      setIsLoading(false)
+      if (isMountedCheck) setIsLoading(false)
     }
-  }
+  }, [router])
 
   useEffect(() => {
-    router.refresh()
-    fetchSubmissions()
-  }, [router])
+    let isMounted = true
+    fetchSubmissions(isMounted)
+    return () => {
+      isMounted = false
+    }
+  }, [fetchSubmissions])
 
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault()

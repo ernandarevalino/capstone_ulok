@@ -311,11 +311,17 @@ export default function DetailUlokBadanHukumPage() {
       }
     })
 
+    let channel: any = null
+    let activeClient: any = null
+    let cancelled = false
+
     const fetchDetail = async () => {
       setIsLoading(true)
       setChecklistLoading(true)
       const res = await getUlokDetail(ulokId)
       
+      if (cancelled) return
+
       if (res.success && res.data) {
         const fetchedStatus = res.data.jenis_badan_hukum || 'PT'
         setNamaLokasi(res.data.nama_lokasi || '')
@@ -334,6 +340,8 @@ export default function DetailUlokBadanHukumPage() {
           fetchChecklistData(fetchedStatus)
         ])
 
+        if (cancelled) return
+
         if (commentsRes.success && commentsRes.data) {
           setComments(commentsRes.data)
         }
@@ -342,17 +350,15 @@ export default function DetailUlokBadanHukumPage() {
           setCurrentProfile(profileRes.profile)
         }
       } else {
-        alert('Gagal memuat data: ' + res.error)
-        router.push(backPath)
+        if (!cancelled) {
+          alert('Gagal memuat data: ' + res.error)
+          router.push(backPath)
+        }
       }
-      setIsLoading(false)
+      if (!cancelled) setIsLoading(false)
     }
 
     fetchDetail()
-
-    let channel: any = null
-    let activeClient: any = null
-    let cancelled = false
 
     const initRealtime = async () => {
       const client = await getRealtimeClient()

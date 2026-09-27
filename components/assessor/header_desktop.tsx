@@ -5,44 +5,36 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getCurrentProfile } from '@/actions/auth';
 import { getNotificationsAction } from '@/actions/assessor';
+import { useAssessorProfile } from '@/context/AssessorProfileContext';
 
 export default function HeaderDesktop() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<any>(null);
+  const profileFromContext = useAssessorProfile();
+  const profile = profileFromContext;
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
+    let isMounted = true;
     let intervalId: any;
 
-    async function loadData() {
-      const res = await getCurrentProfile();
-      if (res && res.success && res.profile) {
-        setProfile(res.profile);
-        const uId = res.profile.id;
-
-        const fetchUnread = async () => {
-          const resNotif = await getNotificationsAction();
-          if (resNotif && resNotif.success) {
-            const unreadItems = resNotif.data.filter((item: any) => !item.is_read);
-            setUnreadCount(unreadItems.length);
-          }
-        };
-
-        await fetchUnread();
-
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(fetchUnread, 10000);
+    const fetchUnread = async () => {
+      const resNotif = await getNotificationsAction();
+      if (isMounted && resNotif && resNotif.success) {
+        const unreadItems = resNotif.data.filter((item: any) => !item.is_read);
+        setUnreadCount(unreadItems.length);
       }
-    }
+    };
 
-    loadData();
+    fetchUnread();
+    intervalId = setInterval(fetchUnread, 15000);
 
     return () => {
+      isMounted = false;
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
-  }, [pathname]);
+  }, []);
 
   const isActive = (path: string) => pathname === path;
   const initialLetter = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'A';

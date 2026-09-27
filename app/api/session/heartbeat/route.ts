@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
+const SEVEN_DAYS_SECONDS = 60 * 60 * 24 * 7 // 7 hari (604800 detik)
+
 export async function POST() {
   try {
     const supabase = await createClient()
@@ -21,6 +23,7 @@ export async function POST() {
       sameSite: 'lax',
       path: '/',
       secure: isProduction,
+      maxAge: SEVEN_DAYS_SECONDS,
     })
 
     return NextResponse.json({ ok: true })

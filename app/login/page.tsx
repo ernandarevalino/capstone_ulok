@@ -20,7 +20,7 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('reason') === 'session_expired') {
-      setErrorMsg('Sesi Anda telah berakhir setelah 30 menit. Silakan masuk kembali.');
+      setErrorMsg('Sesi Anda telah berakhir setelah 1 jam tidak ada aktivitas. Silakan masuk kembali.');
     }
   }, []);
 

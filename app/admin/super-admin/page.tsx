@@ -214,6 +214,13 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
+      {/* ══ ANALITIK & PERFORMA ══════════════════════════════════════ */}
+      <div className="flex items-center gap-2 mt-[50px]">
+        <TrendingUp className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
+        <h2 className="text-sm font-black text-gray-700 dark:text-slate-200 uppercase tracking-wide">
+          Analitik &amp; Performa
+        </h2>
+      </div>
 
       {/* ROW 2: 3 Stat Cards (Col 1: 1 span | Col 2: 1 span | Col 3: 1 span) ═══
           Benchmark row: 3 Cards of EXACT EQUAL WIDTH (1/3 each)!
@@ -249,13 +256,6 @@ export default function SuperAdminDashboard() {
         />
       </div>
 
-      {/* ══ ANALITIK & PERFORMA ══════════════════════════════════════ */}
-      <div className="flex items-center gap-2 mt-[50px]">
-        <TrendingUp className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
-        <h2 className="text-sm font-black text-gray-700 dark:text-slate-200 uppercase tracking-wide">
-          Analitik &amp; Performa
-        </h2>
-      </div>
 
       {/* ROW 3: 2x2 Charts (Col 1 & 2: 2 spans) + Recent Activity (Col 3: 1 span) ══
           Charts block spans Col 1 & 2 (with 2 inner cols matching Col 1 & Col 2).
