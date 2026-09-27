@@ -15,11 +15,17 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options: CookieOptions }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // (Read-only)
+            cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options: CookieOptions }) => {
+              cookieStore.set(name, value, {
+                path: options?.path ?? '/',
+                sameSite: (options?.sameSite === 'none' || options?.sameSite === 'strict' || options?.sameSite === 'lax') ? options.sameSite : 'lax',
+                secure: process.env.NODE_ENV === 'production',
+                httpOnly: options?.httpOnly ?? true,
+                maxAge: options?.maxAge,
+              })
+            })
+          } catch (err) {
+            console.error('[utils/supabase/server.ts] setAll cookie error:', err)
           }
         },
       },

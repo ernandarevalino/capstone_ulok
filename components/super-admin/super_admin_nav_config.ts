@@ -19,24 +19,17 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroupConfig[] = [
     items: [
       {
         id: 'ulok-dashboard',
-        title: 'Ulok Dashboard',
+        title: 'Dashboard',
         href: '/admin/super-admin',
         exact: true,
         icon: 'dashboard',
       },
       {
         id: 'clustering-dashboard',
-        title: 'Clustering Dashboard',
+        title: 'Clustering',
         href: '/admin/super-admin/clustering',
         exact: false,
         icon: 'clustering',
-      },
-      {
-        id: 'user-dashboard',
-        title: 'User Dashboard',
-        href: '/admin/super-admin/user-dashboard',
-        exact: false,
-        icon: 'analytics',
       },
     ],
   },
@@ -85,9 +78,9 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroupConfig[] = [
     groupTitle: 'PENGATURAN',
     items: [
       {
-        id: 'branches',
-        title: 'Umum',
-        href: '/admin/super-admin/branches',
+        id: 'settings',
+        title: 'Pengaturan',
+        href: '/admin/super-admin/settings',
         exact: false,
         icon: 'settings',
       },
@@ -109,16 +102,16 @@ export function isNavItemActive(pathname: string, href: string, exact: boolean =
  * Get dynamic page title for the header topbar based on current pathname
  */
 export function getSuperAdminPageTitle(pathname: string): string {
-  if (pathname === '/admin/super-admin') return 'Ulok Dashboard';
-  if (pathname.startsWith('/admin/super-admin/clustering')) return 'Clustering Dashboard';
-  if (pathname.startsWith('/admin/super-admin/user-dashboard')) return 'User Dashboard';
+  if (pathname === '/admin/super-admin') return 'Dashboard';
+  if (pathname.startsWith('/admin/super-admin/clustering')) return 'Clustering';
   if (pathname.startsWith('/admin/super-admin/daftaruser/admincabang')) return 'Daftar Admin Cabang';
   if (pathname.startsWith('/admin/super-admin/daftaruser/assessor')) return 'Daftar Assessor Legal';
   if (pathname.startsWith('/admin/super-admin/riwayat-login')) return 'User Activity Log';
   if (pathname.startsWith('/admin/super-admin/recyclebin')) return 'Recycle Bin';
-  if (pathname.startsWith('/admin/super-admin/profile')) return 'Profil Super Admin';
+  if (pathname.startsWith('/admin/super-admin/settings')) return 'Pengaturan Sistem';
+  if (pathname.startsWith('/admin/super-admin/profile')) return 'Pengaturan Sistem';
+  if (pathname.startsWith('/admin/super-admin/branches')) return 'Pengaturan Sistem';
   if (pathname.startsWith('/admin/super-admin/notification')) return 'Notifikasi System';
-  if (pathname.startsWith('/admin/super-admin/branches')) return 'Manajemen Cabang';
   
   return 'Dashboard';
 }

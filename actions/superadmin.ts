@@ -213,6 +213,81 @@ export async function getAllBranchesAction() {
   }
 }
 
+export interface CreateBranchParams {
+  nama_cabang: string;
+  kabupaten_kota: string;
+  provinsi: string;
+}
+
+export interface UpdateBranchParams {
+  id: number;
+  nama_cabang: string;
+  kabupaten_kota: string;
+  provinsi: string;
+}
+
+// === ACTIONS: TAMBAH CABANG BARU ===
+export async function createBranchAction({ nama_cabang, kabupaten_kota, provinsi }: CreateBranchParams) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('branches')
+      .insert([{ nama_cabang, kabupaten_kota, provinsi }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await createNotification(
+      'Cabang Baru Ditambahkan',
+      `Cabang '${nama_cabang}' (${kabupaten_kota}, ${provinsi}) telah berhasil ditambahkan ke sistem.`,
+      null,
+      'system'
+    );
+
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// === ACTIONS: UPDATE CABANG ===
+export async function updateBranchAction({ id, nama_cabang, kabupaten_kota, provinsi }: UpdateBranchParams) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('branches')
+      .update({ nama_cabang, kabupaten_kota, provinsi })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// === ACTIONS: HAPUS CABANG ===
+export async function deleteBranchAction(id: number) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+      .from('branches')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+
 // === ACTIONS: AMBIL STATISTIK DASHBOARD ===
 export async function getDashboardStatsAction() {
   try {

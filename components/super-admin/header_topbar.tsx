@@ -153,7 +153,7 @@ function HeaderTopbar({
               {/* Links */}
               <div className="py-1.5 px-1">
                 <Link
-                  href="/admin/super-admin/profile"
+                  href="/admin/super-admin/settings?tab=profile"
                   onClick={() => setIsDropdownOpen(false)}
                   className="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700/60 transition-colors"
                 >
