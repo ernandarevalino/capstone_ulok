@@ -1,683 +1,341 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useCabangProfile } from '@/context/CabangProfileContext';
 import { getUlokSubmissions, getNotificationsAction } from '@/actions/cabang';
 import { calculateULOKSAW } from '@/actions/saw';
-import { 
-  FileText, 
-  FileEdit, 
-  Clock, 
-  AlertTriangle, 
-  MapPin, 
-  TrendingUp, 
-  Layers,
-  Bell
+import type { SelectedCellInfo } from '@/components/cabang/ActivityHeatmapCabang';
+import {
+  FileText,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  MoreHorizontal,
+  BarChart3,
+  Bell,
+  TrendingUp,
+  Timer,
+  TriangleAlert,
+  BadgeCheck,
 } from 'lucide-react';
 
-const SubmissionsPieChart = dynamic(() => import('./SubmissionsPieChart'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[14px] sm:border-[16px] border-slate-200 dark:border-slate-800 animate-pulse" />
-    </div>
-  ),
-});
+// ── DYNAMIC IMPORTS ────────────────────────────────────────────────────────────
+const ActivityHeatmapCabang = dynamic(
+  () => import('@/components/cabang/ActivityHeatmapCabang'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs h-full min-h-[420px] animate-pulse" />
+    ),
+  }
+);
 
+const TopUlokProgressList = dynamic(
+  () => import('@/components/cabang/TopUlokProgressList'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs h-full min-h-[420px] animate-pulse" />
+    ),
+  }
+);
+
+// ── KPI CARD ──────────────────────────────────────────────────────────────────
+interface KpiCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  trendIcon: React.ReactNode;
+  trendText: string;
+  trendType: 'success' | 'warning' | 'danger' | 'info';
+  subLabel?: string;
+  href?: string;
+}
+
+function KpiCard({
+  title,
+  value,
+  icon,
+  trendIcon,
+  trendText,
+  trendType,
+  subLabel = 'vs bulan lalu',
+  href,
+}: KpiCardProps) {
+  let badgeColor =
+    'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+  if (trendType === 'warning')
+    badgeColor =
+      'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+  else if (trendType === 'danger')
+    badgeColor =
+      'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-400 border-red-200 dark:border-red-800';
+  else if (trendType === 'info')
+    badgeColor =
+      'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+
+  const inner = (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer flex flex-col justify-between space-y-3 h-full">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+            {icon}
+          </div>
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-tight truncate max-w-[130px]">
+            {title}
+          </span>
+        </div>
+        <MoreHorizontal className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors" />
+      </div>
+
+      <div>
+        <p className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          {value}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${badgeColor}`}
+        >
+          {trendIcon}
+          {trendText}
+        </span>
+        <span className="text-[11px] font-semibold text-slate-400 truncate">
+          {subLabel}
+        </span>
+      </div>
+    </div>
+  );
+
+  return href ? (
+    <Link href={href} className="block h-full">
+      {inner}
+    </Link>
+  ) : (
+    <div className="h-full">{inner}</div>
+  );
+}
+
+// ── PAGE ──────────────────────────────────────────────────────────────────────
 export default function AdminCabangPage() {
   const profile = useCabangProfile();
-  const fullName = profile?.full_name || "Pengguna";
+  const fullName = profile?.full_name || 'Admin Cabang';
+
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Heatmap ↔ detail panel shared state
+  const [selectedCell, setSelectedCell] = useState<SelectedCellInfo | null>(null);
+  const [selectedCellKey, setSelectedCellKey] = useState<string | null>(null);
+
+  const handleCellSelect = useCallback(
+    (info: SelectedCellInfo | null) => {
+      setSelectedCell(info);
+      // Derive a stable key for highlighting — use label+sublabel as proxy
+      setSelectedCellKey(info ? `${info.label}-${info.sublabel}` : null);
+    },
+    []
+  );
+
   useEffect(() => {
     async function initDashboard() {
       setLoading(true);
-
       try {
         const [submissionsRes, notificationsRes] = await Promise.all([
           getUlokSubmissions(),
-          getNotificationsAction()
+          getNotificationsAction(),
         ]);
 
-        if (submissionsRes && submissionsRes.success && submissionsRes.data) {
+        if (submissionsRes?.success && submissionsRes.data) {
           setSubmissions(submissionsRes.data);
 
           const uncalculated = submissionsRes.data.filter(
-            (s: any) =>
-              s.status !== 'Draft' &&
-              (s.final_score === 0 || s.final_score === null)
+            (s: any) => s.status !== 'Draft' && (s.final_score === 0 || s.final_score === null)
           );
-
           if (uncalculated.length > 0) {
-            Promise.all(
-              uncalculated.map((s: any) => calculateULOKSAW(s.id))
-            )
-              .then(() => {
-                getUlokSubmissions().then((updatedRes) => {
-                  if (
-                    updatedRes &&
-                    updatedRes.success &&
-                    updatedRes.data
-                  ) {
-                    setSubmissions(updatedRes.data);
-                  }
-                });
-              })
+            Promise.all(uncalculated.map((s: any) => calculateULOKSAW(s.id)))
+              .then(() =>
+                getUlokSubmissions().then((u) => {
+                  if (u?.success && u.data) setSubmissions(u.data);
+                })
+              )
               .catch((err) =>
-                console.error(
-                  "Gagal melakukan kalkulasi background SAW:",
-                  err
-                )
+                console.error('Gagal kalkulasi background SAW:', err)
               );
           }
         }
 
-        if (
-          notificationsRes &&
-          notificationsRes.success &&
-          notificationsRes.data
-        ) {
-          setNotifications(notificationsRes.data.slice(0, 5));
+        if (notificationsRes?.success && notificationsRes.data) {
+          setNotifications(notificationsRes.data.slice(0, 7));
         }
       } catch (err) {
-        console.error(
-          "Gagal menginisialisasi dashboard admin cabang:",
-          err
-        );
+        console.error('Gagal inisialisasi dashboard admin cabang:', err);
       } finally {
         setLoading(false);
       }
     }
-
     initDashboard();
   }, []);
 
   const totalSubmissions = submissions.length;
+  const inReviewCount = submissions.filter((s) => s.status === 'In Review').length;
+  const revisionCount = submissions.filter((s) => s.status === 'Revisi').length;
+  const approvedCount = submissions.filter((s) => s.status === 'Approved').length;
 
-  const draftCount = submissions.filter(
-    s => s.status === 'Draft'
-  ).length;
-
-  const inReviewCount = submissions.filter(
-    s => s.status === 'In Review'
-  ).length;
-
-  const revisionCount = submissions.filter(
-    s => s.status === 'Revisi'
-  ).length;
-
-  const approvedCount = submissions.filter(
-    s => s.status === 'Approved'
-  ).length;
-
-  const rejectedCount = submissions.filter(
-    s => s.status === 'Rejected'
-  ).length;
-
-  const chartData = [
-    {
-      name: 'Draft (Belum Diajukan)',
-      value: draftCount,
-      color: '#64748B'
-    },
-    {
-      name: 'Dalam Review',
-      value: inReviewCount,
-      color: '#FE9A00'
-    },
-    {
-      name: 'Butuh Revisi',
-      value: revisionCount,
-      color: '#D11A22'
-    },
-    {
-      name: 'Selesai / Approved',
-      value: approvedCount,
-      color: '#10B981'
-    },
-    {
-      name: 'Ditolak / Rejected',
-      value: rejectedCount,
-      color: '#334155'
-    }
-  ].filter(item => item.value > 0);
-
-  const displayChartData =
-    chartData.length > 0
-      ? chartData
-      : [
-          {
-            name: 'Draft',
-            value: 1,
-            color: '#64748B'
-          },
-          {
-            name: 'Dalam Review',
-            value: 1,
-            color: '#FE9A00'
-          },
-          {
-            name: 'Butuh Revisi',
-            value: 1,
-            color: '#D11A22'
-          }
-        ];
-
-  const topScores = [...submissions]
-    .filter(
-      s =>
-        s.final_score !== null &&
-        s.final_score !== undefined
-    )
-    .sort((a, b) => b.final_score - a.final_score)
-    .slice(0, 7);
-
+  // ── SKELETON ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
-
-        {/* Skeleton Welcome Banner */}
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800 p-5 sm:p-6">
-          <div className="h-5 sm:h-7 w-1/2 max-w-xs bg-slate-300 dark:bg-slate-700 rounded-md mb-2.5 animate-pulse" />
-          <div className="h-3 w-full max-w-md bg-slate-300/70 dark:bg-slate-700/70 rounded-md animate-pulse" />
-        </div>
-
-        {/* Skeleton Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+      <div className="w-full min-h-full space-y-5 text-gray-800 dark:text-slate-100 transition-colors duration-300">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-between gap-2"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 h-[130px] animate-pulse space-y-3"
             >
-              <div className="space-y-1.5 min-w-0 flex-1">
-                <div className="h-2.5 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                <div className="h-6 sm:h-8 w-14 bg-slate-300 dark:bg-slate-700 rounded-md animate-pulse" />
-              </div>
-              <div className="w-9 h-9 sm:w-11 sm:h-11 bg-slate-200 dark:bg-slate-800 rounded-lg sm:rounded-xl shrink-0 animate-pulse" />
+              <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-8 w-16 bg-slate-300 dark:bg-slate-700 rounded" />
+              <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded-full" />
             </div>
           ))}
         </div>
-
-        {/* Skeleton Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm">
-          <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
-            <div className="h-3.5 w-52 bg-slate-300 dark:bg-slate-700 rounded-md mb-2 animate-pulse" />
-            <div className="h-2.5 w-64 max-w-full bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse" />
-          </div>
-          <div className="flex flex-col lg:flex-row items-center justify-around gap-4 md:gap-6">
-            <div className="w-full lg:w-1/2 h-52 sm:h-60 md:h-64 flex items-center justify-center">
-              <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[14px] sm:border-[16px] border-slate-200 dark:border-slate-800 animate-pulse" />
-            </div>
-            <div className="w-full lg:w-1/2 flex flex-col gap-2">
-              <div className="h-2.5 w-24 bg-slate-200 dark:bg-slate-800 rounded-md mb-1 animate-pulse" />
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-9 w-full bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton Bottom Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
-          {/* Recent Activity */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[58px]" />
-            <div className="p-3 sm:p-4 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-2.5">
-                  <div className="mt-1 shrink-0 w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-2/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                    <div className="h-2.5 w-4/5 bg-slate-100 dark:bg-slate-800/60 rounded animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Top 7 Lokasi */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-slate-200 dark:bg-slate-800 p-3.5 sm:p-4 h-[52px] sm:h-[58px]" />
-            <div className="p-3 sm:p-4 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between gap-3">
-                  <div className="h-3 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                  <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800/60 rounded animate-pulse" />
-                  <div className="h-4 w-14 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
-                  <div className="h-3 w-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                </div>
-              ))}
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 h-[420px] animate-pulse" />
+          <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 h-[420px] animate-pulse" />
         </div>
       </div>
     );
   }
 
+  // ── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
-      
-      {/* =====================================================
-          WELCOME BANNER
-      ====================================================== */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#142B4D] via-[#0f203a] to-[#1a365d] p-5 sm:p-6 text-white shadow-lg transition-all duration-300 hover:shadow-xl">
+    <div className="w-full min-h-full space-y-5 text-gray-800 dark:text-slate-100 transition-colors duration-300">
 
-        <div className="absolute -right-6 -bottom-6 sm:-right-10 sm:-bottom-10 opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500">
-          <Layers className="w-40 h-40 sm:w-64 sm:h-64 text-white" />
+      {/* ══ HEADER BAR ═══════════════════════════════════════════════════════════ */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-[#142B4D] dark:text-blue-400" />
+          <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wide">
+            Dashboard Command Center
+          </h2>
+        </div>
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          Selamat datang,{' '}
+          <strong className="text-[#142B4D] dark:text-blue-400">{fullName}</strong>
+        </span>
+      </div>
+
+      {/* ══ ROW 1: 4 KPI CARDS ════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          title="Total Usulan ULOK"
+          value={totalSubmissions}
+          icon={<FileText className="w-4.5 h-4.5 text-[#142B4D] dark:text-blue-400" />}
+          trendIcon={<TrendingUp className="w-3 h-3" />}
+          trendText="+15%"
+          trendType="success"
+          subLabel="vs bulan lalu"
+          href="/admin/cabang/usulan-lokasi"
+        />
+        <KpiCard
+          title="Dalam Review"
+          value={inReviewCount}
+          icon={<Clock className="w-4.5 h-4.5 text-[#F28705]" />}
+          trendIcon={<Timer className="w-3 h-3" />}
+          trendText="Active Review"
+          trendType="warning"
+          subLabel="evaluasi assessor"
+        />
+        <KpiCard
+          title="Butuh Revisi"
+          value={revisionCount}
+          icon={<AlertTriangle className="w-4.5 h-4.5 text-[#D91E2E]" />}
+          trendIcon={<TriangleAlert className="w-3 h-3" />}
+          trendText="Action Needed"
+          trendType="danger"
+          subLabel="perbaikan berkas"
+        />
+        <KpiCard
+          title="Approved & Selesai"
+          value={approvedCount}
+          icon={<CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
+          trendIcon={<BadgeCheck className="w-3 h-3" />}
+          trendText="Validated"
+          trendType="success"
+          subLabel="usulan disetujui"
+        />
+      </div>
+
+      {/* ══ ROW 2: ACTIVITY HEATMAP (left 2-col) + DETAIL PANEL (right 1-col) ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+        {/* LEFT: Activity Heatmap */}
+        <div className="lg:col-span-2 min-h-[420px]">
+          <ActivityHeatmapCabang
+            submissions={submissions}
+            onCellSelect={handleCellSelect}
+            selectedCellKey={selectedCellKey}
+          />
         </div>
 
-        <div className="relative z-10 space-y-1.5 sm:space-y-2">
-
-          <h1 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent leading-snug">
-            Hallo Selamat Datang, {fullName}!
-          </h1>
-
-          <p className="text-blue-100/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
-            Pantau status usulan lokasi (ULOK) cabang Anda, kelola draf dokumen, perbaiki revisi, dan pantau penilaian real-time di sini.
-          </p>
-
+        {/* RIGHT: Detail Panel (driven by selected cell) */}
+        <div className="lg:col-span-1 min-h-[420px]">
+          <TopUlokProgressList
+            selectedCell={selectedCell}
+            submissions={submissions}
+          />
         </div>
       </div>
 
-      {/* =====================================================
-          STATS
-      ====================================================== */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-
-        {/* Total Pengajuan */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#142B4D] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-
-          <div className="space-y-0.5 sm:space-y-1 min-w-0">
-
-            <p className="text-gray-400 dark:text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
-              Total Pengajuan
-            </p>
-
-            <h3 className="text-xl sm:text-3xl font-black text-gray-800 dark:text-slate-100 tracking-tight">
-              {totalSubmissions}
-            </h3>
-
-            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
-              Semua berkas terdaftar
-            </p>
-
-          </div>
-
-          <div className="bg-[#142B4D]/10 dark:bg-slate-800 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <FileText className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#142B4D] dark:text-blue-400" />
-          </div>
-
-        </div>
-
-        {/* Draft */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-slate-400 shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-
-          <div className="space-y-0.5 sm:space-y-1 min-w-0">
-
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
-              Status Draft
-            </p>
-
-            <h3 className="text-xl sm:text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">
-              {draftCount}
-            </h3>
-
-            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
-              Belum diajukan ke pusat
-            </p>
-
-          </div>
-
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <FileEdit className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-slate-600 dark:text-slate-400" />
-          </div>
-
-        </div>
-
-        {/* Review */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#FE9A00] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-
-          <div className="space-y-0.5 sm:space-y-1 min-w-0">
-
-            <p className="text-[#FE9A00] text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
-              Dalam Review
-            </p>
-
-            <h3 className="text-xl sm:text-3xl font-black text-[#FE9A00] tracking-tight">
-              {inReviewCount}
-            </h3>
-
-            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
-              Sedang dinilai assessor
-            </p>
-
-          </div>
-
-          <div className="bg-[#FE9A00]/10 dark:bg-[#FE9A00]/20 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <Clock className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#FE9A00]" />
-          </div>
-
-        </div>
-
-        {/* Revisi */}
-        <div className="group bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-t-4 border-t-[#D11A22] shadow-sm flex items-center justify-between gap-2 transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-md active:scale-[0.98]">
-
-          <div className="space-y-0.5 sm:space-y-1 min-w-0">
-
-            <p className="text-[#D11A22] text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">
-              Butuh Revisi
-            </p>
-
-            <h3 className="text-xl sm:text-3xl font-black text-[#D11A22] tracking-tight">
-              {revisionCount}
-            </h3>
-
-            <p className="hidden sm:block text-[11px] text-gray-400 dark:text-slate-400 font-medium">
-              Perlu perbaikan berkas
-            </p>
-
-          </div>
-
-          <div className="bg-[#D11A22]/10 dark:bg-[#D11A22]/20 p-2 sm:p-3 rounded-lg sm:rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            <AlertTriangle className="w-4.5 h-4.5 sm:w-6 sm:h-6 text-[#D11A22]" />
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          CHART
-      ====================================================== */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-
-        <div className="pb-3 sm:pb-4 mb-3 sm:mb-4">
-
-          <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#142B4D] dark:text-blue-400 shrink-0" />
-            Persentase Status Pengajuan ULOK
+      {/* ══ ROW 3: RECENT ACTIVITY LOG ════════════════════════════════════════════ */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-[#142B4D] dark:bg-slate-950 px-5 py-3.5 flex items-center justify-between gap-2">
+          <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+            <Bell className="w-4 h-4 text-[#F28705]" />
+            Recent Activity Log
           </h3>
-
-          <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-            Visualisasi penyebaran status usulan lokasi saat ini
-          </p>
-
+          <span className="text-[10px] bg-white/10 text-blue-200 font-bold px-2 py-0.5 rounded-full animate-pulse">
+            Real-time
+          </span>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-around gap-4 md:gap-6 w-full">
-
-          <div className="w-full lg:w-1/2 h-52 sm:h-60 md:h-64">
-
-            <SubmissionsPieChart displayChartData={displayChartData} />
-
-          </div>
-
-          <div className="w-full lg:w-1/2 flex flex-col gap-2">
-
-            <h4 className="text-xs font-extrabold uppercase text-gray-400 dark:text-slate-500 tracking-wider mb-1 sm:mb-2">
-              Legenda Status
-            </h4>
-
-            {displayChartData.map((entry, idx) => (
+        <div className="divide-y divide-slate-50 dark:divide-slate-800/60">
+          {notifications.length === 0 ? (
+            <div className="text-center py-10 text-xs text-slate-400 italic">
+              Tidak ada notifikasi aktivitas terbaru.
+            </div>
+          ) : (
+            notifications.map((notif, idx) => (
               <div
-                key={idx}
-                className="flex items-center justify-between text-xs font-semibold py-2 transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg"
+                key={notif.id || idx}
+                className="flex gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group"
               >
-
-                <div className="flex items-center gap-2 min-w-0">
-
-                  <div
-                    className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: entry.color }}
-                  />
-
-                  <span className="text-gray-600 dark:text-slate-300 truncate">
-                    {entry.name}
-                  </span>
-
-                </div>
-
-                <span className="text-gray-900 dark:text-slate-100 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md shrink-0 ml-2">
-                  {entry.value}
-                </span>
-
-              </div>
-            ))}
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          BOTTOM CONTENT
-      ====================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
-        {/* ===================================================
-            RECENT ACTIVITY
-        ==================================================== */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
-
-            <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
-
-              <Bell className="w-4 h-4 text-[#FE9A00] shrink-0" />
-
-              <span className="truncate">
-                Recent Activity (Log & Notifikasi)
-              </span>
-
-            </h3>
-
-            <span className="text-[10px] bg-white/10 text-blue-200 border border-white/10 font-bold px-2 sm:px-2.5 py-0.5 rounded-full animate-pulse shrink-0">
-              Real-time
-            </span>
-
-          </div>
-
-          <div className="p-3 sm:p-4 flex-1 divide-y divide-gray-100 dark:divide-slate-800 overflow-y-auto max-h-[300px] sm:max-h-[350px] scrollbar-thin">
-
-            {notifications.length === 0 ? (
-
-              <div className="text-center py-12 text-xs text-gray-400 dark:text-slate-500 italic">
-                Tidak ada aktivitas terbaru.
-              </div>
-
-            ) : (
-
-              notifications.map((notif, idx) => (
-
-                <div
-                  key={notif.id || idx}
-                  className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex gap-2.5 sm:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition px-2 rounded-xl group"
-                >
-
-                  <div className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-[#FE9A00] group-hover:scale-125 transition-transform" />
-
-                  <div className="flex-1 min-w-0 space-y-1">
-
-                    <div className="flex items-start sm:items-center justify-between gap-2">
-
-                      <h4 className="font-bold text-xs text-gray-800 dark:text-slate-200 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors">
-                        {notif.title}
-                      </h4>
-
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-semibold shrink-0">
-
-                        {notif.created_at
-                          ? new Date(
-                              notif.created_at
-                            ).toLocaleDateString(
-                              'id-ID',
-                              {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }
-                            )
-                          : ''}
-
-                      </span>
-
-                    </div>
-
-                    <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-                      {notif.message}
-                    </p>
-
+                <div className="mt-2 shrink-0 w-2 h-2 rounded-full bg-[#F28705] group-hover:scale-125 transition-transform" />
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors truncate">
+                      {notif.title}
+                    </h4>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold shrink-0">
+                      {notif.created_at
+                        ? new Date(notif.created_at).toLocaleDateString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : ''}
+                    </span>
                   </div>
-
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-1">
+                    {notif.message}
+                  </p>
                 </div>
-
-              ))
-
-            )}
-
-          </div>
-
+              </div>
+            ))
+          )}
         </div>
-
-        {/* ===================================================
-            TOP 7 LOKASI
-        ==================================================== */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-
-          <div className="bg-[#142B4D] dark:bg-slate-950 p-3.5 sm:p-4 text-white flex items-center justify-between gap-2">
-
-            <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2 min-w-0">
-
-              <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-
-              <span className="truncate">
-                Top 7 Lokasi Skor Tertinggi
-              </span>
-
-            </h3>
-
-            <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 sm:px-2.5 py-0.5 rounded-full shrink-0">
-              Sistem SAW
-            </span>
-
-          </div>
-
-          <div className="overflow-x-auto flex-1 scrollbar-thin -webkit-overflow-scrolling-touch">
-
-            <table className="w-full text-left border-collapse text-xs min-w-[480px]">
-
-              <thead>
-
-                <tr className="bg-gray-50 dark:bg-slate-800/50 text-gray-400 dark:text-slate-400 font-bold text-[11px]">
-
-                  <th className="p-2.5 sm:p-3 pl-4 sm:pl-5">
-                    Nama ULOK
-                  </th>
-
-                  <th className="p-2.5 sm:p-3">
-                    Badan Hukum
-                  </th>
-
-                  <th className="p-2.5 sm:p-3 text-center">
-                    Status
-                  </th>
-
-                  <th className="p-2.5 sm:p-3 text-center">
-                    Skor SAW
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50 text-gray-700 dark:text-slate-300">
-
-                {topScores.length === 0 ? (
-
-                  <tr>
-
-                    <td
-                      colSpan={4}
-                      className="text-center p-12 text-xs text-gray-400 dark:text-slate-500 italic"
-                    >
-                      Belum ada lokasi yang dinilai.
-                    </td>
-
-                  </tr>
-
-                ) : (
-
-                  topScores.map((row, idx) => {
-
-                    let statusColor =
-                      "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300";
-
-                    if (row.status === 'Approved') {
-                      statusColor =
-                        "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40";
-                    } else if (row.status === 'In Review') {
-                      statusColor =
-                        "bg-[#FE9A00]/10 text-[#FE9A00] border border-[#FE9A00]/20 dark:bg-[#FE9A00]/20";
-                    } else if (row.status === 'Revisi') {
-                      statusColor =
-                        "bg-[#D11A22]/10 text-[#D11A22] border border-[#D11A22]/20 dark:bg-[#D11A22]/20";
-                    }
-
-                    return (
-                      <tr
-                        key={row.id || idx}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group"
-                      >
-
-                        <td className="p-2.5 sm:p-3 pl-4 sm:pl-5 font-bold text-gray-900 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors">
-                          {row.nama_lokasi}
-                        </td>
-
-                        <td className="p-2.5 sm:p-3 text-gray-500 dark:text-slate-400 font-medium">
-                          {row.jenis_badan_hukum}
-                        </td>
-
-                        <td className="p-2.5 sm:p-3 text-center">
-
-                          <span
-                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusColor}`}
-                          >
-                            {row.status === 'Draft'
-                              ? 'Draf'
-                              : row.status}
-                          </span>
-
-                        </td>
-
-                        <td className="p-2.5 sm:p-3 text-center font-black text-emerald-600 dark:text-emerald-400 text-sm">
-
-                          {row.final_score
-                            ? row.final_score.toFixed(2)
-                            : '0.00'}
-
-                        </td>
-
-                      </tr>
-                    );
-                  })
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
       </div>
-
     </div>
   );
 }

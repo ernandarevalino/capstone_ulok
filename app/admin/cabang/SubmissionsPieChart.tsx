@@ -1,62 +1,54 @@
-'use client'
+'use client';
 
-import React from 'react'
+import React from 'react';
 import {
   ResponsiveContainer,
-  PieChart,
-  Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
   Cell,
-  Tooltip
-} from 'recharts'
+} from 'recharts';
 
 const CustomChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 shadow-xl backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 shadow-xl backdrop-blur-sm">
         <p className="text-xs font-bold text-gray-800 dark:text-slate-100">
-          {payload[0].name}
+          {payload[0].payload.name}
         </p>
         <p className="text-xs text-[#142B4D] dark:text-blue-400 font-black mt-0.5">
           {payload[0].value} Usulan
         </p>
       </div>
-    )
+    );
   }
 
-  return null
-}
+  return null;
+};
 
 interface SubmissionsPieChartProps {
   displayChartData: Array<{
-    name: string
-    value: number
-    color: string
-  }>
+    name: string;
+    value: number;
+    color: string;
+  }>;
 }
 
 export default function SubmissionsPieChart({ displayChartData }: SubmissionsPieChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={displayChartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={55}
-          outerRadius={80}
-          paddingAngle={5}
-          dataKey="value"
-        >
-          {displayChartData.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={entry.color}
-              className="transition-all duration-300 hover:opacity-80 outline-none"
-            />
-          ))}
-        </Pie>
+      <BarChart data={displayChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
         <Tooltip content={<CustomChartTooltip />} />
-      </PieChart>
+        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+          {displayChartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Bar>
+      </BarChart>
     </ResponsiveContainer>
-  )
+  );
 }

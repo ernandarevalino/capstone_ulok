@@ -257,14 +257,14 @@ export default function DaftarAdminCabangPage() {
         </div>
 
         {/* Search + Actions Skeleton */}
-        <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2">
+        <div className="mb-6 flex flex-row items-center gap-2">
           <div className="h-11 md:h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           <div className="h-11 md:h-10 w-11 sm:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           <div className="h-11 md:h-10 w-11 sm:w-36 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
         </div>
 
         {/* Table Container Skeleton */}
-        <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
           {/* Table Header Skeleton */}
           <div className="bg-slate-200 dark:bg-slate-800 p-5 flex items-center justify-between animate-pulse border-b border-gray-100 dark:border-gray-800/60">
             <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
@@ -306,7 +306,7 @@ export default function DaftarAdminCabangPage() {
     <div className="space-y-4 md:space-y-6 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* === HEADER SECTION === */}
-      <div className="max-w-7xl mx-auto mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Daftar Admin Cabang</h1>
         <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">
           Total terdaftar: <span className="font-bold text-[#142B4D] dark:text-blue-400">{totalCount} pengguna</span> Admin Cabang
@@ -314,7 +314,7 @@ export default function DaftarAdminCabangPage() {
       </div>
 
       {/* === SEARCH + ACTIONS === */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2 relative z-50">
+      <div className="mb-6 flex flex-row items-center gap-2 relative z-50">
         {/* Search */}
         <div className="relative flex-1 min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -414,7 +414,7 @@ export default function DaftarAdminCabangPage() {
       </div>
 
       {/* === TABEL DATA UTAMA === */}
-      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

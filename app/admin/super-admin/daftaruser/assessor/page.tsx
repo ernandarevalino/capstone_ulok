@@ -262,20 +262,20 @@ export default function DaftarAssessorPage() {
     return (
       <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 text-gray-800 dark:text-slate-100">
         {/* Page Header Skeleton */}
-        <div className="max-w-7xl mx-auto mb-6">
+        <div className="mb-6">
           <div className="h-8 md:h-9 w-1/2 md:w-64 bg-slate-300 dark:bg-slate-700 rounded mb-2 animate-pulse"></div>
           <div className="h-3 md:h-4 w-3/4 md:w-96 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
         </div>
 
         {/* Search + Actions Skeleton */}
-        <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2">
+        <div className="mb-6 flex flex-row items-center gap-2">
           <div className="h-11 md:h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           <div className="h-11 md:h-10 w-11 sm:w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
           <div className="h-11 md:h-10 w-11 sm:w-36 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
         </div>
 
         {/* Table Container Skeleton */}
-        <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
           {/* Table Header Skeleton */}
           <div className="bg-slate-200 dark:bg-slate-800 p-5 flex items-center justify-between animate-pulse border-b border-gray-100 dark:border-gray-800/60">
             <div className="h-5 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
@@ -324,7 +324,7 @@ export default function DaftarAssessorPage() {
       </div>
 
       {/* === SEARCH + ACTIONS === */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-row items-center gap-2 relative z-50">
+      <div className="mb-6 flex flex-row items-center gap-2 relative z-50">
         {/* Search */}
         <div className="relative flex-1 min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -437,7 +437,7 @@ export default function DaftarAssessorPage() {
       </div>
 
       {/* === TABEL DATA UTAMA === */}
-      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
