@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
+  Activity,
+  Filter,
   ChevronLeft,
   ChevronRight,
-  CalendarDays,
+  Calendar as CalendarIcon,
+  Table,
   MapPin,
-  FileCheck2,
   Clock,
   CheckCircle2,
-  XCircle,
   AlertTriangle,
-  Table,
-  Calendar as CalendarIcon,
-  X,
+  XCircle,
+  FileEdit,
+  MousePointerClick,
+  ExternalLink,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type UlokStatus = 'In Review' | 'Approved' | 'Rejected' | 'Revisi';
+type UlokStatus = 'In Review' | 'Approved' | 'Rejected' | 'Revisi' | 'Draft';
+type ViewMode = 'week' | 'month';
+type ActiveTab = 'calendar' | 'info';
 
 interface UlokEvent {
   id: string;
@@ -25,437 +29,642 @@ interface UlokEvent {
   kelengkapanDokumen: number;
   status: UlokStatus;
   cabang: string;
+  date: string; // ISO YYYY-MM-DD
 }
 
-interface DayEvent {
-  date: number;
-  month: number;
-  year: number;
-  events: UlokEvent[];
+// ─── Dummy Data ───────────────────────────────────────────────────────────────
+const DUMMY_EVENTS: UlokEvent[] = [
+  { id: 'ULK-001', namaLokasi: 'Alfamidi Sudirman',      kelengkapanDokumen: 85,  status: 'In Review', cabang: 'Jakarta Pusat',   date: '2026-09-03' },
+  { id: 'ULK-002', namaLokasi: 'Alfamidi Gatot Subroto', kelengkapanDokumen: 100, status: 'Approved',  cabang: 'Jakarta Selatan', date: '2026-09-09' },
+  { id: 'ULK-003', namaLokasi: 'Alfamidi Kuningan',      kelengkapanDokumen: 72,  status: 'In Review', cabang: 'Jakarta Selatan', date: '2026-09-09' },
+  { id: 'ULK-004', namaLokasi: 'Alfamidi Cilandak',      kelengkapanDokumen: 60,  status: 'Revisi',    cabang: 'Jakarta Selatan', date: '2026-09-15' },
+  { id: 'ULK-005', namaLokasi: 'Alfamidi Kemayoran',     kelengkapanDokumen: 40,  status: 'Rejected',  cabang: 'Jakarta Utara',   date: '2026-09-18' },
+  { id: 'ULK-006', namaLokasi: 'Alfamidi Mangga Dua',    kelengkapanDokumen: 90,  status: 'Approved',  cabang: 'Jakarta Utara',   date: '2026-09-18' },
+  { id: 'ULK-007', namaLokasi: 'Alfamidi Kebon Jeruk',   kelengkapanDokumen: 78,  status: 'In Review', cabang: 'Jakarta Barat',   date: '2026-09-22' },
+  { id: 'ULK-008', namaLokasi: 'Alfamidi Depok Timur',   kelengkapanDokumen: 55,  status: 'Revisi',    cabang: 'Depok',           date: '2026-09-26' },
+  { id: 'ULK-009', namaLokasi: 'Alfamidi Bintaro',       kelengkapanDokumen: 95,  status: 'Approved',  cabang: 'Tangerang',       date: '2026-10-01' },
+  { id: 'ULK-010', namaLokasi: 'Alfamidi Bekasi Barat',  kelengkapanDokumen: 30,  status: 'Draft',     cabang: 'Bekasi',          date: '2026-10-01' },
+];
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MONTH_NAMES_FULL  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const MONTH_NAMES_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const DAY_LABELS        = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+function toMonFirstIdx(getDay: number): number {
+  return getDay === 0 ? 6 : getDay - 1;
 }
 
-// ─── Dummy Data (pre-populated for September 2026) ────────────────────────────
-const DUMMY_EVENTS: DayEvent[] = [
-  {
-    date: 3, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-001', namaLokasi: 'Alfamidi Sudirman', kelengkapanDokumen: 85, status: 'In Review', cabang: 'Jakarta Pusat' },
-    ],
-  },
-  {
-    date: 9, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-002', namaLokasi: 'Alfamidi Gatot Subroto', kelengkapanDokumen: 100, status: 'Approved', cabang: 'Jakarta Selatan' },
-      { id: 'ULK-003', namaLokasi: 'Alfamidi Kuningan', kelengkapanDokumen: 72, status: 'In Review', cabang: 'Jakarta Selatan' },
-    ],
-  },
-  {
-    date: 15, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-004', namaLokasi: 'Alfamidi Cilandak', kelengkapanDokumen: 60, status: 'Revisi', cabang: 'Jakarta Selatan' },
-    ],
-  },
-  {
-    date: 18, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-005', namaLokasi: 'Alfamidi Kemayoran', kelengkapanDokumen: 40, status: 'Rejected', cabang: 'Jakarta Utara' },
-      { id: 'ULK-006', namaLokasi: 'Alfamidi Mangga Dua', kelengkapanDokumen: 90, status: 'Approved', cabang: 'Jakarta Utara' },
-    ],
-  },
-  {
-    date: 22, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-007', namaLokasi: 'Alfamidi Kebon Jeruk', kelengkapanDokumen: 78, status: 'In Review', cabang: 'Jakarta Barat' },
-    ],
-  },
-  {
-    date: 26, month: 8, year: 2026,
-    events: [
-      { id: 'ULK-008', namaLokasi: 'Alfamidi Depok Timur', kelengkapanDokumen: 55, status: 'Revisi', cabang: 'Depok' },
-    ],
-  },
-];
+// ─── Heat Color (same palette as ActivityHeatmapCabang) ───────────────────────
+// Light blue #DBEAFE → Dark navy #142B4D
+function getCellStyle(count: number, max: number, isSelected: boolean): React.CSSProperties {
+  if (isSelected) {
+    return {
+      backgroundColor: '#142B4D',
+      boxShadow: '0 0 0 2px #142B4D, 0 0 0 5px rgba(20,43,77,0.25)',
+    };
+  }
+  if (count === 0) return {};
+  const t = Math.pow(Math.min(count / Math.max(max, 1), 1), 0.55);
+  const r = Math.round(219 + (20 - 219) * t);
+  const g = Math.round(234 + (43 - 234) * t);
+  const b = Math.round(254 + (77 - 254) * t);
+  return { backgroundColor: `rgb(${r},${g},${b})` };
+}
 
-// Yearly forecast summary dummy data (matching Image 4 reference)
-const FORECAST_SUMMARY_2026 = [
-  { label: 'Berkas Masuk', data: [12, 14, 18, 15, 22, 19, 25, 28, 24, 0, 0, 0], color: '#142B4D' },
-  { label: 'Disetujui',    data: [8,  10, 12, 11, 15, 14, 18, 20, 17, 0, 0, 0], color: '#10b981' },
-  { label: 'Dalam Tinjauan', data: [3, 2,  4,  3,  5,  3,  4,  5,  4, 0, 0, 0], color: '#F28705' },
-  { label: 'Perlu Revisi', data: [1,  2,  2,  1,  2,  2,  3,  3,  3, 0, 0, 0], color: '#f97316' },
-  { label: 'Ditolak',      data: [0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0], color: '#D91E2E' },
-];
-
-// Config for status styles
-const STATUS_CONFIG: Record<UlokStatus, { color: string; bg: string; dot: string; icon: React.ReactNode; label: string }> = {
-  'In Review':  { color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50',   dot: 'bg-amber-500',              icon: <Clock className="w-3 h-3" />,        label: 'Dalam Tinjauan' },
-  'Approved':   { color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/50', dot: 'bg-[#142B4D] dark:bg-blue-400', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Disetujui'       },
-  'Rejected':   { color: 'text-red-600 dark:text-red-400',       bg: 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/50',             dot: 'bg-[#D91E2E]',              icon: <XCircle className="w-3 h-3" />,       label: 'Ditolak'         },
-  'Revisi':     { color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700/50', dot: 'bg-[#F28705]',              icon: <AlertTriangle className="w-3 h-3" />, label: 'Perlu Revisi'    },
+// ─── Status Config ────────────────────────────────────────────────────────────
+const STATUS_CFG: Record<UlokStatus, { dot: string; badge: string; label: string; icon: React.ReactNode }> = {
+  Draft: {
+    dot: 'bg-slate-400',
+    badge: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+    label: 'Draft',
+    icon: <FileEdit className="w-3 h-3" />,
+  },
+  'In Review': {
+    dot: 'bg-[#F28705]',
+    badge: 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+    label: 'In Review',
+    icon: <Clock className="w-3 h-3" />,
+  },
+  Revisi: {
+    dot: 'bg-[#D91E2E]',
+    badge: 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    label: 'Revisi',
+    icon: <AlertTriangle className="w-3 h-3" />,
+  },
+  Approved: {
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    label: 'Approved',
+    icon: <CheckCircle2 className="w-3 h-3" />,
+  },
+  Rejected: {
+    dot: 'bg-slate-500',
+    badge: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    label: 'Rejected',
+    icon: <XCircle className="w-3 h-3" />,
+  },
 };
 
-const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+// ─── Forecast / Informasi summary data ───────────────────────────────────────
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
-const DAY_NAMES   = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
-function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
-}
-
-function KelengkapanBar({ pct }: { pct: number }) {
-  const color = pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500';
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums w-7 text-right">{pct}%</span>
-    </div>
-  );
-}
+const FORECAST_ROWS = [
+  { label: 'Berkas Masuk',    data: [12,14,18,15,22,19,25,28,24,0,0,0], color: '#142B4D' },
+  { label: 'Disetujui',       data: [8, 10,12,11,15,14,18,20,17,0,0,0], color: '#10b981' },
+  { label: 'Dalam Tinjauan',  data: [3,  2, 4, 3, 5, 3, 4, 5, 4,0,0,0], color: '#F28705' },
+  { label: 'Perlu Revisi',    data: [1,  2, 2, 1, 2, 2, 3, 3, 3,0,0,0], color: '#f97316' },
+  { label: 'Ditolak',         data: [0,  0, 0, 0, 0, 0, 0, 0, 0,0,0,0], color: '#D91E2E' },
+];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ActivityCalendar() {
-  const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [activeTab, setActiveTab] = useState<'calendar' | 'forecast'>('calendar');
-  const [selectedDate, setSelectedDate] = useState<{ d: number; m: number; y: number } | null>(null);
+  const today = useMemo(() => new Date(), []);
 
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-  const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
+  const [viewMode, setViewMode]       = useState<ViewMode>('week');
+  const [activeTab, setActiveTab]     = useState<ActiveTab>('calendar');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [navOffset, setNavOffset]     = useState(0);
+  const [selectedCellKey, setSelectedCellKey] = useState<string | null>(null);
+  const [selectedCellItems, setSelectedCellItems] = useState<UlokEvent[]>([]);
+  const [selectedCellLabel, setSelectedCellLabel] = useState<string>('');
 
-  // Pad days calculation for previous month
-  const prevMonthDays = getDaysInMonth(viewYear, viewMonth === 0 ? 11 : viewMonth - 1);
-  
-  const cells = useMemo(() => {
-    const list: { day: number; isCurrentMonth: boolean; month: number; year: number }[] = [];
-    
-    // Previous month padding
-    for (let i = firstDay - 1; i >= 0; i--) {
-      list.push({
-        day: prevMonthDays - i,
-        isCurrentMonth: false,
-        month: viewMonth === 0 ? 11 : viewMonth - 1,
-        year: viewMonth === 0 ? viewYear - 1 : viewYear,
-      });
+  // ── Filtered Events ─────────────────────────────────────────────────────────
+  const filtered = useMemo(
+    () =>
+      statusFilter === 'all'
+        ? DUMMY_EVENTS
+        : DUMMY_EVENTS.filter((e) => e.status === statusFilter),
+    [statusFilter]
+  );
+
+  // ── Week dates (Mon-first) ───────────────────────────────────────────────────
+  const weekDates = useMemo(() => {
+    const pivot = new Date(today);
+    pivot.setDate(today.getDate() + navOffset * 7);
+    const dow = pivot.getDay();
+    const monOffset = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(pivot);
+    monday.setDate(pivot.getDate() + monOffset);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  }, [today, navOffset]);
+
+  // ── Month info ──────────────────────────────────────────────────────────────
+  const monthInfo = useMemo(() => {
+    const d = new Date(today.getFullYear(), today.getMonth() + navOffset, 1);
+    return { year: d.getFullYear(), month: d.getMonth() };
+  }, [today, navOffset]);
+
+  // ── Matrices ─────────────────────────────────────────────────────────────────
+  const weekMatrix = useMemo(() => {
+    const m: Record<string, UlokEvent[]> = {};
+    filtered.forEach((item) => {
+      if (!item.date) return;
+      if (!m[item.date]) m[item.date] = [];
+      m[item.date].push(item);
+    });
+    return m;
+  }, [filtered]);
+
+  const monthMatrix = useMemo(() => {
+    const m: Record<string, UlokEvent[]> = {};
+    filtered.forEach((item) => {
+      if (!item.date) return;
+      const d = new Date(item.date);
+      if (isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!m[key]) m[key] = [];
+      m[key].push(item);
+    });
+    return m;
+  }, [filtered]);
+
+  // ── Max count for intensity ──────────────────────────────────────────────────
+  const maxCount = useMemo(() => {
+    const vals =
+      viewMode === 'week'
+        ? weekDates.map((d) => (weekMatrix[d.toISOString().slice(0, 10)] || []).length)
+        : (() => {
+            const { year, month } = monthInfo;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            return Array.from({ length: daysInMonth }, (_, i) => {
+              return (monthMatrix[`${year}-${month}-${i + 1}`] || []).length;
+            });
+          })();
+    return Math.max(...vals, 1);
+  }, [viewMode, weekDates, weekMatrix, monthInfo, monthMatrix]);
+
+  // ── Month calendar cells ─────────────────────────────────────────────────────
+  const monthCells = useMemo(() => {
+    if (viewMode !== 'month') return [];
+    const { year, month } = monthInfo;
+    const firstDow = toMonFirstIdx(new Date(year, month, 1).getDay());
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+    return Array.from({ length: totalCells }, (_, i) => {
+      const dn = i - firstDow + 1;
+      return dn >= 1 && dn <= daysInMonth ? dn : null;
+    });
+  }, [viewMode, monthInfo]);
+
+  // ── Nav Label ────────────────────────────────────────────────────────────────
+  const navLabel = useMemo(() => {
+    if (viewMode === 'week') {
+      const f = weekDates[0], l = weekDates[6];
+      const sameMonth = f.getMonth() === l.getMonth();
+      return sameMonth
+        ? `${f.getDate()} – ${l.getDate()} ${MONTH_NAMES_FULL[l.getMonth()]} ${l.getFullYear()}`
+        : `${f.getDate()} ${MONTH_NAMES_SHORT[f.getMonth()]} – ${l.getDate()} ${MONTH_NAMES_SHORT[l.getMonth()]} ${l.getFullYear()}`;
     }
-    
-    // Current month days
-    for (let d = 1; d <= daysInMonth; d++) {
-      list.push({
-        day: d,
-        isCurrentMonth: true,
-        month: viewMonth,
-        year: viewYear,
-      });
-    }
-    
-    // Next month padding to complete 5 or 6 rows of 7 days
-    const targetLength = list.length > 35 ? 42 : 35;
-    let nextDay = 1;
-    while (list.length < targetLength) {
-      list.push({
-        day: nextDay++,
-        isCurrentMonth: false,
-        month: viewMonth === 11 ? 0 : viewMonth + 1,
-        year: viewMonth === 11 ? viewYear + 1 : viewYear,
-      });
-    }
-    
-    return list;
-  }, [daysInMonth, firstDay, prevMonthDays, viewMonth, viewYear]);
+    return `${MONTH_NAMES_FULL[monthInfo.month]} ${monthInfo.year}`;
+  }, [viewMode, weekDates, monthInfo]);
 
-  function prevMonth() {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
-    else setViewMonth(m => m - 1);
-  }
-  function nextMonth() {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
-    else setViewMonth(m => m + 1);
-  }
-  function goToday() {
-    setViewYear(today.getFullYear());
-    setViewMonth(today.getMonth());
-  }
+  // ── Cell click ───────────────────────────────────────────────────────────────
+  const handleClick = useCallback(
+    (key: string, label: string, items: UlokEvent[]) => {
+      if (items.length === 0) {
+        setSelectedCellKey(null);
+        setSelectedCellItems([]);
+        setSelectedCellLabel('');
+        return;
+      }
+      setSelectedCellKey(key);
+      setSelectedCellItems(items);
+      setSelectedCellLabel(label);
+      setActiveTab('info');
+    },
+    []
+  );
 
-  const selectedEvents = selectedDate
-    ? DUMMY_EVENTS.find(e => e.date === selectedDate.d && e.month === selectedDate.m && e.year === selectedDate.y)?.events ?? []
-    : [];
-
-  const isToday = (cell: typeof cells[0]) => 
-    cell.isCurrentMonth && cell.day === today.getDate() && cell.month === today.getMonth() && cell.year === today.getFullYear();
+  // ── Informasi Panel items ────────────────────────────────────────────────────
+  const infoItems = selectedCellKey ? selectedCellItems : DUMMY_EVENTS.slice(0, 6);
+  const infoTitle = selectedCellKey ? selectedCellLabel : 'Semua Aktivitas';
+  const infoSub   = selectedCellKey
+    ? `${selectedCellItems.length} usulan ditemukan`
+    : 'Klik sel kalender untuk filter · terbaru';
 
   return (
-    <div className="h-full bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col justify-between transition-colors duration-300">
-      
-      {/* ── HEADER BAR ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-slate-800 shrink-0">
+    <div className="h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col transition-colors duration-300 overflow-hidden">
+
+      {/* ── HEADER ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
         {/* Title */}
-        <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-[#142B4D] dark:text-blue-400" />
-          <h3 className="font-bold text-sm text-gray-800 dark:text-slate-100">Kalender Aktivitas ULOK</h3>
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-blue-500/10 text-[#142B4D] dark:text-blue-400">
+            <Activity className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 tracking-tight">
+              Activity
+            </h3>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+              Frekuensi aktivitas ULOK — klik sel untuk lihat detail
+            </p>
+          </div>
         </div>
 
-        {/* View Mode Toggle Tabs (Matching Reference Image 2 & 4!) */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold">
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          {/* Status filter */}
+          <div className="relative">
+            <Filter className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setNavOffset(0);
+                setSelectedCellKey(null);
+                setSelectedCellItems([]);
+              }}
+              className="pl-7 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-semibold text-slate-700 dark:text-slate-200 focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="all">Semua</option>
+              <option value="Draft">Draft</option>
+              <option value="In Review">In Review</option>
+              <option value="Revisi">Revisi</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          {/* Tab switcher: Calendar | Informasi */}
+          <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-[11px] font-semibold">
             <button
               onClick={() => setActiveTab('calendar')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
                 activeTab === 'calendar'
-                  ? 'bg-[#142B4D] text-white shadow-sm font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-700 text-[#142B4D] dark:text-white shadow-xs font-bold'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
               }`}
             >
               <CalendarIcon className="w-3.5 h-3.5" />
-              Calendar View
+              Kalender
             </button>
             <button
-              onClick={() => setActiveTab('forecast')}
+              onClick={() => setActiveTab('info')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                activeTab === 'forecast'
-                  ? 'bg-[#142B4D] text-white shadow-sm font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                activeTab === 'info'
+                  ? 'bg-white dark:bg-slate-700 text-[#142B4D] dark:text-white shadow-xs font-bold'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
               }`}
             >
               <Table className="w-3.5 h-3.5" />
-              Forecast Table
+              Informasi
             </button>
           </div>
 
-          {/* Status Legend Dots */}
-          <div className="hidden xl:flex items-center gap-2.5 text-[10px] font-semibold text-gray-500 dark:text-slate-400">
-            {(Object.keys(STATUS_CONFIG) as UlokStatus[]).map(s => (
-              <span key={s} className="flex items-center gap-1">
-                <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[s].dot}`} />
-                {STATUS_CONFIG[s].label}
-              </span>
-            ))}
-          </div>
+          {/* Week/Month view switcher (only in calendar tab) */}
+          {activeTab === 'calendar' && (
+            <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-[11px] font-semibold">
+              {(['week', 'month'] as ViewMode[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => { setViewMode(v); setNavOffset(0); setSelectedCellKey(null); setSelectedCellItems([]); }}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    viewMode === v
+                      ? 'bg-white dark:bg-slate-700 text-[#142B4D] dark:text-white shadow-xs font-bold'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                  }`}
+                >
+                  {v === 'week' ? 'Minggu' : 'Bulan'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── MAIN CONTENT AREA ── */}
+      {/* ── TABS CONTENT ── */}
       {activeTab === 'calendar' ? (
-        <div className="flex-1 flex flex-col p-4 sm:p-5 min-h-0 justify-between">
-          
-          {/* Controls & Nav Bar */}
-          <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={prevMonth}
-                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-                aria-label="Bulan sebelumnya"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={nextMonth}
-                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-                aria-label="Bulan berikutnya"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={goToday}
-                className="px-3 py-1 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors shadow-xs"
-              >
-                Hari Ini
-              </button>
-            </div>
+        <div className="flex-1 flex flex-col p-4 sm:p-5 min-h-0">
 
-            <h4 className="text-base sm:text-lg font-black text-gray-800 dark:text-slate-100 tracking-tight">
-              {MONTH_NAMES[viewMonth]} {viewYear}
-            </h4>
+          {/* Nav Row */}
+          <div className="flex items-center justify-between mb-3 shrink-0">
+            <button
+              onClick={() => setNavOffset((p) => p - 1)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 select-none">
+              {navLabel}
+            </span>
+            <button
+              onClick={() => setNavOffset((p) => p + 1)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Day Headers (7 equal columns) */}
-          <div className="grid grid-cols-7 gap-1.5 text-center mb-1 shrink-0">
-            {DAY_NAMES.map(d => (
-              <div key={d} className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider py-1">
-                {d}
-              </div>
-            ))}
-          </div>
+          {/* Grid Body */}
+          <div className="flex-1 flex flex-col justify-center">
 
-          {/* Calendar Full Grid (Matching Reference Image 2 & 3!) */}
-          <div className="grid grid-cols-7 gap-1.5 flex-1">
-            {cells.map((cell, idx) => {
-              const dayEvents = DUMMY_EVENTS.find(
-                e => e.date === cell.day && e.month === cell.month && e.year === cell.year
-              )?.events ?? [];
-              const hasEvents = dayEvents.length > 0;
-              const todayFlag = isToday(cell);
-              const isSel = selectedDate?.d === cell.day && selectedDate?.m === cell.month && selectedDate?.y === cell.year;
-
-              return (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    if (hasEvents) {
-                      setSelectedDate({ d: cell.day, m: cell.month, y: cell.year });
-                    }
-                  }}
-                  className={`
-                    group relative p-1.5 sm:p-2 rounded-xl border flex flex-col justify-between transition-all duration-200 min-h-[50px] sm:min-h-[56px]
-                    ${!cell.isCurrentMonth
-                      ? 'bg-slate-50/50 dark:bg-slate-900/40 border-gray-100 dark:border-slate-800/40 opacity-30'
-                      : isSel
-                      ? 'bg-blue-50/80 dark:bg-blue-950/40 border-[#142B4D] dark:border-blue-500 ring-2 ring-[#142B4D]/20'
-                      : todayFlag
-                      ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-700/50'
-                      : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
-                    }
-                    ${hasEvents ? 'cursor-pointer' : ''}
-                  `}
-                >
-                  {/* Top line: Date number */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`
-                        text-xs font-bold w-5.5 h-5.5 flex items-center justify-center rounded-full tabular-nums
-                        ${todayFlag
-                          ? 'bg-[#142B4D] text-white font-black shadow-xs'
-                          : !cell.isCurrentMonth
-                          ? 'text-gray-400 dark:text-slate-600'
-                          : 'text-gray-700 dark:text-slate-200'
-                        }
-                      `}
-                    >
-                      {cell.day}
-                    </span>
-
-                    {/* Event count indicator if multiple */}
-                    {dayEvents.length > 1 && (
-                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                        +{dayEvents.length}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Cell Events (Mini Badges - Image 2 & 3 style!) */}
-                  {hasEvents && (
-                    <div className="mt-1 space-y-1">
-                      {dayEvents.slice(0, 2).map((ev) => {
-                        const cfg = STATUS_CONFIG[ev.status];
-                        return (
-                          <div
-                            key={ev.id}
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate flex items-center gap-1 ${cfg.bg} ${cfg.color}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-                            <span className="truncate">{ev.namaLokasi}</span>
-                          </div>
-                        );
-                      })}
+            {/* ═══ WEEK VIEW ═══ */}
+            {viewMode === 'week' && (
+              <div className="w-full">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 gap-2 mb-2">
+                  {DAY_LABELS.map((d) => (
+                    <div key={d} className="text-[10px] font-bold text-slate-400 dark:text-slate-500 text-center">
+                      {d}
                     </div>
+                  ))}
+                </div>
+
+                {/* 7 square cells */}
+                <div className="grid grid-cols-7 gap-2">
+                  {weekDates.map((date) => {
+                    const iso = date.toISOString().slice(0, 10);
+                    const items = weekMatrix[iso] || [];
+                    const cnt = items.length;
+                    const isSelected = selectedCellKey === iso;
+                    const isEmpty = cnt === 0;
+                    const isToday = date.toDateString() === today.toDateString();
+                    const bgStyle = getCellStyle(cnt, maxCount, isSelected);
+                    const dateLabel = `${date.getDate()} ${MONTH_NAMES_SHORT[date.getMonth()]}`;
+
+                    return (
+                      <button
+                        key={iso}
+                        title={cnt > 0 ? `${dateLabel} — ${cnt} usulan` : dateLabel}
+                        onClick={() => handleClick(iso, dateLabel, items)}
+                        style={bgStyle}
+                        className={[
+                          'aspect-square rounded-xl flex flex-col items-center justify-center border transition-all duration-200',
+                          isEmpty
+                            ? 'bg-slate-100/80 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700/40 cursor-default'
+                            : 'border-transparent hover:scale-105 hover:shadow-lg cursor-pointer active:scale-95',
+                          isToday && !isSelected ? 'ring-2 ring-[#F28705]/60' : '',
+                          isSelected ? 'ring-2 ring-[#142B4D]/40' : '',
+                        ].join(' ')}
+                      >
+                        <span className={`text-[13px] font-black leading-none ${
+                          isSelected ? 'text-white'
+                            : isEmpty ? 'text-slate-400 dark:text-slate-600'
+                            : cnt / maxCount > 0.5 ? 'text-white' : 'text-[#142B4D]'
+                        }`}>
+                          {date.getDate()}
+                        </span>
+                        <span className={`text-[9px] font-semibold mt-0.5 leading-none ${
+                          isSelected ? 'text-white/70'
+                            : isEmpty ? 'text-slate-300 dark:text-slate-700'
+                            : cnt / maxCount > 0.5 ? 'text-white/70' : 'text-[#142B4D]/60'
+                        }`}>
+                          {DAY_LABELS[toMonFirstIdx(date.getDay())]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Week summary */}
+                <div className="mt-4 flex items-center justify-center gap-6">
+                  {weekDates.map((date) => {
+                    const iso = date.toISOString().slice(0, 10);
+                    const cnt = (weekMatrix[iso] || []).length;
+                    if (cnt === 0) return null;
+                    return (
+                      <div key={iso} className="text-center">
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {DAY_LABELS[toMonFirstIdx(date.getDay())]}
+                        </div>
+                        <div className="text-xs font-black text-[#142B4D] dark:text-blue-400">{cnt}</div>
+                      </div>
+                    );
+                  })}
+                  {weekDates.every((d) => (weekMatrix[d.toISOString().slice(0, 10)] || []).length === 0) && (
+                    <p className="text-[11px] text-slate-400 italic">Tidak ada aktivitas minggu ini</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* ═══ MONTH VIEW ═══ */}
+            {viewMode === 'month' && (
+              <div className="w-full">
+                {/* Day-of-week headers */}
+                <div className="grid grid-cols-7 gap-1 mb-1.5">
+                  {DAY_LABELS.map((d) => (
+                    <div key={d} className="text-[10px] font-bold text-slate-400 dark:text-slate-500 text-center py-1">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calendar day cells */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthCells.map((dateNum, i) => {
+                    if (dateNum === null) return <div key={`e-${i}`} />;
+
+                    const { year, month } = monthInfo;
+                    const key = `${year}-${month}-${dateNum}`;
+                    const items = monthMatrix[key] || [];
+                    const cnt = items.length;
+                    const isSelected = selectedCellKey === key;
+                    const isEmpty = cnt === 0;
+                    const isToday =
+                      today.getFullYear() === year &&
+                      today.getMonth() === month &&
+                      today.getDate() === dateNum;
+                    const bgStyle = getCellStyle(cnt, maxCount, isSelected);
+                    const dateLabel = `${dateNum} ${MONTH_NAMES_FULL[month]}`;
+
+                    return (
+                      <button
+                        key={key}
+                        title={cnt > 0 ? `${dateLabel} — ${cnt} usulan` : dateLabel}
+                        onClick={() => handleClick(key, dateLabel, items)}
+                        style={bgStyle}
+                        className={[
+                          'aspect-square rounded-lg flex flex-col items-center justify-center border transition-all duration-150 relative',
+                          isEmpty
+                            ? 'bg-slate-100/80 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700/40 cursor-default'
+                            : 'border-transparent hover:scale-110 hover:shadow-md cursor-pointer active:scale-95',
+                          isToday && !isSelected ? 'ring-2 ring-[#F28705]/60' : '',
+                          isSelected ? 'ring-2 ring-[#142B4D]/40' : '',
+                        ].join(' ')}
+                      >
+                        <span className={`text-[11px] font-black leading-none ${
+                          isSelected ? 'text-white'
+                            : isEmpty ? 'text-slate-400 dark:text-slate-600'
+                            : cnt / maxCount > 0.5 ? 'text-white' : 'text-[#142B4D]'
+                        }`}>
+                          {dateNum}
+                        </span>
+                        {cnt > 0 && (
+                          <span className={`text-[8px] font-extrabold leading-none mt-0.5 ${
+                            isSelected || cnt / maxCount > 0.5 ? 'text-white/75' : 'text-[#142B4D]/60'
+                          }`}>
+                            {cnt}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-end gap-1.5 pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+            <span className="text-[10px] text-slate-400 font-medium mr-1">Sedikit</span>
+            {[0.1, 0.3, 0.5, 0.7, 1.0].map((t) => {
+              const r = Math.round(219 + (20 - 219) * Math.sqrt(t));
+              const g = Math.round(234 + (43 - 234) * Math.sqrt(t));
+              const b = Math.round(254 + (77 - 254) * Math.sqrt(t));
+              return (
+                <div
+                  key={t}
+                  className="w-3.5 h-3.5 rounded-sm"
+                  style={{ backgroundColor: `rgb(${r},${g},${b})` }}
+                />
               );
             })}
+            <span className="text-[10px] text-slate-400 font-medium ml-1">Banyak</span>
           </div>
-
         </div>
       ) : (
-        /* ── FORECAST SUMMARY TABLE VIEW (Matching Reference Image 4!) ── */
-        <div className="flex-1 p-4 sm:p-5 overflow-x-auto">
-          <div className="min-w-[650px] space-y-4">
-            <div>
-              <h4 className="text-sm font-bold text-gray-800 dark:text-slate-100">Forecast Summary 2026</h4>
-              <p className="text-xs text-gray-400 dark:text-slate-500">Ringkasan estimasi &amp; histori berkas ULOK per bulan</p>
-            </div>
+        /* ── INFORMASI TAB (matches TopUlokProgressList style) ── */
+        <div className="flex-1 flex flex-col overflow-hidden">
 
-            <table className="w-full text-xs text-left">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-slate-800 text-gray-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                  <th className="py-2.5 px-3">PARAMETER</th>
-                  {MONTH_SHORT.map(m => (
-                    <th key={m} className="py-2.5 px-2 text-center">{m}</th>
-                  ))}
-                  <th className="py-2.5 px-3 text-right">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60 font-medium">
-                {FORECAST_SUMMARY_2026.map((row) => {
-                  const total = row.data.reduce((a, b) => a + b, 0);
-                  return (
-                    <tr key={row.label} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3 font-bold flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
-                        <span className="text-gray-800 dark:text-slate-200">{row.label}</span>
-                      </td>
-                      {row.data.map((val, idx) => (
-                        <td key={idx} className="py-3 px-2 text-center font-semibold tabular-nums text-gray-600 dark:text-slate-300">
-                          {val || '—'}
-                        </td>
-                      ))}
-                      <td className="py-3 px-3 text-right font-black tabular-nums" style={{ color: row.color }}>
-                        {total}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── EVENT DETAIL MODAL (If date with events is clicked) ── */}
-      {selectedDate && selectedEvents.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xl w-full max-w-md p-5 space-y-4 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Detail Aktivitas ULOK</p>
-                <h4 className="text-base font-black text-gray-800 dark:text-slate-100">
-                  {selectedDate.d} {MONTH_NAMES[selectedDate.m]} {selectedDate.y}
-                </h4>
+          {/* Panel Header */}
+          <div className={`px-5 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0 transition-colors duration-300 ${
+            selectedCellKey ? 'bg-[#142B4D]/5 dark:bg-slate-800/40' : ''
+          }`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {selectedCellKey ? (
+                    <MapPin className="w-3.5 h-3.5 text-[#142B4D] dark:text-blue-400 shrink-0" />
+                  ) : (
+                    <MousePointerClick className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  )}
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 tracking-tight truncate">
+                    {infoTitle}
+                  </h3>
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium leading-tight">
+                  {infoSub}
+                </p>
               </div>
-              <button
-                onClick={() => setSelectedDate(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {selectedEvents.map(ev => {
-                const cfg = STATUS_CONFIG[ev.status];
+              {selectedCellKey && (
+                <span className="shrink-0 text-[10px] font-black text-[#142B4D] dark:text-blue-400 bg-[#142B4D]/10 dark:bg-blue-500/10 px-2 py-0.5 rounded-full">
+                  {selectedCellItems.length}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Item List */}
+          <div className="flex-1 overflow-y-auto [scrollbar-width:thin] divide-y divide-slate-50 dark:divide-slate-800/60">
+            {infoItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 px-4 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <MousePointerClick className="w-5 h-5 text-slate-400" />
+                </div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Tidak ada aktivitas di slot ini
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                  Coba klik sel lain di grid kalender
+                </p>
+              </div>
+            ) : (
+              infoItems.map((item, idx) => {
+                const statusKey = item.status in STATUS_CFG ? item.status : 'Draft';
+                const cfg = STATUS_CFG[statusKey];
+                const dateFormatted = item.date
+                  ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '';
+
                 return (
-                  <div key={ev.id} className={`rounded-xl p-3 flex flex-col gap-2 ${cfg.bg}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs font-black tracking-wider text-gray-600 dark:text-slate-300">{ev.id}</span>
-                      <span className={`inline-flex items-center gap-1 text-xs font-bold ${cfg.color}`}>
-                        {cfg.icon} {ev.status}
+                  <div
+                    key={item.id || idx}
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+                  >
+                    {/* Status dot */}
+                    <div className="shrink-0">
+                      <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                    </div>
+
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors truncate leading-tight">
+                        {item.namaLokasi}
+                      </p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                        {item.cabang} · {dateFormatted}
+                      </p>
+                    </div>
+
+                    {/* Right: Status badge + doc completion */}
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${cfg.badge}`}>
+                        {cfg.icon}
+                        {cfg.label}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
+                        {item.kelengkapanDokumen}% dokumen
                       </span>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400 dark:text-slate-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-gray-800 dark:text-slate-100">{ev.namaLokasi}</p>
-                        <p className="text-[11px] text-gray-500 dark:text-slate-400">{ev.cabang}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <FileCheck2 className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" />
-                        <span className="text-[11px] font-semibold text-gray-600 dark:text-slate-300">Kelengkapan Dokumen</span>
-                      </div>
-                      <KelengkapanBar pct={ev.kelengkapanDokumen} />
-                    </div>
+
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#142B4D] dark:group-hover:text-blue-400 transition-colors shrink-0" />
                   </div>
                 );
-              })}
-            </div>
+              })
+            )}
           </div>
+
+          {/* Footer: Forecast Summary (collapsed table) */}
+          {!selectedCellKey && (
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                Forecast Summary 2026
+              </p>
+              <div className="overflow-x-auto [scrollbar-width:thin]">
+                <table className="w-full text-[10px] text-left min-w-[480px]">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                      <th className="py-1.5 pr-2">Parameter</th>
+                      {MONTH_SHORT.map((m) => (
+                        <th key={m} className="py-1.5 px-1 text-center">{m}</th>
+                      ))}
+                      <th className="py-1.5 pl-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 font-medium">
+                    {FORECAST_ROWS.map((row) => {
+                      const total = row.data.reduce((a, b) => a + b, 0);
+                      return (
+                        <tr key={row.label} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="py-2 pr-2 font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
+                            <span className="text-slate-700 dark:text-slate-200">{row.label}</span>
+                          </td>
+                          {row.data.map((val, i) => (
+                            <td key={i} className="py-2 px-1 text-center text-slate-500 dark:text-slate-400 tabular-nums">
+                              {val || '—'}
+                            </td>
+                          ))}
+                          <td className="py-2 pl-2 text-right font-black tabular-nums" style={{ color: row.color }}>
+                            {total}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
     </div>
   );
 }
