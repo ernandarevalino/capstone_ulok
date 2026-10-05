@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useTransition, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique, syncUlokFromMidiloc } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique, syncUlokFromMidiloc, saveGoogleDriveLink } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2, RefreshCw, Link2, Loader2 } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
@@ -128,6 +128,13 @@ export default function DetailUlokBadanHukumPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
+
+  // === AKTE SEWA STATES ===
+  const [isAkteSewaModalOpen, setIsAkteSewaModalOpen] = useState(false)
+  const [akteSewaLink, setAkteSewaLink] = useState('')
+  const [akteSewaInput, setAkteSewaInput] = useState('')
+  const [akteSewaError, setAkteSewaError] = useState('')
+  const [isSavingAkteSewa, setIsSavingAkteSewa] = useState(false)
 
   const formatLastReviewedDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'Belum pernah direview'
@@ -256,6 +263,11 @@ export default function DetailUlokBadanHukumPage() {
         setDenominator(denom)
         setPercentage(pct)
         setChecklistItems(items)
+
+        const akteSewaDoc = docs.find((d: any) => d.document_type === 'akte_sewa' && d.is_latest) || docs.find((d: any) => d.document_type === 'akte_sewa')
+        if (akteSewaDoc?.file_url) {
+          setAkteSewaLink(akteSewaDoc.file_url)
+        }
       }
 
       if (uploaderRes.success) {
@@ -498,6 +510,43 @@ export default function DetailUlokBadanHukumPage() {
     }
   }, [ulokId, idUlok, fetchChecklistData, router, fromSource])
 
+  const handleSaveAkteSewaLink = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!ulokId) return
+    const trimmed = akteSewaInput.trim()
+    if (!trimmed) {
+      setAkteSewaError('Link Google Drive tidak boleh kosong')
+      return
+    }
+
+    if (!trimmed.toLowerCase().includes('drive.google.com')) {
+      setAkteSewaError('Link harus berupa tautan Google Drive yang valid (drive.google.com)')
+      return
+    }
+
+    setIsSavingAkteSewa(true)
+    setAkteSewaError('')
+    try {
+      const res = await saveGoogleDriveLink(ulokId, 'akte_sewa', trimmed)
+      if (res.success) {
+        setAkteSewaLink(trimmed)
+        setIsAkteSewaModalOpen(false)
+        setSuccessMessage('Link berhasil ter-upload!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 2000)
+        await fetchChecklistData()
+      } else {
+        setAkteSewaError(res.error || 'Gagal menyimpan link Google Drive')
+      }
+    } catch (err: any) {
+      setAkteSewaError(err.message || 'Terjadi kesalahan sistem saat menyimpan link')
+    } finally {
+      setIsSavingAkteSewa(false)
+    }
+  }
+
   const handleUpdateDetail = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ulokId || !namaLokasi || !statusBadan || !namaPemegang) return
@@ -605,8 +654,9 @@ export default function DetailUlokBadanHukumPage() {
           {/* === GRUP ACTION BUTTONS === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
+              type="button"
               onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/badanhukum/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
-              className="w-full sm:w-auto bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+              className="bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap cursor-pointer"
             >
               <img 
                 src="/icons/icon-form.svg" 
@@ -614,6 +664,19 @@ export default function DetailUlokBadanHukumPage() {
                 className="w-4 h-4 object-contain brightness-0 invert" 
               />
               Form
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAkteSewaInput(akteSewaLink)
+                setAkteSewaError('')
+                setIsAkteSewaModalOpen(true)
+              }}
+              className="bg-[#142B4D] dark:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap cursor-pointer"
+              title="Masukkan / Lihat link Google Drive Akte Sewa"
+            >
+              <Link2 className="w-4 h-4 text-blue-300" />
+              Akte Sewa
             </button>
           </div>
         </div>
@@ -1048,6 +1111,91 @@ export default function DetailUlokBadanHukumPage() {
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successMessage}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL: LINK GOOGLE DRIVE AKTE SEWA === */}
+      {isAkteSewaModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-md overflow-hidden animate-[scaleUp_0.2s_ease-out]">
+            {/* Header */}
+            <div className="bg-[#142B4D] dark:bg-slate-900 px-5 py-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-blue-300" />
+                <h3 className="font-bold text-sm md:text-base leading-snug">
+                  Masukkan link Google Drive untuk Akte Sewa
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAkteSewaModalOpen(false)}
+                className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleSaveAkteSewaLink} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                  Link Google Drive
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={akteSewaInput}
+                    onChange={(e) => {
+                      setAkteSewaInput(e.target.value)
+                      if (akteSewaError) setAkteSewaError('')
+                    }}
+                    placeholder="masukkan link gdrive..."
+                    disabled={isSavingAkteSewa}
+                    className={`w-full border p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 font-medium text-gray-700 dark:text-gray-200 transition-colors ${
+                      akteSewaError
+                        ? 'border-red-500 focus:outline-red-500 focus:ring-1 focus:ring-red-500'
+                        : 'border-gray-200 dark:border-gray-800 focus:outline-blue-950 dark:focus:outline-blue-500'
+                    }`}
+                    autoFocus
+                  />
+                </div>
+                {akteSewaError && (
+                  <p className="text-red-500 text-xs mt-1.5 font-semibold flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {akteSewaError}
+                  </p>
+                )}
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
+                  Pastikan link mengarah ke Google Drive (mengandung domain <span className="font-mono font-semibold">drive.google.com</span>) dan akses folder telah dibuka/dibagikan.
+                </p>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAkteSewaModalOpen(false)}
+                  disabled={isSavingAkteSewa}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition disabled:opacity-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingAkteSewa || !akteSewaInput.trim()}
+                  className="bg-[#142B4D] hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isSavingAkteSewa ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Mengunggah...</span>
+                    </>
+                  ) : (
+                    <span>Upload</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

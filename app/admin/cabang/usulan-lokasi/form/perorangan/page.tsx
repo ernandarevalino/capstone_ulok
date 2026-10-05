@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useTransition, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique, syncUlokFromMidiloc } from '@/actions/cabang'
+import { getUlokDetail, updateUlokSubmission, getComments, createComment, getUploadedDocuments, getChecklistMaster, getLastUploaderName, uploadUlokFile, uploadChatAttachment, checkUlokIdUnique, syncUlokFromMidiloc, saveGoogleDriveLink } from '@/actions/cabang'
 import { getCurrentProfile } from '@/actions/auth'
 import { supabase } from '@/lib/supabaseClient'
 import { getRealtimeClient } from '@/utils/supabase/client'
 import DocumentChecklistPanel from '@/components/shared/DocumentChecklistPanel'
 import { getChecklistMasterIds, getEffectiveChecklistId } from '@/utils/progress'
 import UlokSummaryCard from '@/components/shared/UlokSummaryCard'
-import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Paperclip, FileText, X, Reply, ExternalLink, AlertCircle, Send, MessagesSquare, CheckCircle2, RefreshCw, Link2, Loader2 } from 'lucide-react'
 import AvatarPopover, { AvatarPopoverState } from '@/components/shared/AvatarPopover'
 
 const mapDocNameToType = (docName: string, jenisBadanHukum: string): string | null => {
@@ -114,7 +114,7 @@ export default function DetailUlokPeroranganPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
-  
+
   const [namaLokasi, setNamaLokasi] = useState('')
   const [statusBadan, setStatusBadan] = useState('')
   const [namaPemegang, setNamaPemegang] = useState('')
@@ -124,10 +124,17 @@ export default function DetailUlokPeroranganPage() {
   const [statusSubmission, setStatusSubmission] = useState('Draft')
   const [namaPengusul, setNamaPengusul] = useState('')
   const [namaCabang, setNamaCabang] = useState('')
-  
+
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [lastReviewedAt, setLastReviewedAt] = useState<string | null>(null)
+
+  // === AKTE SEWA STATES ===
+  const [isAkteSewaModalOpen, setIsAkteSewaModalOpen] = useState(false)
+  const [akteSewaLink, setAkteSewaLink] = useState('')
+  const [akteSewaInput, setAkteSewaInput] = useState('')
+  const [akteSewaError, setAkteSewaError] = useState('')
+  const [isSavingAkteSewa, setIsSavingAkteSewa] = useState(false)
 
   const formatLastReviewedDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'Belum pernah direview'
@@ -214,11 +221,11 @@ export default function DetailUlokPeroranganPage() {
       if (docsRes.success && masterRes.success) {
         const docs = docsRes.data || []
         const master = masterRes.data || []
-        
+
         const submissionMock = {
           jenis_badan_hukum: activeStatus,
         }
-        
+
         const checklistMasterIds = getChecklistMasterIds(submissionMock, docs)
         const denom = checklistMasterIds.length
 
@@ -256,6 +263,11 @@ export default function DetailUlokPeroranganPage() {
         setDenominator(denom)
         setPercentage(pct)
         setChecklistItems(items)
+
+        const akteSewaDoc = docs.find((d: any) => d.document_type === 'akte_sewa' && d.is_latest) || docs.find((d: any) => d.document_type === 'akte_sewa')
+        if (akteSewaDoc?.file_url) {
+          setAkteSewaLink(akteSewaDoc.file_url)
+        }
       }
 
       if (uploaderRes.success) {
@@ -319,7 +331,7 @@ export default function DetailUlokPeroranganPage() {
       setIsLoading(true)
       setChecklistLoading(true)
       const res = await getUlokDetail(ulokId)
-      
+
       if (cancelled) return
 
       if (res.success && res.data) {
@@ -333,7 +345,7 @@ export default function DetailUlokPeroranganPage() {
         setLastReviewedAt(res.data.last_reviewed_at || null)
         setNamaPengusul(res.data.profiles?.full_name || 'Pengusul Tidak Diketahui')
         setNamaCabang(res.data.profiles?.branches?.nama_cabang || 'Cabang Tidak Diketahui')
-        
+
         const [commentsRes, profileRes] = await Promise.all([
           getComments(ulokId),
           getCurrentProfile(),
@@ -426,11 +438,11 @@ export default function DetailUlokPeroranganPage() {
 
       const commentText = newComment.trim() || (selectedFile ? `[Lampiran: ${selectedFile.name}]` : '')
       const res = await createComment(
-        ulokId, 
-        activeId, 
-        commentText, 
-        replyingTo?.id || null, 
-        attachmentUrl, 
+        ulokId,
+        activeId,
+        commentText,
+        replyingTo?.id || null,
+        attachmentUrl,
         attachmentType
       )
 
@@ -497,6 +509,43 @@ export default function DetailUlokPeroranganPage() {
       setIsSyncing(false)
     }
   }, [ulokId, idUlok, fetchChecklistData, router, fromSource])
+
+  const handleSaveAkteSewaLink = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!ulokId) return
+    const trimmed = akteSewaInput.trim()
+    if (!trimmed) {
+      setAkteSewaError('Link Google Drive tidak boleh kosong')
+      return
+    }
+
+    if (!trimmed.toLowerCase().includes('drive.google.com')) {
+      setAkteSewaError('Link harus berupa tautan Google Drive yang valid (drive.google.com)')
+      return
+    }
+
+    setIsSavingAkteSewa(true)
+    setAkteSewaError('')
+    try {
+      const res = await saveGoogleDriveLink(ulokId, 'akte_sewa', trimmed)
+      if (res.success) {
+        setAkteSewaLink(trimmed)
+        setIsAkteSewaModalOpen(false)
+        setSuccessMessage('Link berhasil ter-upload!')
+        setShowSuccessModal(true)
+        setTimeout(() => {
+          setShowSuccessModal(false)
+        }, 2000)
+        await fetchChecklistData()
+      } else {
+        setAkteSewaError(res.error || 'Gagal menyimpan link Google Drive')
+      }
+    } catch (err: any) {
+      setAkteSewaError(err.message || 'Terjadi kesalahan sistem saat menyimpan link')
+    } finally {
+      setIsSavingAkteSewa(false)
+    }
+  }
 
   const handleUpdateDetail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -566,11 +615,11 @@ export default function DetailUlokPeroranganPage() {
   return (
     <div className="w-full overflow-x-hidden space-y-4 md:space-y-6 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-300">
       <div className="space-y-6">
-        
+
         {/* === BREADCRUMB === */}
         <nav className="flex items-center gap-1 text-xs font-bold text-gray-500 dark:text-gray-400 select-none mb-10 uppercase tracking-wider">
-          <span 
-            onClick={() => router.push(backPath)} 
+          <span
+            onClick={() => router.push(backPath)}
             className="cursor-pointer hover:text-blue-900 dark:hover:text-blue-400 transition"
           >
             {originLabel}
@@ -582,15 +631,15 @@ export default function DetailUlokPeroranganPage() {
         {/* === HEADER PANEL === */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-gray-200 dark:border-gray-800 pb-5">
           <div className={`flex items-center gap-3 transition-all duration-300 ${isSyncing ? 'opacity-50 filter blur-[0.5px]' : ''}`}>
-            <button 
+            <button
               onClick={() => router.push(backPath)}
               className="text-gray-500 dark:text-gray-400 hover:text-blue-950 dark:hover:text-blue-400 transition bg-white dark:bg-gray-900 p-2.5 rounded-full shadow-xs border border-gray-200 dark:border-gray-800 active:scale-90 flex items-center justify-center"
               title="Kembali"
             >
-              <img 
-                src="/icons/icon-back.svg" 
-                alt="Kembali" 
-                className="w-6 h-6 object-contain dark:brightness-0 dark:invert" 
+              <img
+                src="/icons/icon-back.svg"
+                alt="Kembali"
+                className="w-6 h-6 object-contain dark:brightness-0 dark:invert"
               />
             </button>
             <div>
@@ -601,19 +650,33 @@ export default function DetailUlokPeroranganPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold mt-0.5">ID Berkas: {ulokId}</p>
             </div>
           </div>
-          
+
           {/* === ACTION BUTTONS === */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
+              type="button"
               onClick={() => router.push(`/admin/cabang/usulan-lokasi/form/perorangan/section1?id=${ulokId}${fromSource ? `&from=${fromSource}` : ''}`)}
-              className="bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+              className="bg-[#142B4D] dark:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap cursor-pointer"
             >
-              <img 
-                src="/icons/icon-form.svg" 
-                alt="Form Icon" 
-                className="w-4 h-4 object-contain brightness-0 invert" 
+              <img
+                src="/icons/icon-form.svg"
+                alt="Form Icon"
+                className="w-4 h-4 object-contain brightness-0 invert"
               />
               Form
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAkteSewaInput(akteSewaLink)
+                setAkteSewaError('')
+                setIsAkteSewaModalOpen(true)
+              }}
+              className="bg-[#142B4D] dark:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold hover:bg-blue-900 dark:hover:bg-slate-700 transition shadow-xs flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap cursor-pointer"
+              title="Masukkan / Lihat link Google Drive Akte Sewa"
+            >
+              <Link2 className="w-4 h-4 text-blue-300" />
+              Akte Sewa
             </button>
           </div>
         </div>
@@ -639,386 +702,379 @@ export default function DetailUlokPeroranganPage() {
           />
         </div>
 
-            {/* === FORM: PERORANGAN UTAMA === */}
-            <form 
-              id="form-perorangan" 
-              onSubmit={handleUpdateDetail} 
-              className={`bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-all duration-300 ${isSyncing ? 'opacity-80 pointer-events-none' : ''}`}
-            >
-              <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
-                <h2 className="font-bold text-white text-sm md:text-base tracking-tight">
-                  Informasi Usulan Kelompok Perorangan
-                </h2>
-                <div className="flex items-center gap-2.5">
-                  <span className="px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
-                  </span>
+        {/* === FORM: PERORANGAN UTAMA === */}
+        <form
+          id="form-perorangan"
+          onSubmit={handleUpdateDetail}
+          className={`bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-all duration-300 ${isSyncing ? 'opacity-80 pointer-events-none' : ''}`}
+        >
+          <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
+            <h2 className="font-bold text-white text-sm md:text-base tracking-tight">
+              Informasi Usulan Kelompok Perorangan
+            </h2>
+            <div className="flex items-center gap-2.5">
+              <span className="px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                {statusSubmission === 'Draft' ? 'Belum Direview' : statusSubmission}
+              </span>
+              <button
+                type="submit"
+                disabled={isPending || isLoading || isSyncing}
+                className="bg-white/10 hover:bg-emerald-600 text-white p-2 h-[34px] w-[34px] rounded-lg transition shadow-xs flex items-center justify-center active:scale-95 disabled:opacity-50 shrink-0 border border-white/20 cursor-pointer"
+                title={isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+              >
+                {isPending ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <img
+                    src="/icons/icon-check-2.svg"
+                    alt="Save Icon"
+                    className="w-4 h-4 object-contain brightness-0 invert"
+                  />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Lokasi</label>
+                <input
+                  type="text"
+                  value={namaLokasi}
+                  onChange={(e) => setNamaLokasi(e.target.value)}
+                  placeholder="Masukkan nama lokasi"
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Pemegang Hak</label>
+                <input
+                  type="text"
+                  value={namaPemegang}
+                  onChange={(e) => setNamaPemegang(e.target.value)}
+                  placeholder="Masukkan nama pemegang hak"
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NOMOR ULOK</label>
+                  {isSyncing && (
+                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 animate-pulse">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Menyinkronkan...
+                    </span>
+                  )}
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={idUlok}
+                    disabled={isSyncing}
+                    onChange={(e) => {
+                      setIdUlok(e.target.value.toUpperCase());
+                      setIdUlokError('');
+                    }}
+                    placeholder="Contoh: MDL1-2609-0099"
+                    className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 pr-20 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${idUlokError
+                        ? 'border-red-500 focus:ring-2 focus:ring-red-500'
+                        : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
+                      }`}
+                    required
+                  />
                   <button
-                    type="submit"
-                    disabled={isPending || isLoading || isSyncing}
-                    className="bg-white/10 hover:bg-emerald-600 text-white p-2 h-[34px] w-[34px] rounded-lg transition shadow-xs flex items-center justify-center active:scale-95 disabled:opacity-50 shrink-0 border border-white/20 cursor-pointer"
-                    title={isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                    type="button"
+                    onClick={() => triggerMidilocSync(idUlok)}
+                    disabled={isSyncing || !idUlok.trim()}
+                    title="Tarik data terbaru dari Midiloc"
+                    className="absolute right-1.5 px-2.5 py-1.5 bg-[#142B4D] hover:bg-blue-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-md text-[11px] font-bold flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                   >
-                    {isPending ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <img 
-                        src="/icons/icon-check-2.svg" 
-                        alt="Save Icon" 
-                        className="w-4 h-4 object-contain brightness-0 invert" 
-                      />
-                    )}
+                    <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
                   </button>
                 </div>
+                {idUlokError && (
+                  <p className="text-red-500 text-xs mt-1 font-semibold flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" /> {idUlokError}
+                  </p>
+                )}
               </div>
 
-              <div className="p-6 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Lokasi</label>
-                    <input 
-                      type="text"
-                      value={namaLokasi}
-                      onChange={(e) => setNamaLokasi(e.target.value)}
-                      placeholder="Masukkan nama lokasi"
-                      className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors"
-                      required
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Perorangan)</label>
+                <select
+                  value={statusBadan}
+                  onChange={(e) => handleStatusBadanChange(e.target.value)}
+                  disabled={isPending}
+                  className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60"
+                  required
+                >
+                  <option value="Perorangan">Perorangan</option>
+                  <option value="Waris">Waris / Ahli Waris</option>
+                  <option value="Hibah">Hibah</option>
+                  <option value="Kuasa">Kuasa / Penerima Kuasa</option>
+                </select>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
+                  {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nama Pemegang Hak</label>
-                    <input 
-                      type="text"
-                      value={namaPemegang}
-                      onChange={(e) => setNamaPemegang(e.target.value)}
-                      placeholder="Masukkan nama pemegang hak"
-                      className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors"
-                      required
-                    />
-                  </div>
+        {/* === PANEL KOMENTAR === */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
+          <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
+            <h2 className="font-bold text-white text-sm md:text-base tracking-tight">Kolom Komentar / Pesan Assessor</h2>
+          </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">NOMOR ULOK</label>
-                      {isSyncing && (
-                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 animate-pulse">
-                          <RefreshCw className="w-3 h-3 animate-spin" /> Menyinkronkan...
-                        </span>
-                      )}
-                    </div>
-                    <div className="relative flex items-center">
-                      <input 
-                        type="text" 
-                        value={idUlok} 
-                        disabled={isSyncing}
-                        onChange={(e) => {
-                          setIdUlok(e.target.value.toUpperCase());
-                          setIdUlokError('');
-                        }}
-                        placeholder="Contoh: MDL1-2609-0099"
-                        className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 pr-20 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
-                          idUlokError 
-                            ? 'border-red-500 focus:ring-2 focus:ring-red-500' 
-                            : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
-                        }`}
-                        required
-                      />
+          <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(circle_at_1px_1px,_rgba(20,43,77,0.06)_1px,_transparent_0)] [background-size:8px_8px] dark:bg-[radial-gradient(circle_at_1px_1px,_rgba(255,255,255,0.035)_1px,_transparent_0)] min-h-[300px] flex flex-col justify-between transition-colors">
+            {comments.length === 0 ? (
+              <div className="text-center my-auto py-12 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                <span className="text-3xl mb-2 opacity-50">✉️</span>
+                <p className="font-bold">Belum ada komentar atau pesan dari assessor.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto overflow-x-hidden pr-2 flex flex-col">
+                {comments.map((item) => {
+                  const isSelf =
+                    (currentUserId && (item.profile_id === currentUserId || item.profiles?.id === currentUserId)) ||
+                    (currentProfile?.id && (item.profile_id === currentProfile.id || item.profiles?.id === currentProfile.id)) ||
+                    (currentProfile?.full_name && item.profiles?.full_name === currentProfile.full_name)
+
+                  const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
+
+                  const repliedParent = item.reply_to_id
+                    ? comments.find((c: any) => c.id === item.reply_to_id)
+                    : null
+
+                  const avatarUrl = item.profiles?.avatar_url
+                  const fullName = item.profiles?.full_name || (isSelf ? 'Anda' : 'User')
+
+                  return (
+                    <div
+                      id={`message-${item.id}`}
+                      key={item.id}
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+                        setReplyingTo(item)
+                      }}
+                      className={`flex items-start gap-2.5 w-full group relative ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}
+                    >
+                      {/* User Avatar */}
                       <button
                         type="button"
-                        onClick={() => triggerMidilocSync(idUlok)}
-                        disabled={isSyncing || !idUlok.trim()}
-                        title="Tarik data terbaru dari Midiloc"
-                        className="absolute right-1.5 px-2.5 py-1.5 bg-[#142B4D] hover:bg-blue-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-md text-[11px] font-bold flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                        onClick={(e) => handleAvatarClick(e, item.profiles)}
+                        className="shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#142B4D] rounded-full"
+                        title={`Lihat profil ${fullName}`}
                       >
-                        <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                        <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
-                      </button>
-                    </div>
-                    {idUlokError && (
-                      <p className="text-red-500 text-xs mt-1 font-semibold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" /> {idUlokError}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status Kepemilikan (Khusus Perorangan)</label>
-                    <select 
-                      value={statusBadan} 
-                      onChange={(e) => handleStatusBadanChange(e.target.value)}
-                      disabled={isPending}
-                      className="w-full border border-gray-200 dark:border-gray-800 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60"
-                      required
-                    >
-                      <option value="Perorangan">Perorangan</option>
-                      <option value="Waris">Waris / Ahli Waris</option>
-                      <option value="Hibah">Hibah</option>
-                      <option value="Kuasa">Kuasa / Penerima Kuasa</option>
-                    </select>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-bold">
-                      {lastReviewedAt ? `Terakhir direview pada (${formatLastReviewedDate(lastReviewedAt)})` : 'Belum pernah direview'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </form>
-
-            {/* === PANEL KOMENTAR === */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800/80 overflow-hidden transition-colors duration-300">
-              <div className="bg-[#142B4D] dark:bg-slate-900 px-4 py-3.5 md:px-5 flex items-center justify-between transition-colors rounded-t-xl">
-                <h2 className="font-bold text-white text-sm md:text-base tracking-tight">Kolom Komentar / Pesan Assessor</h2>
-              </div>
-              
-              <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(circle_at_1px_1px,_rgba(20,43,77,0.06)_1px,_transparent_0)] [background-size:8px_8px] dark:bg-[radial-gradient(circle_at_1px_1px,_rgba(255,255,255,0.035)_1px,_transparent_0)] min-h-[300px] flex flex-col justify-between transition-colors">
-                {comments.length === 0 ? (
-                  <div className="text-center my-auto py-12 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
-                    <span className="text-3xl mb-2 opacity-50">✉️</span>
-                    <p className="font-bold">Belum ada komentar atau pesan dari assessor.</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Seluruh feedback peninjauan berkas akan tampil di sini.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto overflow-x-hidden pr-2 flex flex-col">
-                    {comments.map((item) => {
-                      const isSelf = 
-                        (currentUserId && (item.profile_id === currentUserId || item.profiles?.id === currentUserId)) || 
-                        (currentProfile?.id && (item.profile_id === currentProfile.id || item.profiles?.id === currentProfile.id)) ||
-                        (currentProfile?.full_name && item.profiles?.full_name === currentProfile.full_name)
-
-                      const isComplaint = item.message?.includes('[Catatan Assessor - Grup:')
-
-                      const repliedParent = item.reply_to_id
-                        ? comments.find((c: any) => c.id === item.reply_to_id)
-                        : null
-
-                      const avatarUrl = item.profiles?.avatar_url
-                      const fullName = item.profiles?.full_name || (isSelf ? 'Anda' : 'User')
-
-                      return (
-                        <div 
-                          id={`message-${item.id}`}
-                          key={item.id} 
-                          onContextMenu={(e) => {
-                            e.preventDefault()
-                            setReplyingTo(item)
-                          }}
-                          className={`flex items-start gap-2.5 w-full group relative ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}
-                        >
-                          {/* User Avatar */}
-                          <button
-                            type="button"
-                            onClick={(e) => handleAvatarClick(e, item.profiles)}
-                            className="shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#142B4D] rounded-full"
-                            title={`Lihat profil ${fullName}`}
-                          >
-                            {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt={fullName}
-                                className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
-                              />
-                            ) : (
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity ${
-                                isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
-                              }`}>
-                                {fullName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </button>
-
-                          {/* Message Bubble */}
-                          <div 
-                            className={`px-3 py-2 md:px-4 md:py-2.5 rounded-lg border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${
-                              highlightedMsgId === item.id 
-                                ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]' 
-                                : ''
-                            } ${
-                              isSelf 
-                                ? 'bg-[#142B4D] dark:bg-[#142B4D] border-transparent text-white rounded-tr-none shadow-[0_2px_6px_rgba(20,43,77,0.15)]' 
-                                : isComplaint 
-                                  ? 'bg-rose-50 border-rose-200/70 dark:bg-rose-950/40 dark:border-rose-900/60 text-gray-800 dark:text-gray-100 rounded-tl-none' 
-                                  : 'bg-white border-gray-200/70 dark:bg-gray-800 dark:border-gray-700/70 text-gray-800 dark:text-gray-100 rounded-tl-none'
-                            }`}
-                          >
-                            <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${
-                              isSelf 
-                                ? 'border-white/10 text-blue-200' 
-                                : isComplaint 
-                                  ? 'border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400' 
-                                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={fullName}
+                            className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-2xs mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                          />
+                        ) : (
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-2xs border border-white/20 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity ${isSelf ? 'bg-[#142B4D]' : 'bg-slate-600'
                             }`}>
-                              <span className="flex items-center gap-1">
-                                {!isSelf && isComplaint && <span>⚠️ REVISI PENTING</span>}
-                                <span>{isSelf ? 'Anda (Admin Cabang)' : `${item.profiles?.full_name || 'Assessor'} (${item.profiles?.role || 'User'})`}</span>
-                              </span>
-                              <span className={isSelf ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'}>
-                                {new Date(item.created_at).toLocaleString('id-ID', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </span>
-                            </div>
+                            {fullName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </button>
 
-                            {repliedParent && (
-                              <div
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (item.reply_to_id) {
-                                    scrollToMessage(item.reply_to_id)
-                                  }
-                                }}
-                                className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs cursor-pointer hover:opacity-90 transition-all ${
-                                  isSelf
-                                    ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
-                                    : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
-                                }`}
-                                title="Klik untuk melihat pesan yang dibalas"
+                      {/* Message Bubble */}
+                      <div
+                        className={`px-3 py-2 md:px-4 md:py-2.5 rounded-lg border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${highlightedMsgId === item.id
+                            ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]'
+                            : ''
+                          } ${isSelf
+                            ? 'bg-[#142B4D] dark:bg-[#142B4D] border-transparent text-white rounded-tr-none shadow-[0_2px_6px_rgba(20,43,77,0.15)]'
+                            : isComplaint
+                              ? 'bg-rose-50 border-rose-200/70 dark:bg-rose-950/40 dark:border-rose-900/60 text-gray-800 dark:text-gray-100 rounded-tl-none'
+                              : 'bg-white border-gray-200/70 dark:bg-gray-800 dark:border-gray-700/70 text-gray-800 dark:text-gray-100 rounded-tl-none'
+                          }`}
+                      >
+                        <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${isSelf
+                            ? 'border-white/10 text-blue-200'
+                            : isComplaint
+                              ? 'border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400'
+                              : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                          }`}>
+                          <span className="flex items-center gap-1">
+                            {!isSelf && isComplaint && <span>⚠️ REVISI PENTING</span>}
+                            <span>{isSelf ? 'Anda (Admin Cabang)' : `${item.profiles?.full_name || 'Assessor'} (${item.profiles?.role || 'User'})`}</span>
+                          </span>
+                          <span className={isSelf ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'}>
+                            {new Date(item.created_at).toLocaleString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+
+                        {repliedParent && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (item.reply_to_id) {
+                                scrollToMessage(item.reply_to_id)
+                              }
+                            }}
+                            className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs cursor-pointer hover:opacity-90 transition-all ${isSelf
+                                ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
+                                : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
+                              }`}
+                            title="Klik untuk melihat pesan yang dibalas"
+                          >
+                            <div className="font-bold flex items-center gap-1 opacity-90">
+                              <Reply className="w-3 h-3 shrink-0" />
+                              <span>Membalas {repliedParent.profiles?.full_name || 'Pengguna'}</span>
+                            </div>
+                            <p className="truncate italic opacity-80 mt-0.5">
+                              {repliedParent.message || 'Pesan sebelumnya...'}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-1.5">
+                          {!isSelf && isComplaint && <span className="text-sm shrink-0 mt-0.5 select-none">⚠️</span>}
+                          <p className="text-xs md:text-sm font-semibold whitespace-pre-line break-words">
+                            {item.message}
+                          </p>
+                        </div>
+
+                        {item.attachment_url && (
+                          <div className="mt-2">
+                            {item.attachment_type === 'image' || ['jpg', 'jpeg', 'png', 'webp'].some(ext => item.attachment_url?.toLowerCase().includes(ext)) ? (
+                              <div className="overflow-hidden rounded-lg border border-black/10 dark:border-white/10 max-w-xs mt-1">
+                                <a href={item.attachment_url} target="_blank" rel="noopener noreferrer" title="Klik untuk membuka gambar ukuran penuh">
+                                  <img
+                                    src={item.attachment_url}
+                                    alt="Lampiran Gambar"
+                                    className="max-h-48 w-full object-cover hover:scale-105 transition-transform duration-200"
+                                  />
+                                </a>
+                              </div>
+                            ) : (
+                              <a
+                                href={item.attachment_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-2 p-2 rounded-lg border transition text-xs font-semibold max-w-xs mt-1 ${isSelf
+                                    ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
+                                    : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
+                                  }`}
                               >
-                                <div className="font-bold flex items-center gap-1 opacity-90">
-                                  <Reply className="w-3 h-3 shrink-0" />
-                                  <span>Membalas {repliedParent.profiles?.full_name || 'Pengguna'}</span>
-                                </div>
-                                <p className="truncate italic opacity-80 mt-0.5">
-                                  {repliedParent.message || 'Pesan sebelumnya...'}
-                                </p>
-                              </div>
-                            )}
-
-                            <div className="flex items-start gap-1.5">
-                              {!isSelf && isComplaint && <span className="text-sm shrink-0 mt-0.5 select-none">⚠️</span>}
-                              <p className="text-xs md:text-sm font-semibold whitespace-pre-line break-words">
-                                {item.message}
-                              </p>
-                            </div>
-
-                            {item.attachment_url && (
-                              <div className="mt-2">
-                                {item.attachment_type === 'image' || ['jpg', 'jpeg', 'png', 'webp'].some(ext => item.attachment_url?.toLowerCase().includes(ext)) ? (
-                                  <div className="overflow-hidden rounded-lg border border-black/10 dark:border-white/10 max-w-xs mt-1">
-                                    <a href={item.attachment_url} target="_blank" rel="noopener noreferrer" title="Klik untuk membuka gambar ukuran penuh">
-                                      <img
-                                        src={item.attachment_url}
-                                        alt="Lampiran Gambar"
-                                        className="max-h-48 w-full object-cover hover:scale-105 transition-transform duration-200"
-                                      />
-                                    </a>
-                                  </div>
-                                ) : (
-                                  <a
-                                    href={item.attachment_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`flex items-center gap-2 p-2 rounded-lg border transition text-xs font-semibold max-w-xs mt-1 ${
-                                      isSelf
-                                        ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
-                                        : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
-                                    }`}
-                                  >
-                                    <FileText className="w-4 h-4 shrink-0 text-red-400" />
-                                    <span className="truncate flex-1">Dokumen Lampiran (PDF)</span>
-                                    <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                                  </a>
-                                )}
-                              </div>
+                                <FileText className="w-4 h-4 shrink-0 text-red-400" />
+                                <span className="truncate flex-1">Dokumen Lampiran (PDF)</span>
+                                <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                              </a>
                             )}
                           </div>
+                        )}
+                      </div>
 
-                          {/* Hover Reply Trigger */}
-                          <button
-                            type="button"
-                            onClick={() => setReplyingTo(item)}
-                            className="
+                      {/* Hover Reply Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(item)}
+                        className="
                               opacity-0 group-hover:opacity-100 transition-opacity duration-150
                               shrink-0 p-1.5 rounded-md text-[10px] font-bold shadow-2xs
                               flex items-center gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
                               border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700
                               cursor-pointer self-center
                             "
-                            title="Balas pesan ini"
-                          >
-                            <Reply className="w-3 h-3 text-blue-500" />
-                            <span className="hidden sm:inline">Balas</span>
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Reply / File Preview Bar */}
-                {(replyingTo || selectedFile) && (
-                  <div className="mt-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800/90 rounded-lg flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between text-xs transition-all">
-                    {replyingTo && (
-                      <div className="flex items-center gap-1.5 min-w-0 text-blue-600 dark:text-blue-400 font-medium">
-                        <Reply className="w-3.5 h-3.5 shrink-0" />
-                        <span className="shrink-0">Membalas <strong className="font-semibold">{replyingTo.profiles?.full_name || 'Pengguna'}</strong>:</span>
-                        <span className="truncate max-w-[200px] md:max-w-md italic opacity-80">"{replyingTo.message}"</span>
-                        <button type="button" onClick={() => setReplyingTo(null)} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal membalas">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-
-                    {selectedFile && (
-                      <div className="flex items-center gap-1.5 min-w-0 text-amber-600 dark:text-amber-400 font-medium">
-                        <Paperclip className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate max-w-[200px] md:max-w-md">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                        <button type="button" onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal lampiran">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2 md:gap-2.5 items-center">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition shrink-0"
-                    title="Unggah PDF / Gambar (.pdf, .jpg, .png)"
-                  >
-                    <Paperclip className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-300" />
-                  </button>
-
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) setSelectedFile(e.target.files[0])
-                    }}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="hidden"
-                  />
-
-                  <input 
-                    type="text" 
-                    placeholder={replyingTo ? `Balas pesan ${replyingTo.profiles?.full_name || ''}...` : "Tulis pesan balasan ke assessor jika diperlukan..."} 
-                    className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3.5 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[#142B4D]/20 dark:focus:ring-blue-500/30 focus:border-[#142B4D]/20 outline-none transition-all font-medium"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onPaste={handlePaste}
-                    disabled={isSending}
-                  />
-                  <button 
-                    type="submit"
-                    className="w-10 h-10 md:w-11 md:h-11 rounded-lg bg-[#142B4D] hover:bg-[#1a3863] text-white flex items-center justify-center disabled:opacity-40 transition-all shrink-0 shadow-sm active:scale-95"
-                    disabled={isSending || (!newComment.trim() && !selectedFile)}
-                    title="Kirim Pesan"
-                  >
-                    {isSending ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
-                    )}
-                  </button>
-                </form>
+                        title="Balas pesan ini"
+                      >
+                        <Reply className="w-3 h-3 text-blue-500" />
+                        <span className="hidden sm:inline">Balas</span>
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+            )}
+
+            {/* Reply / File Preview Bar */}
+            {(replyingTo || selectedFile) && (
+              <div className="mt-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800/90 rounded-lg flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between text-xs transition-all">
+                {replyingTo && (
+                  <div className="flex items-center gap-1.5 min-w-0 text-blue-600 dark:text-blue-400 font-medium">
+                    <Reply className="w-3.5 h-3.5 shrink-0" />
+                    <span className="shrink-0">Membalas <strong className="font-semibold">{replyingTo.profiles?.full_name || 'Pengguna'}</strong>:</span>
+                    <span className="truncate max-w-[200px] md:max-w-md italic opacity-80">"{replyingTo.message}"</span>
+                    <button type="button" onClick={() => setReplyingTo(null)} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal membalas">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {selectedFile && (
+                  <div className="flex items-center gap-1.5 min-w-0 text-amber-600 dark:text-amber-400 font-medium">
+                    <Paperclip className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate max-w-[200px] md:max-w-md">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    <button type="button" onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }} className="ml-1 text-gray-400 hover:text-red-500 transition" title="Batal lampiran">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleSendComment} className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-2 md:gap-2.5 items-center">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition shrink-0"
+                title="Unggah PDF / Gambar (.pdf, .jpg, .png)"
+              >
+                <Paperclip className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setSelectedFile(e.target.files[0])
+                }}
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+              />
+
+              <input
+                type="text"
+                placeholder={replyingTo ? `Balas pesan ${replyingTo.profiles?.full_name || ''}...` : "Tulis pesan balasan ke assessor jika diperlukan..."}
+                className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3.5 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[#142B4D]/20 dark:focus:ring-blue-500/30 focus:border-[#142B4D]/20 outline-none transition-all font-medium"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onPaste={handlePaste}
+                disabled={isSending}
+              />
+              <button
+                type="submit"
+                className="w-10 h-10 md:w-11 md:h-11 rounded-lg bg-[#142B4D] hover:bg-[#1a3863] text-white flex items-center justify-center disabled:opacity-40 transition-all shrink-0 shadow-sm active:scale-95"
+                disabled={isSending || (!newComment.trim() && !selectedFile)}
+                title="Kirim Pesan"
+              >
+                {isSending ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
 
         {/* === PANEL CHECKLIST DOKUMEN === */}
         {checklistLoading ? (
@@ -1049,6 +1105,90 @@ export default function DetailUlokPeroranganPage() {
             <p className="text-gray-800 dark:text-gray-200 font-semibold text-base leading-relaxed">
               {successMessage}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL: LINK GOOGLE DRIVE AKTE SEWA === */}
+      {isAkteSewaModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-md overflow-hidden animate-[scaleUp_0.2s_ease-out]">
+            {/* Header */}
+            <div className="bg-[#142B4D] dark:bg-slate-900 px-5 py-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-blue-300" />
+                <h3 className="font-bold text-sm md:text-base leading-snug">
+                  Masukkan link Google Drive untuk Akte Sewa
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAkteSewaModalOpen(false)}
+                className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleSaveAkteSewaLink} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                  Link Google Drive
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={akteSewaInput}
+                    onChange={(e) => {
+                      setAkteSewaInput(e.target.value)
+                      if (akteSewaError) setAkteSewaError('')
+                    }}
+                    placeholder="Masukkan link google drive disini..."
+                    disabled={isSavingAkteSewa}
+                    className={`w-full border p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 font-medium text-gray-700 dark:text-gray-200 transition-colors ${akteSewaError
+                        ? 'border-red-500 focus:outline-red-500 focus:ring-1 focus:ring-red-500'
+                        : 'border-gray-200 dark:border-gray-800 focus:outline-blue-950 dark:focus:outline-blue-500'
+                      }`}
+                    autoFocus
+                  />
+                </div>
+                {akteSewaError && (
+                  <p className="text-red-500 text-xs mt-1.5 font-semibold flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {akteSewaError}
+                  </p>
+                )}
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
+                  Pastikan link mengarah ke Google Drive (mengandung domain <span className="font-mono font-semibold">drive.google.com</span>) dan akses folder telah dibuka/dibagikan.
+                </p>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAkteSewaModalOpen(false)}
+                  disabled={isSavingAkteSewa}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition disabled:opacity-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingAkteSewa || !akteSewaInput.trim()}
+                  className="bg-[#142B4D] hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isSavingAkteSewa ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Mengunggah...</span>
+                    </>
+                  ) : (
+                    <span>Upload</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

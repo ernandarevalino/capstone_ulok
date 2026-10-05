@@ -383,19 +383,21 @@ export default function Section2PeroranganAssessorPage() {
                   <img src="/icons/icon-view.svg" alt="View" className="w-3.5 h-3.5 object-contain dark:invert" />
                 </a>
 
-                <button
-                  type="button"
-                  disabled={downloadingDocId === existingDoc.id}
-                  onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
-                  className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
-                  title="Download File"
-                >
-                  {downloadingDocId === existingDoc.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                </button>
+                {docType !== 'akte_sewa' && (
+                  <button
+                    type="button"
+                    disabled={downloadingDocId === existingDoc.id}
+                    onClick={() => handleDownload(existingDoc.file_url, existingDoc.id, existingDoc.document_type)}
+                    className="p-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                    title="Download File"
+                  >
+                    {downloadingDocId === existingDoc.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -469,19 +471,21 @@ export default function Section2PeroranganAssessorPage() {
                           >
                             <img src="/icons/icon-view.svg" alt="View" className="w-3 h-3 object-contain dark:invert" />
                           </a>
-                          <button
-                            type="button"
-                            disabled={downloadingDocId === file.id}
-                            onClick={() => handleDownload(file.file_url, file.id, file.document_type)}
-                            className="p-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xs text-gray-655 dark:text-gray-450 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
-                            title="Download File"
-                          >
-                            {downloadingDocId === file.id ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Download className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                          {docType !== 'akte_sewa' && (
+                            <button
+                              type="button"
+                              disabled={downloadingDocId === file.id}
+                              onClick={() => handleDownload(file.file_url, file.id, file.document_type)}
+                              className="p-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xs text-gray-655 dark:text-gray-450 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition-all flex items-center justify-center disabled:opacity-50"
+                              title="Download File"
+                            >
+                              {downloadingDocId === file.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -767,7 +771,8 @@ export default function Section2PeroranganAssessorPage() {
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Catatan Tambahan (Textarea)</label>
             <textarea rows={3} readOnly value={catatanLainnya} className="w-full border border-gray-200 dark:border-gray-700 p-2 text-xs rounded-lg bg-gray-100 dark:bg-gray-800 cursor-not-allowed outline-none text-gray-500 dark:text-gray-400 font-medium whitespace-pre-wrap" />
           </div>
-          <div className="pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            {renderUploadSlot("akte_sewa", "Akte Sewa (Google Drive)", "Link folder / berkas Google Drive Akte Sewa")}
             {renderUploadSlot("dokumen_tambahan", "Dokumen Berkas Pendukung Tambahan Lainnya", "Format berkas bebas gabungan")}
           </div>
         </div>

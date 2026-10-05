@@ -1546,4 +1546,81 @@ export async function syncUlokFromMidiloc(ulokId: string, nomorUlok: string) {
   }
 }
 
+// === ACTIONS: SAVE GOOGLE DRIVE LINK (AKTE SEWA / DRIVE FOLDERS) ===
+export async function saveGoogleDriveLink(ulokId: string, docType: string, driveUrl: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized: Silakan login kembali')
+
+    if (!ulokId || !driveUrl) {
+      throw new Error('ID Usulan dan Link Google Drive wajib diisi')
+    }
+
+    const trimmedUrl = driveUrl.trim()
+    if (!trimmedUrl.toLowerCase().includes('drive.google.com')) {
+      throw new Error('Link harus berupa tautan Google Drive yang valid (drive.google.com)')
+    }
+
+    // Versioning query
+    const { data: existingDocs, error: queryError } = await supabase
+      .from('documents')
+      .select('id, version')
+      .eq('ulok_id', ulokId)
+      .eq('document_type', docType)
+      .is('deleted_at', null)
+
+    if (queryError) throw queryError
+
+    let nextVersion = 1
+    if (existingDocs && existingDocs.length > 0) {
+      const maxVersion = existingDocs.reduce((max, d) => Math.max(max, d.version || 1), 0)
+      nextVersion = maxVersion + 1
+
+      const existingIds = existingDocs.map(d => d.id)
+      await supabase
+        .from('documents')
+        .update({ is_latest: false })
+        .in('id', existingIds)
+    }
+
+    const { data: insertedDoc, error: insertError } = await supabase
+      .from('documents')
+      .insert([
+        {
+          ulok_id: ulokId,
+          document_type: docType,
+          checklist_id: null,
+          file_url: trimmedUrl,
+          uploaded_by: user.id,
+          version: nextVersion,
+          is_latest: true
+        }
+      ])
+      .select()
+      .single()
+
+    if (insertError) throw insertError
+
+    try {
+      await updateUlokProgressAndTimestamp(ulokId)
+      await calculateULOKSAW(ulokId)
+    } catch (sawErr) {
+      console.error('Non-critical SAW/progress update error:', sawErr)
+    }
+
+    revalidatePath('/admin/cabang/usulan-lokasi')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/perorangan')
+    revalidatePath('/admin/cabang/usulan-lokasi/form/badanhukum')
+    revalidatePath('/admin/assessor/penilaian/ulok-perorangan/detail-penilaian/section2')
+    revalidatePath('/admin/assessor/penilaian/ulok-badanhukum/detail-penilaian/section2')
+
+    return { success: true, data: insertedDoc }
+  } catch (error: any) {
+    console.error('Error saving Google Drive link:', error)
+    return { success: false, error: error.message || 'Gagal menyimpan link Google Drive' }
+  }
+}
+
 
