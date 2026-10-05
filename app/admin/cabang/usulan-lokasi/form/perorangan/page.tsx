@@ -781,8 +781,8 @@ export default function DetailUlokPeroranganPage() {
                     }}
                     placeholder="Contoh: MDL1-2609-0099"
                     className={`w-full border border-gray-200 dark:border-gray-800 p-2.5 pr-20 rounded-lg text-sm bg-white dark:bg-gray-950 focus:outline-blue-950 dark:focus:outline-blue-500 font-medium text-gray-700 dark:text-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${idUlokError
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-500'
-                        : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-500'
+                      : 'border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-[#142B4D]'
                       }`}
                     required
                   />
@@ -892,8 +892,8 @@ export default function DetailUlokPeroranganPage() {
                       {/* Message Bubble */}
                       <div
                         className={`px-3 py-2 md:px-4 md:py-2.5 rounded-lg border shadow-xs max-w-xl transition-all duration-300 leading-relaxed relative ${highlightedMsgId === item.id
-                            ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]'
-                            : ''
+                          ? 'ring-2 ring-amber-400 bg-amber-500/20 dark:bg-amber-400/20 scale-[1.01]'
+                          : ''
                           } ${isSelf
                             ? 'bg-[#142B4D] dark:bg-[#142B4D] border-transparent text-white rounded-tr-none shadow-[0_2px_6px_rgba(20,43,77,0.15)]'
                             : isComplaint
@@ -902,10 +902,10 @@ export default function DetailUlokPeroranganPage() {
                           }`}
                       >
                         <div className={`flex items-center justify-between gap-6 mb-2 text-[10px] uppercase font-bold border-b pb-1.5 ${isSelf
-                            ? 'border-white/10 text-blue-200'
-                            : isComplaint
-                              ? 'border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400'
-                              : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                          ? 'border-white/10 text-blue-200'
+                          : isComplaint
+                            ? 'border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400'
+                            : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
                           }`}>
                           <span className="flex items-center gap-1">
                             {!isSelf && isComplaint && <span>⚠️ REVISI PENTING</span>}
@@ -930,8 +930,8 @@ export default function DetailUlokPeroranganPage() {
                               }
                             }}
                             className={`mb-2 px-2.5 py-1.5 rounded border-l-2 text-[10px] md:text-xs cursor-pointer hover:opacity-90 transition-all ${isSelf
-                                ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
-                                : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
+                              ? 'bg-black/20 border-white/40 text-blue-100 hover:bg-black/30'
+                              : 'bg-black/5 dark:bg-white/10 border-[#142B4D] dark:border-blue-400 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/20'
                               }`}
                             title="Klik untuk melihat pesan yang dibalas"
                           >
@@ -970,8 +970,8 @@ export default function DetailUlokPeroranganPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`flex items-center gap-2 p-2 rounded-lg border transition text-xs font-semibold max-w-xs mt-1 ${isSelf
-                                    ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
-                                    : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
+                                  ? 'bg-black/20 border-white/20 text-white hover:bg-black/30'
+                                  : 'bg-black/5 dark:bg-white/10 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-black/10 dark:hover:bg-white/20'
                                   }`}
                               >
                                 <FileText className="w-4 h-4 shrink-0 text-red-400" />
@@ -1144,11 +1144,11 @@ export default function DetailUlokPeroranganPage() {
                       setAkteSewaInput(e.target.value)
                       if (akteSewaError) setAkteSewaError('')
                     }}
-                    placeholder="Masukkan link google drive disini..."
+                    placeholder="Insert link google drive disini..."
                     disabled={isSavingAkteSewa}
                     className={`w-full border p-2.5 rounded-lg text-sm bg-white dark:bg-gray-950 font-medium text-gray-700 dark:text-gray-200 transition-colors ${akteSewaError
-                        ? 'border-red-500 focus:outline-red-500 focus:ring-1 focus:ring-red-500'
-                        : 'border-gray-200 dark:border-gray-800 focus:outline-blue-950 dark:focus:outline-blue-500'
+                      ? 'border-red-500 focus:outline-red-500 focus:ring-1 focus:ring-red-500'
+                      : 'border-gray-200 dark:border-gray-800 focus:outline-blue-950 dark:focus:outline-blue-500'
                       }`}
                     autoFocus
                   />
